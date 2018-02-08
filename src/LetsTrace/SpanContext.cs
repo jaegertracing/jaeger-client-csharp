@@ -103,9 +103,9 @@ namespace LetsTrace
     // that they can correctly reference other spans
     public class SpanContext : ISpanContext
     {
-        public readonly TraceId TraceId;
-        public readonly SpanId SpanId;
-        public readonly SpanId ParentId;
+        public TraceId TraceId { get; }
+        public SpanId SpanId { get; }
+        public SpanId ParentId { get; }
         private Dictionary<string, string> _baggage;
 
         public SpanContext(TraceId traceId, SpanId spanId = null, SpanId parentId = null, Dictionary<string, string> baggage = null)

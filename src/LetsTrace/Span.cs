@@ -9,7 +9,7 @@ namespace LetsTrace
     public class Span : ILetsTraceSpan
     {
         // private members
-        private readonly ILetsTraceTracer _tracer;
+        private ILetsTraceTracer _tracer { get; }
 
 
         // public members
