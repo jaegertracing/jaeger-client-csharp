@@ -99,6 +99,8 @@ namespace LetsTrace
         }
     }
 
+    // The SpanContext is used to pass the information needed by other spans so
+    // that they can correctly reference other spans
     public class SpanContext : ISpanContext
     {
         public readonly TraceId TraceId;
@@ -108,17 +110,10 @@ namespace LetsTrace
 
         public SpanContext(TraceId traceId, SpanId spanId = null, SpanId parentId = null, Dictionary<string, string> baggage = null)
         {
-            TraceId = traceId;
+            TraceId = traceId ?? throw new ArgumentNullException(nameof(traceId));
             ParentId = parentId;
             SpanId = spanId;
             _baggage = baggage ?? new Dictionary<string, string>();
-        }
-
-        private static string GuidToString(Guid? guid) {
-            if (guid == null) {
-                return "null";
-            }
-            return guid.GetValueOrDefault().ToString("N");
         }
 
         public override string ToString() {
@@ -134,6 +129,7 @@ namespace LetsTrace
             return new SpanContext(TraceId.FromString(parts[0]), SpanId.FromString(parts[1]), SpanId.FromString(parts[2]));
         }
 
+        // OpenTracing API: Iterate through all baggage items
         public IEnumerable<KeyValuePair<string, string>> GetBaggageItems()
         {
             return _baggage;

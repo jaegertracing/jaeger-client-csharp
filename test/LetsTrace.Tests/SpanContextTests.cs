@@ -1,10 +1,64 @@
 using System;
+using System.Collections.Generic;
 using Xunit;
 
 namespace LetsTrace.Tests
 {
     public class SpanContextTests
     {
+        [Fact]
+        public void SpanContext_Constructor_ShouldSetAllItemsPassedIn()
+        {
+            var traceId = new TraceId { High = 1, Low = 2 };
+            var spanId = new SpanId(3);
+            var parentId = new SpanId(4);
+            var baggage = new Dictionary<string, string> { { "key", "value" } };
+
+            var t1 = new SpanContext(traceId, spanId, parentId, baggage);
+            Assert.Equal(traceId.High, t1.TraceId.High);
+            Assert.Equal(traceId.Low, t1.TraceId.Low);
+            Assert.Equal(spanId, t1.SpanId);
+            Assert.Equal(parentId, t1.ParentId);
+            Assert.Equal(baggage, t1.GetBaggageItems());
+        }
+
+        [Fact]
+        public void SpanContext_Constructor_ShouldNotLetANullTraceIdBePassedIn()
+        {
+            var ex = Assert.Throws<ArgumentNullException>(() => new SpanContext(null));
+            Assert.Equal("traceId", ex.ParamName);
+        }
+
+        [Fact]
+        public void SpanContext_Constructor_ShouldDefaultToEmptyBaggage()
+        {
+            var traceId = new TraceId { High = 1, Low = 2 };
+
+            var t2 = new SpanContext(traceId);
+            Assert.Equal(new Dictionary<string, string>(), t2.GetBaggageItems());
+        }
+
+        [Fact]
+        public void SpanContext_Constructor_ShouldLetNullSpanAndParentIdsIn()
+        {
+            var traceId = new TraceId { High = 1, Low = 2 };
+
+            var t3 = new SpanContext(traceId, null, null);
+            Assert.Null(t3.SpanId);
+            Assert.Null(t3.ParentId);
+        }
+
+        [Fact]
+        public void SpanContext_ToString()
+        {
+            var traceId = new TraceId { High = 1, Low = 2 };
+            var spanId = new SpanId(3);
+            var parentId = new SpanId(4);
+
+            var sc = new SpanContext(traceId, spanId, parentId);
+            Assert.Equal("10000000000000002:3:4", sc.ToString());
+        }
+
         [Fact]
         public void SpanContext_FromString()
         {
@@ -57,6 +111,24 @@ namespace LetsTrace.Tests
             Assert.Equal("1", sc.TraceId.Low.ToString());
             Assert.Equal("1", sc.SpanId.ToString());
             Assert.Equal("1", sc.SpanId.ToString());
+        }
+
+        [Fact]
+        public void SpanContext_SetBaggageItems()
+        {
+            var traceId = new TraceId { High = 1, Low = 2 };
+            var spanId = new SpanId(3);
+            var parentId = new SpanId(4);
+            var baggage = new Dictionary<string, string> { { "key", "value" } };
+
+            var sc = new SpanContext(traceId, spanId, parentId, baggage);
+
+            Assert.Equal(baggage, sc.GetBaggageItems());
+
+            var newBaggage = new Dictionary<string, string> { { "new", "baggage" } };
+            sc.SetBaggageItems(newBaggage);
+
+            Assert.Equal(newBaggage, sc.GetBaggageItems());
         }
     }
 }
