@@ -11,7 +11,7 @@ namespace LetsTrace.Tests
     {
 
         [Fact]
-        public void Span_Constructor_ShouldTAssignEverythingCorrectlyWhenPassed()
+        public void Span_Constructor_ShouldAssignEverythingCorrectlyWhenPassed()
         {
             var tracer = Substitute.For<ILetsTraceTracer>();
             var operationName = "testing";
