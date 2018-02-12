@@ -28,7 +28,7 @@ namespace LetsTrace.Transport.Zipkin.ZipkinJSON
     {
         public Uri Uri { get; }
 
-        private List<Span> _buffer; // TODO: look into making this thread safe
+        private List<Span> _buffer = new List<Span>(); // TODO: look into making this thread safe
         private int _bufferSize = 10;
         private static readonly HttpClient HttpClient = new HttpClient();
         
