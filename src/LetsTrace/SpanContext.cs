@@ -101,7 +101,7 @@ namespace LetsTrace
 
     // The SpanContext is used to pass the information needed by other spans so
     // that they can correctly reference other spans
-    public class SpanContext : ISpanContext
+    public class SpanContext : ILetsTraceSpanContext
     {
         public TraceId TraceId { get; }
         public SpanId SpanId { get; }

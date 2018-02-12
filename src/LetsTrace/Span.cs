@@ -6,14 +6,8 @@ using OpenTracing;
 namespace LetsTrace
 {
     // Span holds everything relevant to a specific span
-    public class Span : ILetsTraceSpan
+    public class Span : ILetsTraceSpan, IDisposable
     {
-        // private members
-        private ILetsTraceTracer _tracer { get; }
-
-
-        // public members
-        
         // OpenTracing API: Retrieve the Spans SpanContext
         public ISpanContext Context { get; private set; }
         public DateTimeOffset? FinishTimestamp { get; private set; }
@@ -27,10 +21,11 @@ namespace LetsTrace
         public List<Reference> References { get; }
         public DateTimeOffset StartTimestamp { get; private set; }
         public Dictionary<string, string> Tags { get; private set; }
+        public ILetsTraceTracer Tracer { get; }
 
         public Span(ILetsTraceTracer tracer, string operationName, ISpanContext context, DateTimeOffset? startTimestamp = null, Dictionary<string, string> tags = null, List<Reference> references = null)
         {
-            _tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
+            Tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
 
             if (string.IsNullOrEmpty(operationName))
             {
@@ -41,7 +36,7 @@ namespace LetsTrace
             OperationName = operationName;
             Context = context ?? throw new ArgumentNullException(nameof(context));
 
-            StartTimestamp = startTimestamp ?? _tracer.Clock.CurrentTime();
+            StartTimestamp = startTimestamp ?? Tracer.Clock.CurrentTime();
             Tags = tags ?? new Dictionary<string, string>();
             References = references ?? new List<Reference>();
         }
@@ -49,7 +44,7 @@ namespace LetsTrace
         public void Dispose() => Finish();
 
         // OpenTracing API: Finish the Span
-        public void Finish() => Finish(_tracer.Clock.CurrentTime());
+        public void Finish() => Finish(Tracer.Clock.CurrentTime());
 
         // OpenTracing API: Finish the Span
         // An explicit finish timestamp for the Span
@@ -58,7 +53,7 @@ namespace LetsTrace
             if (FinishTimestamp == null) // only report if it's not finished yet
             {
                 FinishTimestamp = finishTimestamp;
-                _tracer.ReportSpan(this);
+                Tracer.ReportSpan(this);
             }
         }
 
@@ -66,16 +61,16 @@ namespace LetsTrace
         public string GetBaggageItem(string key) => Context.GetBaggageItems().Where(bi => bi.Key == key).Select(bi => bi.Value).FirstOrDefault();
 
         // OpenTracing API: Set a baggage item
-        public ISpan SetBaggageItem(string key, string value) => _tracer.SetBaggageItem(this, key, value);
+        public ISpan SetBaggageItem(string key, string value) => Tracer.SetBaggageItem(this, key, value);
 
         // OpenTracing API: Log structured data
-        public ISpan Log(IEnumerable<KeyValuePair<string, object>> fields) => Log(_tracer.Clock.CurrentTime(), fields);
+        public ISpan Log(IEnumerable<KeyValuePair<string, object>> fields) => Log(Tracer.Clock.CurrentTime(), fields);
 
         // OpenTracing API: Log structured data
         public ISpan Log(DateTimeOffset timestamp, IEnumerable<KeyValuePair<string, object>> fields) => Log(timestamp, null, fields);
 
         // OpenTracing API: Log structured data
-        public ISpan Log(string eventName) => Log(_tracer.Clock.CurrentTime(), eventName, null);
+        public ISpan Log(string eventName) => Log(Tracer.Clock.CurrentTime(), eventName, null);
 
         // OpenTracing API: Log structured data
         public ISpan Log(DateTimeOffset timestamp, string eventName) => Log(timestamp, eventName, null);

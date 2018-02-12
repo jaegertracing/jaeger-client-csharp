@@ -12,5 +12,6 @@ namespace LetsTrace
         List<Reference> References { get; }
         DateTimeOffset StartTimestamp { get; }
         Dictionary<string, string> Tags { get; }
+        ILetsTraceTracer Tracer { get; }
     }
 }
