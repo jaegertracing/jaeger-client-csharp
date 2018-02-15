@@ -2,13 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Runtime.Serialization;
 using System.Text;
 using LetsTrace.Util;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace LetsTrace.Transport.Zipkin.ZipkinJSON
 {
+    [JsonConverter(typeof(StringEnumConverter))]
     public enum KindEnum
     { 
         [EnumMember(Value = "CLIENT")]
@@ -60,7 +63,8 @@ namespace LetsTrace.Transport.Zipkin.ZipkinJSON
         {
             var count = _buffer.Count;
             var serialized = JsonConvert.SerializeObject(_buffer);
-            var response = HttpClient.PostAsync(Uri, new StringContent(serialized, Encoding.UTF8, "application/json")).ConfigureAwait(false).GetAwaiter().GetResult();
+            var content = new StringContent(serialized, Encoding.UTF8, "application/json");
+            var response = HttpClient.PostAsync(Uri, content).ConfigureAwait(false).GetAwaiter().GetResult();
 
             response.EnsureSuccessStatusCode();
 
