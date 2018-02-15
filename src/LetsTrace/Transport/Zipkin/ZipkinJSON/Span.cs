@@ -147,7 +147,7 @@ namespace LetsTrace.Transport.Zipkin.ZipkinJSON
         /// Returns the JSON string presentation of the object
         /// </summary>
         /// <returns>JSON string presentation of the object</returns>
-        public string ToJson() => JsonConvert.SerializeObject(this, Formatting.Indented);
+        public string ToJson() => JsonConvert.SerializeObject(this);
 
         /// <summary>
         /// Returns true if objects are equal
