@@ -14,7 +14,7 @@ namespace LetsTrace.Reporters
 
         public void Dispose()
         {
-            throw new System.NotImplementedException();
+            _transport.Dispose();
         }
 
         public void Report(ILetsTraceSpan span)
