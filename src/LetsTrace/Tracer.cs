@@ -20,6 +20,7 @@ namespace LetsTrace
         public string HostIPv4 { get; }
         public string ServiceName { get; }
 
+        // TODO: support tracer level tags
         // TODO: support trace options
         // TODO: add logger
         public Tracer(string serviceName, IReporter reporter, string hostIPv4)

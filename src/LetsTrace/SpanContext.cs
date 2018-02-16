@@ -78,6 +78,11 @@ namespace LetsTrace
             return s._spanId;
         }
 
+        public static implicit operator long(SpanId s)
+        {
+            return (long)s._spanId;
+        }
+
         public override string ToString()
         {
             return _spanId.ToString("x");
