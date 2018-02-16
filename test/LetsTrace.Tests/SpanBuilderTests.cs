@@ -104,10 +104,14 @@ namespace LetsTrace.Tests
             sb.WithTag("stringkey", (string)expectedTags["stringkey"]);
             var builtSpan = (ILetsTraceSpan)sb.Start();
 
-            Assert.Equal(expectedTags["boolkey"].ToString(), builtSpan.Tags["boolkey"]);
-            Assert.Equal(expectedTags["doublekey"].ToString(), builtSpan.Tags["doublekey"]);
-            Assert.Equal(expectedTags["intkey"].ToString(), builtSpan.Tags["intkey"]);
-            Assert.Equal(expectedTags["stringkey"].ToString(), builtSpan.Tags["stringkey"]);
+            Assert.True(builtSpan.Tags["boolkey"] is Field<bool>);
+            Assert.Equal(expectedTags["boolkey"], builtSpan.Tags["boolkey"].ValueAs<bool>());
+            Assert.True(builtSpan.Tags["doublekey"] is Field<double>);
+            Assert.Equal(expectedTags["doublekey"], builtSpan.Tags["doublekey"].ValueAs<double>());
+            Assert.True(builtSpan.Tags["intkey"] is Field<int>);
+            Assert.Equal(expectedTags["intkey"], builtSpan.Tags["intkey"].ValueAs<int>());
+            Assert.True(builtSpan.Tags["stringkey"] is Field<string>);
+            Assert.Equal(expectedTags["stringkey"], builtSpan.Tags["stringkey"].ValueAs<string>());
         }
 
         [Fact]

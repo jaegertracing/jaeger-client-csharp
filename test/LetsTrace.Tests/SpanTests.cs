@@ -18,7 +18,7 @@ namespace LetsTrace.Tests
             var spanContext = Substitute.For<ISpanContext>();
             var startTimestamp = DateTimeOffset.Now;
             var ref1Context = Substitute.For<ISpanContext>();
-            var tags = new Dictionary<string, string> { { "key", "value" } };
+            var tags = new Dictionary<string, Field> { { "key", new Field<string> { Value = "something" } } };
             var references = new List<Reference> {
                 new Reference("type1", ref1Context)
             };
@@ -80,7 +80,7 @@ namespace LetsTrace.Tests
             Assert.Equal(operationName, s.OperationName);
             Assert.Equal(spanContext, s.Context);
             Assert.Equal(startTimestamp, s.StartTimestamp);
-            Assert.Equal(new Dictionary<string, string>(), s.Tags);
+            Assert.Equal(new Dictionary<string, Field>(), s.Tags);
             Assert.Equal(new List<Reference>(), s.References);
         }
 
@@ -333,7 +333,8 @@ namespace LetsTrace.Tests
             var span = new Span(tracer, operationName, spanContext, startTimestamp);
             span.SetTag(tagName, value);
 
-            Assert.Equal(value.ToString(), span.Tags[tagName]);
+            Assert.True(span.Tags[tagName] is Field<bool>);
+            Assert.Equal(value, span.Tags[tagName].ValueAs<bool>());
         }
 
         [Fact]
@@ -349,7 +350,8 @@ namespace LetsTrace.Tests
             var span = new Span(tracer, operationName, spanContext, startTimestamp);
             span.SetTag(tagName, value);
 
-            Assert.Equal(value.ToString(), span.Tags[tagName]);
+            Assert.True(span.Tags[tagName] is Field<double>);
+            Assert.Equal(value, span.Tags[tagName].ValueAs<double>());
         }
 
         [Fact]
@@ -365,7 +367,8 @@ namespace LetsTrace.Tests
             var span = new Span(tracer, operationName, spanContext, startTimestamp);
             span.SetTag(tagName, value);
 
-            Assert.Equal(value.ToString(), span.Tags[tagName]);
+            Assert.True(span.Tags[tagName] is Field<int>);
+            Assert.Equal(value, span.Tags[tagName].ValueAs<int>());
         }
 
         [Fact]
@@ -381,7 +384,8 @@ namespace LetsTrace.Tests
             var span = new Span(tracer, operationName, spanContext, startTimestamp);
             span.SetTag(tagName, value);
 
-            Assert.Equal(value.ToString(), span.Tags[tagName]);
+            Assert.True(span.Tags[tagName] is Field<string>);
+            Assert.Equal(value, span.Tags[tagName].ValueAs<string>());
         }
 
         [Fact]
@@ -397,12 +401,14 @@ namespace LetsTrace.Tests
             var span = new Span(tracer, operationName, spanContext, startTimestamp);
             span.SetTag(tagName, value);
 
-            Assert.Equal(value.ToString(), span.Tags[tagName]);
+            Assert.True(span.Tags[tagName] is Field<string>);
+            Assert.Equal(value, span.Tags[tagName].ValueAs<string>());
 
-            var newValue = "testing 2, yo";
+            var newValue = 56;
             span.SetTag(tagName, newValue);
         
-            Assert.Equal(newValue.ToString(), span.Tags[tagName]);
+            Assert.True(span.Tags[tagName] is Field<int>);
+            Assert.Equal(newValue, span.Tags[tagName].ValueAs<int>());
         }
     }
 }

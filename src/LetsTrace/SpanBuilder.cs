@@ -12,7 +12,7 @@ namespace LetsTrace
         private string _operationName;
         private List<Reference> _references = new List<Reference>();
         private DateTimeOffset? _startTimestamp;
-        private Dictionary<string, string> _tags = new Dictionary<string, string>();
+        private Dictionary<string, Field> _tags = new Dictionary<string, Field>();
 
         public SpanBuilder(ILetsTraceTracer tracer, string operationName)
         {
@@ -73,15 +73,17 @@ namespace LetsTrace
             return this;
         }
 
-        public ISpanBuilder WithTag(string key, bool value) => WithTag(key, value.ToString());
+        public ISpanBuilder WithTag(string key, bool value) => WithTag(key, new Field<bool> { Key = key, Value = value });
 
-        public ISpanBuilder WithTag(string key, double value) => WithTag(key, value.ToString());
+        public ISpanBuilder WithTag(string key, double value) => WithTag(key, new Field<double> { Key = key, Value = value });
 
-        public ISpanBuilder WithTag(string key, int value) => WithTag(key, value.ToString());
+        public ISpanBuilder WithTag(string key, int value) => WithTag(key, new Field<int> { Key = key, Value = value });
 
-        public ISpanBuilder WithTag(string key, string value)
+        public ISpanBuilder WithTag(string key, string value) => WithTag(key, new Field<string> { Key = key, Value = value });
+
+        private ISpanBuilder WithTag(string key, Field value)
         {
-            _tags.Add(key, value);
+            _tags[key] = value;
             return this;
         }
     }

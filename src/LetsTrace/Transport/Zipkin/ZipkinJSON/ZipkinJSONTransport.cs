@@ -101,14 +101,14 @@ namespace LetsTrace.Transport.Zipkin.ZipkinJSON
                 log.Fields.ForEach(field => {
                     var annotation = new Annotation { 
                         Timestamp = log.Timestamp.ToUnixTimeMicroseconds(),
-                        Value = field.StringValue
+                        Value = $"{field.Key}: {field.StringValue}"
                     };
                     annotations.Add(annotation);
                 });
             });
 
-            var tags = span.Tags.Where(t => t.Key != OpenTracing.Tags.SpanKind).ToDictionary(t => t.Key, t => t.Value);
-            var spanKind = span.Tags.Where(t => t.Key == OpenTracing.Tags.SpanKind).FirstOrDefault().Value;
+            var tags = span.Tags.Where(t => t.Key != OpenTracing.Tags.SpanKind).ToDictionary(t => t.Key, t => t.Value.StringValue);
+            var spanKind = span.Tags.Where(t => t.Key == OpenTracing.Tags.SpanKind).FirstOrDefault().Value.StringValue;
 
             var convertedSpan = new Span {
                 TraceId = context.TraceId.ToString(),

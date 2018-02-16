@@ -19,11 +19,11 @@ namespace LetsTrace.Tests
             var spanId = new SpanId(2);
             var spanContext = new SpanContext(traceId, spanId, parentId);
             var logs = new List<LogRecord> {
-                new LogRecord(DateTimeOffset.Now, new List<Field> { new Field<string> { Key = "key", Value = "message, yo" } })
+                new LogRecord(DateTimeOffset.Now, new List<Field> { new Field<string> { Key = "field_log_key", Value = "message, yo" } })
             };
-            var tags = new Dictionary<string, string> {
-                { Tags.SpanKind, Tags.SpanKindServer },
-                { "randomkey", "randomvalue" }
+            var tags = new Dictionary<string, Field> {
+                { Tags.SpanKind, new Field<string> { Value = Tags.SpanKindServer } },
+                { "randomkey", new Field<bool> { Value = false } }
             };
             var operationName = "testing";
             var startTime = DateTimeOffset.Parse("2/12/2018 5:49:19 PM +00:00");
@@ -53,8 +53,8 @@ namespace LetsTrace.Tests
             Assert.Equal(18000000, convertedSpan.Duration);
             Assert.Equal(serviceName, convertedSpan.LocalEndpoint.ServiceName);
             Assert.Equal(hostIpv4, convertedSpan.LocalEndpoint.Ipv4);
-            Assert.Equal("message, yo", convertedSpan.Annotations[0].Value);
-            Assert.Equal("randomvalue", convertedSpan.Tags["randomkey"]);
+            Assert.Equal("field_log_key: message, yo", convertedSpan.Annotations[0].Value);
+            Assert.Equal(false.ToString(), convertedSpan.Tags["randomkey"]);
             Assert.Equal(1, convertedSpan.Tags.Count);
             Assert.Equal("SERVER", convertedSpan.Kind.GetValueOrDefault().ToString());
         }

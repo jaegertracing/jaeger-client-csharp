@@ -20,10 +20,10 @@ namespace LetsTrace
         // who its parent is
         public List<Reference> References { get; }
         public DateTimeOffset StartTimestamp { get; private set; }
-        public Dictionary<string, string> Tags { get; private set; }
+        public Dictionary<string, Field> Tags { get; private set; }
         public ILetsTraceTracer Tracer { get; }
 
-        public Span(ILetsTraceTracer tracer, string operationName, ISpanContext context, DateTimeOffset? startTimestamp = null, Dictionary<string, string> tags = null, List<Reference> references = null)
+        public Span(ILetsTraceTracer tracer, string operationName, ISpanContext context, DateTimeOffset? startTimestamp = null, Dictionary<string, Field> tags = null, List<Reference> references = null)
         {
             Tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
 
@@ -37,7 +37,7 @@ namespace LetsTrace
             Context = context ?? throw new ArgumentNullException(nameof(context));
 
             StartTimestamp = startTimestamp ?? Tracer.Clock.CurrentTime();
-            Tags = tags ?? new Dictionary<string, string>();
+            Tags = tags ?? new Dictionary<string, Field>();
             References = references ?? new List<Reference>();
         }
 
@@ -89,16 +89,18 @@ namespace LetsTrace
         }
 
         // OpenTracing API: Set a Span tag
-        public ISpan SetTag(string key, bool value) =>  SetTag(key, value.ToString());
+        public ISpan SetTag(string key, bool value) => SetTag(key, new Field<bool> { Key = key, Value = value });
 
         // OpenTracing API: Set a Span tag
-        public ISpan SetTag(string key, double value) =>  SetTag(key, value.ToString());
+        public ISpan SetTag(string key, double value) => SetTag(key, new Field<double> { Key = key, Value = value });
 
         // OpenTracing API: Set a Span tag
-        public ISpan SetTag(string key, int value) =>  SetTag(key, value.ToString());
+        public ISpan SetTag(string key, int value) => SetTag(key, new Field<int> { Key = key, Value = value });
 
         // OpenTracing API: Set a Span tag
-        public ISpan SetTag(string key, string value)
+        public ISpan SetTag(string key, string value) => SetTag(key, new Field<string> { Key = key, Value = value });
+
+        private ISpan SetTag(string key, Field value)
         {
             Tags[key] = value;
             return this;
