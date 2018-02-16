@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 
 namespace LetsTrace.Transport
 {
@@ -12,9 +13,9 @@ namespace LetsTrace.Transport
         // transporters internal buffer. If the buffer grows larger than a
         // specified size the transporter should use Flush and return the
         // number of spans flushed.
-       int Append(ILetsTraceSpan span);
+       Task<int> Append(ILetsTraceSpan span);
        // Flush sends the internal buffer to the remote server and returns the
        // number of spans sent.
-       int Flush();
+       Task<int> Flush();
     }
 }

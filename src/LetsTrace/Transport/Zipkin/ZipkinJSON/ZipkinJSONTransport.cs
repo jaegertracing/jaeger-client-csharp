@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Runtime.Serialization;
 using System.Text;
+using System.Threading.Tasks;
 using LetsTrace.Util;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -41,14 +42,14 @@ namespace LetsTrace.Transport.Zipkin.ZipkinJSON
             _bufferSize = bufferSize;
         }
 
-        public int Append(ILetsTraceSpan span)
+        public async Task<int> Append(ILetsTraceSpan span)
         {
             var convertedSpan = ConvertSpan(span);
 
             _buffer.Add(convertedSpan);
 
             if (_buffer.Count > _bufferSize) {
-                return Flush();
+                return await Flush();
             }
 
             return 0;
@@ -56,15 +57,15 @@ namespace LetsTrace.Transport.Zipkin.ZipkinJSON
 
         public void Dispose()
         {
-            Flush();
+            Flush().ConfigureAwait(false);
         }
 
-        public int Flush()
+        public async Task<int> Flush()
         {
             var count = _buffer.Count;
             var serialized = JsonConvert.SerializeObject(_buffer);
             var content = new StringContent(serialized, Encoding.UTF8, "application/json");
-            var response = HttpClient.PostAsync(Uri, content).ConfigureAwait(false).GetAwaiter().GetResult();
+            var response = await HttpClient.PostAsync(Uri, content);
 
             response.EnsureSuccessStatusCode();
 
