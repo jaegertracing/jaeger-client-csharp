@@ -67,17 +67,17 @@ namespace LetsTrace
         public ISpan Log(IEnumerable<KeyValuePair<string, object>> fields) => Log(Tracer.Clock.CurrentTime(), fields);
 
         // OpenTracing API: Log structured data
-        public ISpan Log(DateTimeOffset timestamp, IEnumerable<KeyValuePair<string, object>> fields) => Log(timestamp, null, fields);
+        public ISpan Log(DateTimeOffset timestamp, IEnumerable<KeyValuePair<string, object>> fields) => Log(timestamp, fields.ToFieldList());
 
         // OpenTracing API: Log structured data
-        public ISpan Log(string eventName) => Log(Tracer.Clock.CurrentTime(), eventName, null);
+        public ISpan Log(string eventName) => Log(Tracer.Clock.CurrentTime(), eventName);
 
         // OpenTracing API: Log structured data
-        public ISpan Log(DateTimeOffset timestamp, string eventName) => Log(timestamp, eventName, null);
+        public ISpan Log(DateTimeOffset timestamp, string eventName) => Log(timestamp, new List<Field> { new Field<string> { Key = "event", Value = eventName } });
 
-        private ISpan Log(DateTimeOffset timestamp, string message, IEnumerable<KeyValuePair<string, object>> fields)
+        private ISpan Log(DateTimeOffset timestamp, IEnumerable<Field> fields)
         {
-            Logs.Add(new LogRecord(timestamp, message, fields));
+            Logs.Add(new LogRecord(timestamp, fields.ToList()));
             return this;
         }
 

@@ -208,7 +208,9 @@ namespace LetsTrace.Tests
         {
             var fields = new List<KeyValuePair<string, object>> { 
                 new KeyValuePair<string, object>("log1", "message1"),
-                new KeyValuePair<string, object>("log2", "message2")
+                new KeyValuePair<string, object>("log2", false),
+                new KeyValuePair<string, object>("log3", new Dictionary<string, string> { { "key", "value" } }),
+                new KeyValuePair<string, object>("log3", new Clock())
             };
             
             var tracer = Substitute.For<ILetsTraceTracer>();
@@ -225,7 +227,10 @@ namespace LetsTrace.Tests
             span.Log(fields);
 
             clock.Received(1).CurrentTime();
-            Assert.Equal(fields, span.Logs[0].Fields);
+            Assert.True(span.Logs[0].Fields[0] is Field<string>);
+            Assert.True(span.Logs[0].Fields[1] is Field<bool>);
+            Assert.True(span.Logs[0].Fields[2] is Field<string>);
+            Assert.True(span.Logs[0].Fields[3] is Field<string>);
             Assert.Equal(currentTime, span.Logs[0].Timestamp);
         }
 
@@ -233,8 +238,8 @@ namespace LetsTrace.Tests
         public void Span_Log_Fields_WithTimestamp_ShouldLogAllFields()
         {
             var fields = new List<KeyValuePair<string, object>> { 
-                new KeyValuePair<string, object>("log1", "message1"),
-                new KeyValuePair<string, object>("log2", "message2")
+                new KeyValuePair<string, object>("log1", new byte[] { 0x20, 0x20 }),
+                new KeyValuePair<string, object>("log2", 15m)
             };
             
             var tracer = Substitute.For<ILetsTraceTracer>();
@@ -246,7 +251,8 @@ namespace LetsTrace.Tests
             var span = new Span(tracer, operationName, spanContext, startTimestamp);
             span.Log(logTimestamp, fields);
 
-            Assert.Equal(fields, span.Logs[0].Fields);
+            Assert.True(span.Logs[0].Fields[0] is Field<byte[]>);
+            Assert.True(span.Logs[0].Fields[1] is Field<decimal>);
             Assert.Equal(logTimestamp, span.Logs[0].Timestamp);
         }
 
@@ -269,7 +275,9 @@ namespace LetsTrace.Tests
             span.Log(eventName);
 
             clock.Received(1).CurrentTime();
-            Assert.Equal(eventName, span.Logs[0].Message);
+            Assert.Equal("event", span.Logs[0].Fields[0].Key);
+            Assert.True(span.Logs[0].Fields[0] is Field<string>);
+            Assert.Equal(eventName, span.Logs[0].Fields[0].ValueAs<string>());
             Assert.Equal(currentTime, span.Logs[0].Timestamp);
         }
 
@@ -287,7 +295,9 @@ namespace LetsTrace.Tests
             var span = new Span(tracer, operationName, spanContext, startTimestamp);
             span.Log(logTimestamp, eventName);
 
-            Assert.Equal(eventName, span.Logs[0].Message);
+            Assert.Equal("event", span.Logs[0].Fields[0].Key);
+            Assert.True(span.Logs[0].Fields[0] is Field<string>);
+            Assert.Equal(eventName, span.Logs[0].Fields[0].ValueAs<string>());
             Assert.Equal(logTimestamp, span.Logs[0].Timestamp);
         }
 

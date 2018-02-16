@@ -6,7 +6,7 @@ using NSubstitute;
 using OpenTracing;
 using Xunit;
 
-namespace Name
+namespace LetsTrace.Tests
 {
     public class ZipkinJsonTransportTests
     {
@@ -19,7 +19,7 @@ namespace Name
             var spanId = new SpanId(2);
             var spanContext = new SpanContext(traceId, spanId, parentId);
             var logs = new List<LogRecord> {
-                new LogRecord(DateTimeOffset.Now, "message, yo", null)
+                new LogRecord(DateTimeOffset.Now, new List<Field> { new Field<string> { Key = "key", Value = "message, yo" } })
             };
             var tags = new Dictionary<string, string> {
                 { Tags.SpanKind, Tags.SpanKindServer },

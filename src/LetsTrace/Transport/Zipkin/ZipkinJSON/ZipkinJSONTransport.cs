@@ -98,11 +98,13 @@ namespace LetsTrace.Transport.Zipkin.ZipkinJSON
             };
             var annotations = new List<Annotation>();
             span.Logs.ForEach(log => {
-                var annotation = new Annotation { 
-                    Timestamp = log.Timestamp.ToUnixTimeMicroseconds(),
-                    Value = log.Message ?? log.Fields.ToString()
-                };
-                annotations.Add(annotation);
+                log.Fields.ForEach(field => {
+                    var annotation = new Annotation { 
+                        Timestamp = log.Timestamp.ToUnixTimeMicroseconds(),
+                        Value = field.StringValue
+                    };
+                    annotations.Add(annotation);
+                });
             });
 
             var tags = span.Tags.Where(t => t.Key != OpenTracing.Tags.SpanKind).ToDictionary(t => t.Key, t => t.Value);
