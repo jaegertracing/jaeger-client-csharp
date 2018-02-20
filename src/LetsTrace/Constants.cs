@@ -15,5 +15,9 @@ namespace LetsTrace
 
         // SamplerTypeConst is the type of sampler that always makes the same decision.
         public const string SamplerTypeConst = "const";
+
+        // SamplerTypeProbabilistic is the type of sampler that samples traces
+        // with a certain fixed probability.
+        public const string SamplerTypeProbabilistic = "probabilistic";
     }
 }
