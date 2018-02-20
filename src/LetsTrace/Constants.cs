@@ -19,5 +19,9 @@ namespace LetsTrace
         // SamplerTypeProbabilistic is the type of sampler that samples traces
         // with a certain fixed probability.
         public const string SamplerTypeProbabilistic = "probabilistic";
+
+        // SamplerTypeRateLimiting is the type of sampler that samples
+        // only up to a fixed number of traces per second.
+        public const string SamplerTypeRateLimiting = "ratelimiting";
     }
 }

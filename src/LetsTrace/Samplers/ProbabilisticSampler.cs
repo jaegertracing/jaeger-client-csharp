@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace LetsTrace.Samplers
 {
-    // NewProbabilisticSampler creates a sampler that randomly samples a certain percentage of traces specified by the
+    // ProbabilisticSampler creates a sampler that randomly samples a certain percentage of traces specified by the
     // samplingRate, in the range between 0.0 and 1.0.
     public class ProbabilisticSampler : ISampler
     {
