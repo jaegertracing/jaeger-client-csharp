@@ -23,5 +23,8 @@ namespace LetsTrace
         // SamplerTypeRateLimiting is the type of sampler that samples
         // only up to a fixed number of traces per second.
         public const string SamplerTypeRateLimiting = "ratelimiting";
+
+        public const byte FlagSampled = 1;
+        
     }
 }
