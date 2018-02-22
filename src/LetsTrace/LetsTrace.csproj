@@ -10,9 +10,4 @@
     <PackageReference Include="OpenTracing" Version="0.10.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Jaeger\Jaeger.Thrift\Jaeger.Thrift.csproj" />
-    <ProjectReference Include="..\Thrift\netcore\Thrift\Thrift.csproj" />
-  </ItemGroup>
-
 </Project>

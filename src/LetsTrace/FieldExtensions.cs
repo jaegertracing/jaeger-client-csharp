@@ -2,9 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 
-using JaegerTag = Jaeger.Thrift.Tag;
-using JaegerTagType = Jaeger.Thrift.TagType;
-
 namespace LetsTrace
 {
     public static class FieldExtensions
