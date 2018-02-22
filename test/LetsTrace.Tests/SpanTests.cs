@@ -47,10 +47,10 @@ namespace LetsTrace.Tests
             var spanContext = Substitute.For<ISpanContext>();
             
             var ex1 = Assert.Throws<ArgumentException>(() => new Span(tracer, "", spanContext));
-            Assert.Equal("Argument is empty\nParameter name: operationName", ex1.Message);
+            Assert.True(ex1.Message.StartsWith("Argument is empty"));
 
             var ex2 = Assert.Throws<ArgumentException>(() => new Span(tracer, null, spanContext));
-            Assert.Equal("Argument is null\nParameter name: operationName", ex2.Message);
+            Assert.True(ex2.Message.StartsWith("Argument is null"));
         }
 
         [Fact]
