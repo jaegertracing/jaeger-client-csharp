@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using LetsTrace.Samplers;
 using LetsTrace.Util;
 using OpenTracing;
 
@@ -11,13 +12,15 @@ namespace LetsTrace
         private ILetsTraceTracer _tracer;
         private string _operationName;
         private List<Reference> _references = new List<Reference>();
+        private ISampler _sampler;
         private DateTimeOffset? _startTimestamp;
         private Dictionary<string, Field> _tags = new Dictionary<string, Field>();
 
-        public SpanBuilder(ILetsTraceTracer tracer, string operationName)
+        public SpanBuilder(ILetsTraceTracer tracer, string operationName, ISampler sampler)
         {
             _tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
             _operationName = operationName ?? throw new ArgumentNullException(nameof(operationName));
+            _sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
         }
 
         public ISpanBuilder AddReference(string referenceType, ISpanContext referencedContext)
@@ -41,6 +44,7 @@ namespace LetsTrace
             SpanId parentId = null;
             SpanId spanId = new SpanId(RandomGenerator.RandomId());
             Dictionary<string, string> baggage = null;
+            byte flags = 0;
 
             foreach(var reference in _references)
             {
@@ -55,14 +59,20 @@ namespace LetsTrace
                 traceId = parent.TraceId;
                 parentId = parent.SpanId;
                 baggage = parent.GetBaggageItems().ToDictionary(x => x.Key, x => x.Value);
+                flags = parent.Flags;
             } 
             else
             {
                 traceId = new TraceId{ High = RandomGenerator.RandomId(), Low = RandomGenerator.RandomId() };
                 parentId = new SpanId(0);
+                var samplingInfo = _sampler.IsSampled(traceId, _operationName);
+                foreach(var samplingTag in samplingInfo.Tags) {
+                    _tags[samplingTag.Key] = samplingTag.Value;
+                }
+                flags = samplingInfo.Sampled ? Constants.FlagSampled : (byte)0;
             }
 
-            var spanContext = new SpanContext(traceId, spanId, parentId, baggage);
+            var spanContext = new SpanContext(traceId, spanId, parentId, baggage, flags);
 
             return new Span(_tracer, _operationName, spanContext, _startTimestamp, _tags, _references);
         }

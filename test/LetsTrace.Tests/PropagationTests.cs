@@ -75,7 +75,7 @@ namespace LetsTrace.Tests
             var headersConfig = new HeadersConfig("TraceContextHeaderName", "TraceBaggageHeaderPrefix");
             var propagator = new TextMapPropagator(headersConfig, (val) => val, (val) => val);
             var carrier = new DictionaryTextMap(new Dictionary<string, string> { 
-                { "TraceContextHeaderName", "1:2:3" },
+                { "TraceContextHeaderName", "1:2:3:4" },
                 { "TraceBaggageHeaderPrefix-Item1", "item1" },
                 { "TraceBaggageHeaderPrefix-Item2", "item2" },
             });
@@ -88,6 +88,7 @@ namespace LetsTrace.Tests
             Assert.Equal("1", sc.TraceId.Low.ToString());
             Assert.Equal("2", sc.SpanId.ToString());
             Assert.Equal("3", sc.ParentId.ToString());
+            Assert.Equal(4, sc.Flags);
         }
     }
 }
