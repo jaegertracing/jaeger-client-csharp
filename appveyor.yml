@@ -1,0 +1,56 @@
+version: 0.0.1-{build}-{branch}
+configuration: Release
+pull_requests:
+  do_not_increment_build_number: true
+nuget:
+  account_feed: true
+  project_feed: true
+  disable_publish_on_pr: true
+environment:
+  PACKAGE_VERSION: 0.0.1
+
+cache:
+- C:\ProgramData\chocolatey\bin -> appveyor.yml
+- C:\ProgramData\chocolatey\lib -> appveyor.yml
+- '%USERPROFILE%\.nuget\packages -> **\project.json'
+
+init:
+- ps: $Env:LABEL = "CI" + $Env:APPVEYOR_BUILD_NUMBER.PadLeft(4, "0")
+
+before_build:
+- appveyor-retry dotnet restore
+build_script:
+- dotnet build .\src\LetsTrace -c %CONFIGURATION% --no-dependencies --version-suffix %LABEL%
+after_build:
+- dotnet pack .\src\LetsTrace -c %CONFIGURATION% --no-build --version-suffix %LABEL% -o artifacts
+
+test_script:
+- dotnet test .\test\LetsTrace.Tests --configuration %CONFIGURATION%
+
+artifacts:
+- path: .\**\artifacts\*.*
+  name: NuGet
+
+dotnet_csproj:
+  patch: true
+  file: '**\*.csproj'
+  version: $(APPVEYOR_BUILD_VERSION)
+  package_version: $(PACKAGE_VERSION)
+  assembly_version: $(APPVEYOR_BUILD_VERSION)
+
+deploy:
+- provider: NuGet
+  name: production
+  api_key:
+    secure: gaEajkxA/NbpiHYA9/ULITq/cyfRvurItDJvRosk59yqlMf2in//tg/RSgiNMDyF
+  on:
+    branch: master
+    appveyor_repo_tag: true
+
+notifications:
+  - provider: Email
+    to:
+      - jon.carl.42@gmail.com
+    on_build_success: false
+    on_build_failure: true
+    on_build_status_changed: true

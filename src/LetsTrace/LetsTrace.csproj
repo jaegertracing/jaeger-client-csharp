@@ -2,6 +2,15 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+
+    <PackageId>Vault</PackageId>
+    <PackageProjectUrl>https://github.com/Chatham/LetsTrace/</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/Chatham/LetsTrace/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageVersion>0.0.1</PackageVersion>
+    <PackageTags>letstrace;tracing;opentracing</PackageTags>
+    <Authors>Chatham Financial Corp.</Authors>
+    <Description>.NET Tracing</Description>
+    <Copyright>Copyright 2018 (c) Chatham Financial Corp. All rights reserved.</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
