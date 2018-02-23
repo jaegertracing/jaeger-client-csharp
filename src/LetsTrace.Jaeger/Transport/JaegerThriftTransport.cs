@@ -2,14 +2,18 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using LetsTrace.Util;
-using Thrift.Protocols;
-using Thrift.Transports;
-using OpenTracing;
-using Thrift.Transports.Client;
 using System.Threading;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
+
+using OpenTracing;
+
+using LetsTrace.Util;
+using LetsTrace.Transport;
+
+using Thrift.Protocols;
+using Thrift.Transports;
+using Thrift.Transports.Client;
 
 using JaegerProcess = Jaeger.Thrift.Process;
 using JaegerSpan = Jaeger.Thrift.Span;

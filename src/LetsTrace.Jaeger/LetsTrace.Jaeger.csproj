@@ -4,4 +4,12 @@
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Jaeger.Thrift\Jaeger.Thrift.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="LetsTrace" Version="0.0.1" />
+  </ItemGroup>
+
 </Project>

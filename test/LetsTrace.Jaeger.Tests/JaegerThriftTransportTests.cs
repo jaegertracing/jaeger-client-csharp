@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using LetsTrace.Transport.Jaeger;
+using LetsTrace.Jaeger.Transport;
 using NSubstitute;
 using OpenTracing;
 using Xunit;

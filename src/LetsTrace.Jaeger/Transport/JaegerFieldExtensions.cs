@@ -5,7 +5,7 @@ using System.ComponentModel;
 using JaegerTag = Jaeger.Thrift.Tag;
 using JaegerTagType = Jaeger.Thrift.TagType;
 
-namespace LetsTrace.Transport.Jaeger
+namespace LetsTrace.Jaeger.Transport
 {
     public static class JaegerFieldExtensions
     {

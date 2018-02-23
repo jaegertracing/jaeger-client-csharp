@@ -10,7 +10,7 @@ using System.Threading;
 using JaegerSpan = Jaeger.Thrift.Span;
 using JaegerBatch = Jaeger.Thrift.Batch;
 
-namespace LetsTrace.Transport.Jaeger
+namespace LetsTrace.Jaeger.Transport
 {
     public abstract class JaegerHTTPTransport : JaegerThriftTransport
     {
