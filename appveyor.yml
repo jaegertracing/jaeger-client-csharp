@@ -22,14 +22,12 @@ before_build:
 build_script:
 - dotnet build .\src\LetsTrace.Jaeger -c %CONFIGURATION% --version-suffix %LABEL%
 - cmd: |-
-    echo %APPVEYOR_BUILD_FOLDER%
-    pwd
-    move "%APPVEYOR_BUILD_FOLDER%\LetsTrace.Jaeger\bin\release\netstandard2.0" "%APPVEYOR_BUILD_FOLDER%\LetsTrace.Jaeger\bin\release\netstandard2.0unmerged"
-    cd "%APPVEYOR_BUILD_FOLDER%\LetsTrace.Jaeger\bin\release\netstandard2.0unmerged"
-    %USERPROFILE%\.nuget\packages\ILRepack\2.0.15\tools\ILRepack.exe /parallel /internalize /out:"%APPVEYOR_BUILD_FOLDER%\LetsTrace.Jaeger\bin\release\netstandard2.0\LetsTrace.Jaeger.dll" LetsTrace.Jaeger.dll Thrift.dll Jaeger.Thrift.dll
+    move "%APPVEYOR_BUILD_FOLDER%\src\LetsTrace.Jaeger\bin\Release\netstandard2.0" "%APPVEYOR_BUILD_FOLDER%\src\LetsTrace.Jaeger\bin\Release\netstandard2.0unmerged"
+    cd "%APPVEYOR_BUILD_FOLDER%\src\LetsTrace.Jaeger\bin\Release\netstandard2.0unmerged"
+    %USERPROFILE%\.nuget\packages\ILRepack\2.0.15\tools\ILRepack.exe /parallel /internalize /out:"%APPVEYOR_BUILD_FOLDER%\src\LetsTrace.Jaeger\bin\Release\netstandard2.0\LetsTrace.Jaeger.dll" LetsTrace.Jaeger.dll Thrift.dll Jaeger.Thrift.dll
     cd %APPVEYOR_BUILD_FOLDER%
-    copy "%APPVEYOR_BUILD_FOLDER%\LetsTrace.Jaeger\bin\release\netstandard2.0unmerged\LetsTrace.Jaeger.pdb" "%APPVEYOR_BUILD_FOLDER%\LetsTrace.Jaeger\bin\release\netstandard2.0\"
-    del /s /q "%APPVEYOR_BUILD_FOLDER%\LetsTrace.Jaeger\bin\release\netstandard2.0unmerged"
+    copy "%APPVEYOR_BUILD_FOLDER%\src\LetsTrace.Jaeger\bin\Release\netstandard2.0unmerged\LetsTrace.Jaeger.pdb" "%APPVEYOR_BUILD_FOLDER%\src\LetsTrace.Jaeger\bin\Release\netstandard2.0\"
+    del /s /q "%APPVEYOR_BUILD_FOLDER%\src\LetsTrace.Jaeger\bin\Release\netstandard2.0unmerged"
 after_build:
 - dotnet pack .\src\LetsTrace.Jaeger -c %CONFIGURATION% --no-build --version-suffix %LABEL% -o artifacts
 
