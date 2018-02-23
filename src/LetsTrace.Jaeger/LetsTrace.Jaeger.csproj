@@ -14,7 +14,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Jaeger.Thrift\Jaeger.Thrift.csproj" />
+    <ProjectReference Include="..\Jaeger.Thrift\Jaeger.Thrift.csproj" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
