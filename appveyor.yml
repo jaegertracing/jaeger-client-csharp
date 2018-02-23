@@ -1,0 +1,63 @@
+version: 0.0.1-{build}-{branch}
+configuration: Release
+pull_requests:
+  do_not_increment_build_number: true
+nuget:
+  account_feed: true
+  project_feed: true
+  disable_publish_on_pr: true
+environment:
+  PACKAGE_VERSION: 0.0.1
+
+cache:
+- C:\ProgramData\chocolatey\bin -> appveyor.yml
+- C:\ProgramData\chocolatey\lib -> appveyor.yml
+- '%USERPROFILE%\.nuget\packages -> **\project.json'
+
+init:
+- ps: $Env:LABEL = "CI" + $Env:APPVEYOR_BUILD_NUMBER.PadLeft(4, "0")
+
+before_build:
+- appveyor-retry dotnet restore
+build_script:
+- dotnet build .\src\LetsTrace.Jaeger -c %CONFIGURATION% --version-suffix %LABEL%
+- cmd: |-
+    move "%APPVEYOR_BUILD_FOLDER%\LetsTrace.Jaeger\bin\release\netstandard2.0" "%APPVEYOR_BUILD_FOLDER%\LetsTrace.Jaeger\bin\release\netstandard2.0unmerged"
+    cd "%APPVEYOR_BUILD_FOLDER%\LetsTrace.Jaeger\bin\release\netstandard2.0unmerged"
+    %USERPROFILE%\.nuget\packages\ILRepack\2.0.15\tools\ILRepack.exe /parallel /internalize /out:"%APPVEYOR_BUILD_FOLDER%\LetsTrace.Jaeger\bin\release\netstandard2.0\LetsTrace.Jaeger.dll" LetsTrace.Jaeger.dll Thrift.dll Jaeger.Thrift.dll
+    cd %APPVEYOR_BUILD_FOLDER%
+    copy "%APPVEYOR_BUILD_FOLDER%\LetsTrace.Jaeger\bin\release\netstandard2.0unmerged\LetsTrace.Jaeger.pdb" "%APPVEYOR_BUILD_FOLDER%\LetsTrace.Jaeger\bin\release\netstandard2.0\"
+    del /s /q "%APPVEYOR_BUILD_FOLDER%\LetsTrace.Jaeger\bin\release\netstandard2.0unmerged"
+after_build:
+- dotnet pack .\src\LetsTrace.Jaeger -c %CONFIGURATION% --no-build --version-suffix %LABEL% -o artifacts
+
+test_script:
+- dotnet test .\test\LetsTrace.Jaeger.Tests --configuration %CONFIGURATION%
+
+artifacts:
+- path: .\**\artifacts\*.*
+  name: NuGet
+
+dotnet_csproj:
+  patch: true
+  file: '**\*.csproj'
+  version: $(APPVEYOR_BUILD_VERSION)
+  package_version: $(PACKAGE_VERSION)
+  assembly_version: $(APPVEYOR_BUILD_VERSION)
+
+deploy:
+- provider: NuGet
+  name: production
+  api_key:
+    secure: gaEajkxA/NbpiHYA9/ULITq/cyfRvurItDJvRosk59yqlMf2in//tg/RSgiNMDyF
+  on:
+    branch: master
+    appveyor_repo_tag: true
+
+notifications:
+  - provider: Email
+    to:
+      - jon.carl.42@gmail.com
+    on_build_success: false
+    on_build_failure: true
+    on_build_status_changed: true
