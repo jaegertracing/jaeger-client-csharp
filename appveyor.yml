@@ -22,6 +22,8 @@ before_build:
 build_script:
 - dotnet build .\src\LetsTrace.Jaeger -c %CONFIGURATION% --version-suffix %LABEL%
 - cmd: |-
+    echo %APPVEYOR_BUILD_FOLDER%
+    pwd
     move "%APPVEYOR_BUILD_FOLDER%\LetsTrace.Jaeger\bin\release\netstandard2.0" "%APPVEYOR_BUILD_FOLDER%\LetsTrace.Jaeger\bin\release\netstandard2.0unmerged"
     cd "%APPVEYOR_BUILD_FOLDER%\LetsTrace.Jaeger\bin\release\netstandard2.0unmerged"
     %USERPROFILE%\.nuget\packages\ILRepack\2.0.15\tools\ILRepack.exe /parallel /internalize /out:"%APPVEYOR_BUILD_FOLDER%\LetsTrace.Jaeger\bin\release\netstandard2.0\LetsTrace.Jaeger.dll" LetsTrace.Jaeger.dll Thrift.dll Jaeger.Thrift.dll
