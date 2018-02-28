@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using LetsTrace.Propagation;
 using LetsTrace.Reporters;
+using LetsTrace.Samplers;
 using LetsTrace.Util;
 using OpenTracing;
 using OpenTracing.Propagation;
@@ -15,6 +16,7 @@ namespace LetsTrace
         internal Dictionary<string, IInjector> _injectors { get; private set; } = new Dictionary<string, IInjector>();
         internal Dictionary<string, IExtractor> _extractors { get; private set; } = new Dictionary<string, IExtractor>();
         private IReporter _reporter;
+        private ISampler _sampler;
 
         public IClock Clock { get; internal set; }
         public string HostIPv4 { get; }
@@ -23,11 +25,12 @@ namespace LetsTrace
         // TODO: support tracer level tags
         // TODO: support trace options
         // TODO: add logger
-        public Tracer(string serviceName, IReporter reporter, string hostIPv4)
+        public Tracer(string serviceName, IReporter reporter, string hostIPv4, ISampler sampler)
         {
             ServiceName = serviceName ?? throw new ArgumentNullException(nameof(serviceName));
             _reporter = reporter ?? throw new ArgumentNullException(nameof(reporter));
             HostIPv4 = hostIPv4 ?? throw new ArgumentNullException(nameof(hostIPv4));
+            _sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
 
             // set up default options - TODO: allow these to be overridden via options
             var defaultHeadersConfig = new HeadersConfig(Constants.TraceContextHeaderName, Constants.TraceBaggageHeaderPrefix);
@@ -54,10 +57,16 @@ namespace LetsTrace
 
         public ISpanBuilder BuildSpan(string operationName)
         {
-            return new SpanBuilder(this, operationName);
+            return new SpanBuilder(this, operationName, _sampler);
         }
 
-        public void ReportSpan(ILetsTraceSpan span) => _reporter.Report(span);
+        public void ReportSpan(ILetsTraceSpan span)
+        {
+            var context = span.Context as ILetsTraceSpanContext;
+            if (context.IsSampled()) {
+                _reporter.Report(span);
+            }
+        }
 
         public ISpanContext Extract<TCarrier>(Format<TCarrier> format, TCarrier carrier)
         {
