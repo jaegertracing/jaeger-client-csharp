@@ -13,7 +13,7 @@ namespace LetsTrace.Tests.Samplers
             var ex = Assert.Throws<ArgumentOutOfRangeException>(() => new ProbabilisticSampler(-1));
             Assert.Equal((double)-1, ex.ActualValue);
             Assert.Equal("samplingRate", ex.ParamName);
-            Assert.Equal("sampling rate must be between 0.0 and 1.0", ex.Message.Split('\n')[0]);
+            Assert.True(ex.Message.Contains("sampling rate must be between 0.0 and 1.0"));
         }
 
         [Fact]
@@ -22,7 +22,7 @@ namespace LetsTrace.Tests.Samplers
             var ex = Assert.Throws<ArgumentOutOfRangeException>(() => new ProbabilisticSampler(1.1));
             Assert.Equal(1.1, ex.ActualValue);
             Assert.Equal("samplingRate", ex.ParamName);
-            Assert.Equal("sampling rate must be between 0.0 and 1.0", ex.Message.Split('\n')[0]);
+            Assert.True(ex.Message.Contains("sampling rate must be between 0.0 and 1.0"));
         }
 
         [Fact]

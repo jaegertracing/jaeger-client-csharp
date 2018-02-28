@@ -36,7 +36,7 @@ namespace LetsTrace.Tests.Samplers
             sampler.IsSampled(new TraceId(), operationName);
 
             probabilisticSampler.Received(1).IsSampled(Arg.Any<TraceId>(), Arg.Any<string>());
-            rateLimitingSampler.Received(0).IsSampled(Arg.Any<TraceId>(), Arg.Any<string>());
+            rateLimitingSampler.Received(1).IsSampled(Arg.Any<TraceId>(), Arg.Any<string>());
         }
 
         [Fact]
