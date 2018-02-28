@@ -1,4 +1,4 @@
-version: 0.0.1-{build}-{branch}
+version: 0.0.2-{build}-{branch}
 configuration: Release
 pull_requests:
   do_not_increment_build_number: true
@@ -7,7 +7,7 @@ nuget:
   project_feed: true
   disable_publish_on_pr: true
 environment:
-  PACKAGE_VERSION: 0.0.1
+  PACKAGE_VERSION: 0.0.2
 
 cache:
 - C:\ProgramData\chocolatey\bin -> appveyor.yml

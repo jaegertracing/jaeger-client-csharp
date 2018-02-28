@@ -19,14 +19,19 @@ The following will give you a tracer that reports spans to `ILogger`.
 ```C#
 using LetsTrace;
 using LetsTrace.Reporters;
+using LetsTrace.Samplers;
 
 var logger = ; // get Microsoft.Extensions.Logging ILogger
 
 var serviceName = "initExampleService";
 var reporter = new LoggingReporter(logger);
 var hostIPAddress = "127.0.0.1";
-var tracer = new Tracer(serviceName, reporter, hostIPAddress);
+var sampler = new ConstSampler(true);
+var tracer = new Tracer(serviceName, reporter, hostIPAddress, sampler);
 ```
+
+#### Sampling
+For more information on sampling see the sampling [README](src/LetsTrace/Samplers/README.md)
 
 #### Extracting Span Information
 When your code is called you might want to pull current trace information out of calling information before building and starting a span. This allows you to link your span into a current trace and track its relation to other spans. By default text map and http headers are supported. More support is planned for the future as well as allowing custom extractors.
