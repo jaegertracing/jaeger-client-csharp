@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -23,6 +24,13 @@ namespace LetsTrace.Example.WebApi
         public async Task Invoke(HttpContext context)
         {
             var operationName = $"{context.Request.Method.ToUpper()}{context.Request.Path}";
+
+            if (operationName.EndsWith(".ico", true, CultureInfo.InvariantCulture) || operationName.EndsWith(".png", true, CultureInfo.InvariantCulture)) {
+                _logger.LogInformation($"Ignoring ({operationName}). Will not create a span.");
+                await _next(context);
+                return;
+            }
+
             _logger.LogInformation($"Starting a new span: {operationName}");
             
             var builder = _tracer.GetTracer().BuildSpan(operationName)
