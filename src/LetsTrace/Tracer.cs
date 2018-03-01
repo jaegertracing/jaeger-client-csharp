@@ -21,7 +21,7 @@ namespace LetsTrace
 
         public IScopeManager ScopeManager { get; private set; }
         public IClock Clock { get; internal set; }
-        public ISpan ActiveSpan { get { return ScopeManager.Active.Span; } }
+        public ISpan ActiveSpan { get { return ScopeManager.Active?.Span; } }
         public string HostIPv4 { get; }
         public string ServiceName { get; }
 
