@@ -54,7 +54,7 @@ namespace LetsTrace.Propagation
                 var baggage = new Dictionary<string, string>();
                 SpanContext context = null;
 
-                foreach(var item in map.GetEntries())
+                foreach(var item in map)
                 {
                     if (item.Key == _headersConfig.TraceContextHeaderName) {
                         var safeValue = _decodeValue(item.Value);

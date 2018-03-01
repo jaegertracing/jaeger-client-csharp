@@ -11,6 +11,7 @@ namespace LetsTrace
     {
         private ILetsTraceTracer _tracer;
         private string _operationName;
+        private bool _ignoreActiveSpan = false;
         private List<Reference> _references = new List<Reference>();
         private ISampler _sampler;
         private DateTimeOffset? _startTimestamp;
@@ -29,6 +30,12 @@ namespace LetsTrace
             return this;
         }
 
+        public ISpanBuilder IgnoreActiveSpan()
+        {
+            _ignoreActiveSpan = true;
+            return this;
+        }
+
         public ISpanBuilder AsChildOf(ISpan parent) => AsChildOf(parent.Context);
 
         public ISpanBuilder AsChildOf(ISpanContext parent) => AddReference(References.ChildOf, parent);
@@ -37,6 +44,11 @@ namespace LetsTrace
 
         public ISpanBuilder FollowsFrom(ISpanContext parent) => AddReference(References.FollowsFrom, parent);
 
+        public IScope StartActive(bool finishSpanOnDispose)
+        {
+            return _tracer.ScopeManager.Active;
+        }
+        
         public ISpan Start()
         {
             SpanContext parent = null;

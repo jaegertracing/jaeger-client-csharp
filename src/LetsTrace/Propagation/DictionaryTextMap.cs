@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using OpenTracing.Propagation;
 
@@ -12,10 +13,11 @@ namespace LetsTrace.Propagation
         {
             _map = map ?? new Dictionary<string, string>();
         }
-        public string Get(string key) => _map[key];
-
-        public IEnumerable<KeyValuePair<string, string>> GetEntries() => _map;
 
         public void Set(string key, string value) => _map[key] = value;
+
+        public IEnumerator<KeyValuePair<string, string>> GetEnumerator() => _map.GetEnumerator();
+
+        IEnumerator IEnumerable.GetEnumerator() => _map.GetEnumerator();
     }
 }

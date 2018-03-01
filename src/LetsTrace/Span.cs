@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using OpenTracing;
+using OpenTracing.Tag;
 
 namespace LetsTrace
 {
@@ -64,10 +65,10 @@ namespace LetsTrace
         public ISpan SetBaggageItem(string key, string value) => Tracer.SetBaggageItem(this, key, value);
 
         // OpenTracing API: Log structured data
-        public ISpan Log(IEnumerable<KeyValuePair<string, object>> fields) => Log(Tracer.Clock.CurrentTime(), fields);
+        public ISpan Log(IDictionary<string, object> fields) => Log(Tracer.Clock.CurrentTime(), fields);
 
         // OpenTracing API: Log structured data
-        public ISpan Log(DateTimeOffset timestamp, IEnumerable<KeyValuePair<string, object>> fields) => Log(timestamp, fields.ToFieldList());
+        public ISpan Log(DateTimeOffset timestamp, IDictionary<string, object> fields) => Log(timestamp, fields.ToFieldList());
 
         // OpenTracing API: Log structured data
         public ISpan Log(string eventName) => Log(Tracer.Clock.CurrentTime(), eventName);
