@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using LetsTrace.Reporters;
+using LetsTrace.Samplers;
 using LetsTrace.Transport;
-using LetsTrace.Transport.Zipkin.ZipkinJSON;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -30,8 +30,8 @@ namespace LetsTrace.Example.WebApi
             services.AddLogging(builder => {
                 builder.AddConfiguration(Configuration.GetSection("Logging"));
             });
-            services.AddTransient<ITransport, ZipkinJSONTransport>(ctx => new ZipkinJSONTransport(new Uri("http://localhost:9411/api/v2/spans"), 0));
-            services.AddTransient<IReporter, RemoteReporter>();
+            services.AddTransient<ISampler, ConstSampler>(ctx => new ConstSampler(true));
+            services.AddTransient<IReporter, LoggingReporter>();
             services.AddTransient<ITracingWrapper, TracingWrapper>();
         }
 

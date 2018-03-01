@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using OpenTracing;
+using OpenTracing.Tag;
 
 namespace LetsTrace.Example.WebApi
 {
@@ -25,9 +26,9 @@ namespace LetsTrace.Example.WebApi
             _logger.LogInformation($"Starting a new span: {operationName}");
             
             var builder = _tracer.GetTracer().BuildSpan(operationName)
-                .WithTag(Tags.SpanKind, Tags.SpanKindServer);
+                .WithTag(Tags.SpanKind.Key, Tags.SpanKindServer);
 
-            using (builder.Start())
+            using ((ILetsTraceSpan)builder.Start())
             {
                 await _next(context);
                 _logger.LogInformation($"Finishing span: {operationName}");
