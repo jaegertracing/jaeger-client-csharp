@@ -274,5 +274,161 @@ namespace LetsTrace.Tests
             var context = (ILetsTraceSpanContext)builtSpan.Context;
             Assert.Equal(0, context.Flags);
         }
+
+        [Fact]
+        public void SpanBuilder_StartActive_AddsStartedSpanToScopeManager()
+        {
+            var tracer = Substitute.For<ILetsTraceTracer>();
+            var sampler = Substitute.For<ISampler>();
+            var scopeManager = Substitute.For<IScopeManager>();
+            var operationName = "testing";
+            IScope nullScope = null;
+            tracer.ScopeManager.Returns(scopeManager);
+
+            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, Field>()));
+
+            scopeManager.Active.Returns(nullScope);
+            scopeManager.Activate(
+                Arg.Is<ISpan>(s => ((ILetsTraceSpan)s).OperationName == operationName),
+                Arg.Is<bool>(fsod => fsod == false)
+            );
+
+            var sb = new SpanBuilder(tracer, operationName, sampler);
+            var scope = sb.StartActive(false);
+
+            scopeManager.Received(1).Activate(
+                Arg.Any<ISpan>(),
+                Arg.Any<bool>()
+            );
+        }
+
+        [Fact]
+        public void SpanBuilder_StartActive_ShouldAddActiveAsParent()
+        {
+            var tracer = Substitute.For<ILetsTraceTracer>();
+            var sampler = Substitute.For<ISampler>();
+            var scopeManager = Substitute.For<IScopeManager>();
+            var operationName = "testing";
+            var activeScope = Substitute.For<IScope>();
+            var activeSpan = Substitute.For<ISpan>();
+            var activeTraceId = new TraceId { Low = 34967, High = 31298 };
+            var activeSpanId = new SpanId(3829);
+            var activeContext = new SpanContext(activeTraceId, activeSpanId);
+
+            ILetsTraceSpan newSpan = null;
+
+            activeSpan.Context.Returns(activeContext);
+            activeScope.Span.Returns(activeSpan);
+            scopeManager.Active.Returns(activeScope);
+            tracer.ScopeManager.Returns(scopeManager);
+
+            scopeManager.Activate(
+                Arg.Do<ISpan>(s => newSpan = (ILetsTraceSpan)s),
+                Arg.Is<bool>(fsod => fsod == true)
+            );
+
+            var sb = new SpanBuilder(tracer, operationName, sampler);
+            var scope = sb.StartActive(true);
+
+            scopeManager.Received(1).Activate(
+                Arg.Any<ISpan>(),
+                Arg.Any<bool>()
+            );
+
+            var newContext = (ILetsTraceSpanContext)newSpan.Context;
+            Assert.Equal(activeSpanId, newContext.ParentId);
+            Assert.Equal(activeTraceId.Low, newContext.TraceId.Low);
+            Assert.Equal(activeTraceId.High, newContext.TraceId.High);
+        }
+
+        [Fact]
+        public void SpanBuilder_StartActive_ShouldNotAddActiveAsParent_WhenIgnoreActiveSpanIsSet()
+        {
+            var tracer = Substitute.For<ILetsTraceTracer>();
+            var sampler = Substitute.For<ISampler>();
+            var scopeManager = Substitute.For<IScopeManager>();
+            var operationName = "testing";
+            var activeScope = Substitute.For<IScope>();
+            var activeSpan = Substitute.For<ISpan>();
+            var activeContext = Substitute.For<ILetsTraceSpanContext>();
+            var activeTraceId = new TraceId { Low = 34967, High = 31298 };
+            var activeSpanId = new SpanId(3829);
+
+            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, Field>()));
+
+            ILetsTraceSpan newSpan = null;
+
+            activeContext.TraceId.Returns(activeTraceId);
+            activeContext.SpanId.Returns(activeSpanId);
+            activeSpan.Context.Returns(activeContext);
+            activeScope.Span.Returns(activeSpan);
+            scopeManager.Active.Returns(activeScope);
+            tracer.ScopeManager.Returns(scopeManager);
+
+            scopeManager.Activate(
+                Arg.Do<ISpan>(s => newSpan = (ILetsTraceSpan)s),
+                Arg.Is<bool>(fsod => fsod == true)
+            );
+
+            var sb = new SpanBuilder(tracer, operationName, sampler);
+            sb.IgnoreActiveSpan();
+            var scope = sb.StartActive(true);
+
+            scopeManager.Received(1).Activate(
+                Arg.Any<ISpan>(),
+                Arg.Any<bool>()
+            );
+
+            var newContext = (ILetsTraceSpanContext)newSpan.Context;
+            Assert.Equal(0.ToString(), newContext.ParentId.ToString());
+            Assert.NotEqual(activeTraceId.Low, newContext.TraceId.Low);
+            Assert.NotEqual(activeTraceId.High, newContext.TraceId.High);
+        }
+
+        [Fact]
+        public void SpanBuilder_StartActive_ShouldNotAddActiveAsParent_WhenOtherReferencesExist()
+        {
+            var tracer = Substitute.For<ILetsTraceTracer>();
+            var sampler = Substitute.For<ISampler>();
+            var scopeManager = Substitute.For<IScopeManager>();
+            var operationName = "testing";
+            var activeScope = Substitute.For<IScope>();
+            var activeSpan = Substitute.For<ISpan>();
+            var activeContext = Substitute.For<ILetsTraceSpanContext>();
+            var activeTraceId = new TraceId { Low = 34967, High = 31298 };
+            var activeSpanId = new SpanId(3829);
+
+            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, Field>()));
+
+            ILetsTraceSpan newSpan = null;
+
+            activeContext.TraceId.Returns(activeTraceId);
+            activeContext.SpanId.Returns(activeSpanId);
+            activeSpan.Context.Returns(activeContext);
+            activeScope.Span.Returns(activeSpan);
+            scopeManager.Active.Returns(activeScope);
+            tracer.ScopeManager.Returns(scopeManager);
+
+            scopeManager.Activate(
+                Arg.Do<ISpan>(s => newSpan = (ILetsTraceSpan)s),
+                Arg.Is<bool>(fsod => fsod == true)
+            );
+
+            var refContext = Substitute.For<ILetsTraceSpanContext>();
+            var sb = new SpanBuilder(tracer, operationName, sampler);
+            sb.FollowsFrom(refContext);
+            var scope = sb.StartActive(true);
+
+            scopeManager.Received(1).Activate(
+                Arg.Any<ISpan>(),
+                Arg.Any<bool>()
+            );
+
+            var newContext = (ILetsTraceSpanContext)newSpan.Context;
+            Assert.Equal(0.ToString(), newContext.ParentId.ToString());
+            Assert.NotEqual(activeTraceId.Low, newContext.TraceId.Low);
+            Assert.NotEqual(activeTraceId.High, newContext.TraceId.High);
+        }
+
     }
 }
