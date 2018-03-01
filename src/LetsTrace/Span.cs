@@ -7,7 +7,7 @@ using OpenTracing.Tag;
 namespace LetsTrace
 {
     // Span holds everything relevant to a specific span
-    public class Span : ILetsTraceSpan, IDisposable
+    public class Span : ILetsTraceSpan
     {
         // OpenTracing API: Retrieve the Spans SpanContext
         public ISpanContext Context { get; private set; }
