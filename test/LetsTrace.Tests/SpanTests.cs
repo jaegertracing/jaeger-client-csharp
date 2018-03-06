@@ -47,10 +47,10 @@ namespace LetsTrace.Tests
             var spanContext = Substitute.For<ISpanContext>();
             
             var ex1 = Assert.Throws<ArgumentException>(() => new Span(tracer, "", spanContext));
-            Assert.True(ex1.Message.StartsWith("Argument is empty"));
+            Assert.StartsWith("Argument is empty", ex1.Message);
 
             var ex2 = Assert.Throws<ArgumentException>(() => new Span(tracer, null, spanContext));
-            Assert.True(ex2.Message.StartsWith("Argument is null"));
+            Assert.StartsWith("Argument is null", ex2.Message);
         }
 
         [Fact]
@@ -206,11 +206,11 @@ namespace LetsTrace.Tests
         [Fact]
         public void Span_Log_Fields_ShouldLogAllFields()
         {
-            var fields = new List<KeyValuePair<string, object>> { 
-                new KeyValuePair<string, object>("log1", "message1"),
-                new KeyValuePair<string, object>("log2", false),
-                new KeyValuePair<string, object>("log3", new Dictionary<string, string> { { "key", "value" } }),
-                new KeyValuePair<string, object>("log3", new Clock())
+            var fields = new Dictionary<string, object> { 
+                { "log1", "message1" },
+                { "log2", false },
+                { "log3", new Dictionary<string, string> { { "key", "value" } } },
+                { "log4", new Clock() }
             };
             
             var tracer = Substitute.For<ILetsTraceTracer>();
@@ -237,9 +237,9 @@ namespace LetsTrace.Tests
         [Fact]
         public void Span_Log_Fields_WithTimestamp_ShouldLogAllFields()
         {
-            var fields = new List<KeyValuePair<string, object>> { 
-                new KeyValuePair<string, object>("log1", new byte[] { 0x20, 0x20 }),
-                new KeyValuePair<string, object>("log2", 15m)
+            var fields = new Dictionary<string, object> { 
+                { "log1", new byte[] { 0x20, 0x20 } },
+                { "log2", 15m }
             };
             
             var tracer = Substitute.For<ILetsTraceTracer>();

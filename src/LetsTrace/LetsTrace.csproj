@@ -6,7 +6,7 @@
     <PackageId>LetsTrace</PackageId>
     <PackageProjectUrl>https://github.com/Chatham/LetsTrace/</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/Chatham/LetsTrace/blob/master/LICENSE</PackageLicenseUrl>
-    <PackageVersion>0.0.2</PackageVersion>
+    <PackageVersion>0.0.3</PackageVersion>
     <PackageTags>letstrace;tracing;opentracing</PackageTags>
     <Authors>Chatham Financial Corp.</Authors>
     <Description>.NET Tracing</Description>
@@ -16,7 +16,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Logging" Version="2.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
-    <PackageReference Include="OpenTracing" Version="0.10.0" />
+    <PackageReference Include="OpenTracing" Version="0.11.0" />
   </ItemGroup>
 
 </Project>

@@ -54,9 +54,11 @@ namespace LetsTrace.Tests
 
             propagator.Inject(spanContext, carrier);
 
-            Assert.Equal("Castle.Proxies.ISpanContextProxy", carrier.Get(headersConfig.TraceContextHeaderName)); // cannot mock ToString
-            Assert.Equal(baggage["key1"], carrier.Get($"{headersConfig.TraceBaggageHeaderPrefix}-key1"));
-            Assert.Equal(baggage["key2"], carrier.Get($"{headersConfig.TraceBaggageHeaderPrefix}-key2"));
+            var carrierDict = carrier.ToDictionary(c => c.Key, c => c.Value);
+
+            Assert.Equal("Castle.Proxies.ISpanContextProxy", carrierDict[headersConfig.TraceContextHeaderName]); // cannot mock ToString
+            Assert.Equal(baggage["key1"], carrierDict[$"{headersConfig.TraceBaggageHeaderPrefix}-key1"]);
+            Assert.Equal(baggage["key2"], carrierDict[$"{headersConfig.TraceBaggageHeaderPrefix}-key2"]);
         }
 
         [Fact]

@@ -7,6 +7,7 @@ using LetsTrace.Samplers;
 using LetsTrace.Util;
 using OpenTracing;
 using OpenTracing.Propagation;
+using OpenTracing.Util;
 
 namespace LetsTrace
 {
@@ -18,28 +19,31 @@ namespace LetsTrace
         private IReporter _reporter;
         private ISampler _sampler;
 
+        public IScopeManager ScopeManager { get; private set; }
         public IClock Clock { get; internal set; }
+        public ISpan ActiveSpan { get { return ScopeManager.Active?.Span; } }
         public string HostIPv4 { get; }
         public string ServiceName { get; }
 
         // TODO: support tracer level tags
         // TODO: support trace options
         // TODO: add logger
-        public Tracer(string serviceName, IReporter reporter, string hostIPv4, ISampler sampler)
+        public Tracer(string serviceName, IReporter reporter, string hostIPv4, ISampler sampler, IScopeManager scopeManager = null)
         {
             ServiceName = serviceName ?? throw new ArgumentNullException(nameof(serviceName));
             _reporter = reporter ?? throw new ArgumentNullException(nameof(reporter));
             HostIPv4 = hostIPv4 ?? throw new ArgumentNullException(nameof(hostIPv4));
             _sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
+            ScopeManager = scopeManager ?? new AsyncLocalScopeManager();
 
             // set up default options - TODO: allow these to be overridden via options
             var defaultHeadersConfig = new HeadersConfig(Constants.TraceContextHeaderName, Constants.TraceBaggageHeaderPrefix);
 
             var textPropagator = TextMapPropagator.NewTextMapPropagator(defaultHeadersConfig);
-            AddCodec(Formats.TextMap.Name, textPropagator, textPropagator);
+            AddCodec(BuiltinFormats.TextMap.ToString(), textPropagator, textPropagator);
 
             var httpHeaderPropagator = TextMapPropagator.NewHTTPHeaderPropagator(defaultHeadersConfig);
-            AddCodec(Formats.HttpHeaders.Name, httpHeaderPropagator, httpHeaderPropagator);
+            AddCodec(BuiltinFormats.HttpHeaders.ToString(), httpHeaderPropagator, httpHeaderPropagator);
 
             Clock = new Clock();
         }
@@ -68,21 +72,21 @@ namespace LetsTrace
             }
         }
 
-        public ISpanContext Extract<TCarrier>(Format<TCarrier> format, TCarrier carrier)
+        public ISpanContext Extract<TCarrier>(IFormat<TCarrier> format, TCarrier carrier)
         {
-            if (_extractors.ContainsKey(format.Name)) {
-                return _extractors[format.Name].Extract(carrier);
+            if (_extractors.ContainsKey(format.ToString())) {
+                return _extractors[format.ToString()].Extract(carrier);
             }
-            throw new Exception($"{format.Name} is not a supported extraction format");
+            throw new Exception($"{format.ToString()} is not a supported extraction format");
         }
 
-        public void Inject<TCarrier>(ISpanContext spanContext, Format<TCarrier> format, TCarrier carrier)
+        public void Inject<TCarrier>(ISpanContext spanContext, IFormat<TCarrier> format, TCarrier carrier)
         {
-            if (_injectors.ContainsKey(format.Name)) {
-                _injectors[format.Name].Inject(spanContext, carrier);
+            if (_injectors.ContainsKey(format.ToString())) {
+                _injectors[format.ToString()].Inject(spanContext, carrier);
                 return;
             }
-            throw new Exception($"{format.Name} is not a supported injection format");
+            throw new Exception($"{format.ToString()} is not a supported injection format");
         }
 
         // TODO: setup baggage restriction

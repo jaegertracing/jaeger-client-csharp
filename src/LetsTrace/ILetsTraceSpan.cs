@@ -4,7 +4,7 @@ using OpenTracing;
 
 namespace LetsTrace
 {
-    public interface ILetsTraceSpan : ISpan
+    public interface ILetsTraceSpan : ISpan, IDisposable
     {
         DateTimeOffset? FinishTimestamp { get; }
         List<LogRecord> Logs { get; }
