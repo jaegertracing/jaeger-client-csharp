@@ -1,5 +1,3 @@
-using LetsTrace.Propagation;
-
 namespace LetsTrace
 {
     public class Constants

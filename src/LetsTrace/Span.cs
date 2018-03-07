@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using OpenTracing;
-using OpenTracing.Tag;
 
 namespace LetsTrace
 {
@@ -20,8 +19,8 @@ namespace LetsTrace
         // parent is (if there is one). The span should not handle determining
         // who its parent is
         public List<Reference> References { get; }
-        public DateTimeOffset StartTimestamp { get; private set; }
-        public Dictionary<string, Field> Tags { get; private set; }
+        public DateTimeOffset StartTimestamp { get; }
+        public Dictionary<string, Field> Tags { get; }
         public ILetsTraceTracer Tracer { get; }
 
         public Span(ILetsTraceTracer tracer, string operationName, ISpanContext context, DateTimeOffset? startTimestamp = null, Dictionary<string, Field> tags = null, List<Reference> references = null)

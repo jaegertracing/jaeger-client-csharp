@@ -1,5 +1,3 @@
-using System;
-
 namespace LetsTrace.Util
 {
     // RateLimiter is a rate limiter based on leaky bucket algorithm, formulated in terms of a
