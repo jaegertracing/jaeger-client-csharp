@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Globalization;
 using OpenTracing;
 
 namespace LetsTrace
@@ -18,7 +18,7 @@ namespace LetsTrace
                 return Low.ToString("x");
             }
 
-            return $"{High.ToString("x")}{Low.ToString("x016")}";
+            return $"{High:x}{Low:x016}";
         }
 
         public bool IsValid()
@@ -35,25 +35,25 @@ namespace LetsTrace
 
             UInt64 high = 0, low = 0;
 
-            if (from.Length > 15)
+            if (from.Length > 16)
             {
                 var highLength = from.Length - 16;
                 var highString = from.Substring(0, highLength);
                 var lowString = from.Substring(highLength);
                 
-                if (!UInt64.TryParse(highString, out high))
+                if (!UInt64.TryParse(highString, NumberStyles.HexNumber, null, out high))
                 {
                     throw new Exception($"Cannot parse High TraceId from string: {highString}");
                 }
 
-                if (!UInt64.TryParse(lowString, out low))
+                if (!UInt64.TryParse(lowString, NumberStyles.HexNumber, null, out low))
                 {
                     throw new Exception($"Cannot parse Low TraceId from string: {lowString}");
                 }
             }
             else
             {
-                if (!UInt64.TryParse(from, out low))
+                if (!UInt64.TryParse(from, NumberStyles.HexNumber, null, out low))
                 {
                     throw new Exception($"Cannot parse Low TraceId from string: {from}");
                 }
@@ -95,7 +95,7 @@ namespace LetsTrace
             }
             UInt64 result;
             
-            if (!UInt64.TryParse(from, out result))
+            if (!UInt64.TryParse(from, NumberStyles.HexNumber, null, out result))
             {
                 throw new Exception($"Cannot parse SpanId from string: {from}");
             }
