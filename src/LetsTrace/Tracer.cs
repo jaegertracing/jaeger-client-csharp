@@ -6,6 +6,7 @@ using System.Reflection;
 using LetsTrace.Propagation;
 using LetsTrace.Reporters;
 using LetsTrace.Samplers;
+using LetsTrace.Transport;
 using LetsTrace.Util;
 using OpenTracing;
 using OpenTracing.Propagation;
@@ -95,6 +96,7 @@ namespace LetsTrace
             private IScopeManager _scopeManager;
             private IPropagationRegistry _propagationRegistry;
             private ISampler _sampler;
+            private ITransport _transport;
             private IReporter _reporter;
             //private IMetrics _metrics; TODO
 
@@ -131,6 +133,12 @@ namespace LetsTrace
             public Builder WithReporter(IReporter reporter)
             {
                 this._reporter = reporter;
+                return this;
+            }
+
+            public Builder WithTransport(ITransport transport)
+            {
+                this._transport = transport;
                 return this;
             }
 
@@ -182,12 +190,17 @@ namespace LetsTrace
                 //}
                 if (_reporter == null)
                 {
-                    // TODO: Should really be remote reporter...
-                    _reporter = new NullReporter();
-                    // TODO
-                    //_reporter = new RemoteReporter.Builder()
-                    //    .WithMetrics(_metrics)
-                    //    .Build();
+                    if (_transport == null)
+                    {
+                        _reporter = new NullReporter();
+                    }
+                    else
+                    {
+                        //TODO: Should really be remote reporter...
+                        _reporter = new RemoteReporter.Builder(_transport)
+                            //.WithMetrics(_metrics)
+                            .Build();
+                    }
                 }
                 if (_sampler == null)
                 {
