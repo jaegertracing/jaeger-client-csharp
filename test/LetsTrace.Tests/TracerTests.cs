@@ -121,6 +121,34 @@ namespace LetsTrace.Tests
         }
 
         [Fact]
+        public void Tracer_BuildSpan_ShouldUsePassedInPropagationRegistry()
+        {
+            var reporter = Substitute.For<IReporter>();
+            var sampler = Substitute.For<ISampler>();
+            var scopeManager = Substitute.For<IScopeManager>();
+            var pReg = Substitute.For<IPropagationRegistry>();
+
+            IFormat<string> format = new Builtin<string>("format");
+            var carrier = "carrier, yo";
+            pReg.Extract(Arg.Is<IFormat<string>>(f => f == format), Arg.Is<string>(c => c == carrier));
+            var spanContext = Substitute.For<ISpanContext>();
+            pReg.Inject(Arg.Is<ISpanContext>(sc => sc == spanContext), Arg.Is<IFormat<string>>(f => f == format), Arg.Is<string>(c => c == carrier));
+
+            var tracer = new Tracer.Builder("testingService")
+                .WithReporter(reporter)
+                .WithSampler(sampler)
+                .WithScopeManager(scopeManager)
+                .WithPropagationRegistry(pReg)
+                .Build();
+
+            tracer.Extract(format, carrier);
+            tracer.Inject(spanContext, format, carrier);
+
+            pReg.Received(1).Extract(Arg.Any<IFormat<string>>(), Arg.Any<string>());
+            pReg.Received(1).Inject(Arg.Any<ISpanContext>(), Arg.Any<IFormat<string>>(), Arg.Any<string>());
+        }
+
+        [Fact]
         public void Tracer_ReportSpan_ShouldPassSpanToReporter()
         {
             var reporter = Substitute.For<IReporter>();
@@ -163,38 +191,6 @@ namespace LetsTrace.Tests
         }
 
         [Fact]
-        public void Tracer_ExtractAndInject_ShouldUseTheCorrectCodec()
-        {
-            var reporter = Substitute.For<IReporter>();
-            var injector = Substitute.For<IInjector>();
-            var extractor = Substitute.For<IExtractor>();
-            var carrier = "carrier, yo";
-            var spanContext = Substitute.For<ISpanContext>();
-            var sampler = Substitute.For<ISampler>();
-            var scopeManager = Substitute.For<IScopeManager>();
-
-            var format = new Builtin<string>("format");
-            extractor.Extract(Arg.Is<string>(c => c == carrier));
-            injector.Inject(Arg.Is<ISpanContext>(sc => sc == spanContext), Arg.Is<string>(c => c == carrier));
-
-            var propagator = new PropagationRegistry();
-            propagator.AddCodec(format, injector, extractor);
-
-            var tracer = new Tracer.Builder("testingService")
-                .WithReporter(reporter)
-                .WithSampler(sampler)
-                .WithScopeManager(scopeManager)
-                .WithPropagationRegistry(propagator)
-                .Build();
-
-            tracer.Extract(format, carrier);
-            tracer.Inject(spanContext, format, carrier);
-
-            extractor.Received(1).Extract(Arg.Any<string>());
-            injector.Received(1).Inject(Arg.Any<ISpanContext>(), Arg.Any<string>());
-        }
-
-        [Fact]
         public void Tracer_ExtractAndInject_ShouldThrowWhenCodecDoesNotExist()
         {
             var reporter = Substitute.For<IReporter>();
@@ -215,6 +211,38 @@ namespace LetsTrace.Tests
 
             ex = Assert.Throws<Exception>(() => tracer.Inject(spanContext, format, carrier));
             Assert.Equal($"{format} is not a supported injection format", ex.Message);
+        }
+
+        [Fact]
+        public void Tracer_ExtractAndInject_ShouldUseTheCorrectCodec()
+        {
+            var reporter = Substitute.For<IReporter>();
+            var injector = Substitute.For<IInjector>();
+            var extractor = Substitute.For<IExtractor>();
+            var carrier = "carrier, yo";
+            var spanContext = Substitute.For<ISpanContext>();
+            var sampler = Substitute.For<ISampler>();
+            var scopeManager = Substitute.For<IScopeManager>();
+
+            var format = new Builtin<string>("format");
+            extractor.Extract(Arg.Is<string>(c => c == carrier));
+            injector.Inject(Arg.Is<ISpanContext>(sc => sc == spanContext), Arg.Is<string>(c => c == carrier));
+
+            var propagationRegistry = new PropagationRegistry();
+            propagationRegistry.AddCodec(format, injector, extractor);
+
+            var tracer = new Tracer.Builder("testingService")
+                .WithReporter(reporter)
+                .WithSampler(sampler)
+                .WithScopeManager(scopeManager)
+                .WithPropagationRegistry(propagationRegistry)
+                .Build();
+
+            tracer.Extract(format, carrier);
+            tracer.Inject(spanContext, format, carrier);
+
+            extractor.Received(1).Extract(Arg.Any<string>());
+            injector.Received(1).Inject(Arg.Any<ISpanContext>(), Arg.Any<string>());
         }
 
         [Fact]
