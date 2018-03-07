@@ -56,10 +56,11 @@ namespace LetsTrace.Propagation
 
                 foreach(var item in map)
                 {
-                    if (item.Key == _headersConfig.TraceContextHeaderName) {
+                    // GRPC Metadata is case insensitive, so the case could get lost.
+                    if (item.Key.Equals(_headersConfig.TraceContextHeaderName, StringComparison.OrdinalIgnoreCase)) {
                         var safeValue = _decodeValue(item.Value);
                         context = SpanContext.FromString(safeValue);
-                    } else if (item.Key.StartsWith(_headersConfig.TraceBaggageHeaderPrefix)) {
+                    } else if (item.Key.StartsWith(_headersConfig.TraceBaggageHeaderPrefix, StringComparison.OrdinalIgnoreCase)) {
                         var safeKey = RemoveBaggageKeyPrefix(item.Key);
                         var safeValue = _decodeValue(item.Value);
                         baggage.Add(safeKey, safeValue);
