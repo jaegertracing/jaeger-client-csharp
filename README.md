@@ -173,9 +173,15 @@ or
 span.Finish();
 ```
 
+## Contributing
+
+If you would like to contribute to this project you can fork the repository and send in a pull request. We ask that you use a branch other than `master`.
+
+By contributing your code, you agree to license your contribution under the terms of the [APLv2](LICENSE).
+
 ## License
 
-[MIT License](LICENSE).
+All files are released with the [Apache 2.0 license](LICENSE).
 
 [ci-img]: https://ci.appveyor.com/api/projects/status/b1hodx4afck8ffpu?svg=true
 [ci]: https://ci.appveyor.com/project/chatham/letstrace
