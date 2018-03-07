@@ -12,8 +12,8 @@ namespace LetsTrace.Samplers
         {
             Decision = sample;
             _tags = new Dictionary<string, Field> {
-                { Constants.SamplerTypeTagKey, new Field<string> { Value = Constants.SamplerTypeConst } },
-                { Constants.SamplerParamTagKey, new Field<bool> { Value = sample } }
+                { Constants.SAMPLER_TYPE_TAG_KEY, new Field<string> { Value = Constants.SAMPLER_TYPE_CONST } },
+                { Constants.SAMPLER_PARAM_TAG_KEY, new Field<bool> { Value = sample } }
             };
         }
 

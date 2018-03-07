@@ -111,10 +111,10 @@ namespace LetsTrace
         public TraceId TraceId { get; }
         public SpanId SpanId { get; }
         public SpanId ParentId { get; }
-        public byte Flags { get; }
+        public ContextFlags Flags { get; }
         private Dictionary<string, string> _baggage;
 
-        public SpanContext(TraceId traceId, SpanId spanId = null, SpanId parentId = null, Dictionary<string, string> baggage = null, byte flags = Constants.FlagSampled)
+        public SpanContext(TraceId traceId, SpanId spanId = null, SpanId parentId = null, Dictionary<string, string> baggage = null, ContextFlags flags = ContextFlags.Sampled)
         {
             TraceId = traceId ?? throw new ArgumentNullException(nameof(traceId));
             ParentId = parentId;
@@ -123,10 +123,10 @@ namespace LetsTrace
             _baggage = baggage ?? new Dictionary<string, string>();
         }
 
-        public bool IsSampled() => (Flags & Constants.FlagSampled) == Constants.FlagSampled;
+        public bool IsSampled => Flags.HasFlag(ContextFlags.Sampled);
 
         public override string ToString() {
-            return $"{TraceId.ToString()}:{SpanId.ToString()}:{ParentId.ToString()}:{Flags.ToString()}";
+            return $"{TraceId}:{SpanId}:{ParentId}:{(byte)Flags}";
         }
 
         public static SpanContext FromString(string from) {
@@ -135,7 +135,7 @@ namespace LetsTrace
             var parts = from.Split(':');
             if (parts.Length != 4) { throw new Exception("String does not match tracer state format"); }
 
-            return new SpanContext(TraceId.FromString(parts[0]), SpanId.FromString(parts[1]), SpanId.FromString(parts[2]), null, byte.Parse(parts[3]));
+            return new SpanContext(TraceId.FromString(parts[0]), SpanId.FromString(parts[1]), SpanId.FromString(parts[2]), null, (ContextFlags)byte.Parse(parts[3]));
         }
 
         // OpenTracing API: Iterate through all baggage items

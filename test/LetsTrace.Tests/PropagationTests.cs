@@ -90,7 +90,7 @@ namespace LetsTrace.Tests
             Assert.Equal("1", sc.TraceId.Low.ToString());
             Assert.Equal("2", sc.SpanId.ToString());
             Assert.Equal("3", sc.ParentId.ToString());
-            Assert.Equal(4, sc.Flags);
+            Assert.Equal(4, (byte)sc.Flags);
         }
     }
 }

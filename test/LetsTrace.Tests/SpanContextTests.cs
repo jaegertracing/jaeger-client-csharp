@@ -13,7 +13,7 @@ namespace LetsTrace.Tests
             var spanId = new SpanId(3);
             var parentId = new SpanId(4);
             var baggage = new Dictionary<string, string> { { "key", "value" } };
-            byte flags = 3;
+            ContextFlags flags = (ContextFlags)3;
 
             var t1 = new SpanContext(traceId, spanId, parentId, baggage, flags);
             Assert.Equal(traceId.High, t1.TraceId.High);
@@ -38,7 +38,7 @@ namespace LetsTrace.Tests
 
             var t2 = new SpanContext(traceId);
             Assert.Equal(new Dictionary<string, string>(), t2.GetBaggageItems());
-            Assert.Equal(1, t2.Flags);
+            Assert.Equal(ContextFlags.Sampled, t2.Flags);
         }
 
         [Fact]
@@ -57,7 +57,7 @@ namespace LetsTrace.Tests
             var traceId = new TraceId { High = 1, Low = 2 };
             var spanId = new SpanId(3);
             var parentId = new SpanId(4);
-            byte flags = 3;
+            ContextFlags flags = (ContextFlags)3;
 
             var sc = new SpanContext(traceId, spanId, parentId, null, flags);
             Assert.Equal("10000000000000002:3:4:3", sc.ToString());
@@ -109,14 +109,14 @@ namespace LetsTrace.Tests
             sc = SpanContext.FromString("10000000000000001:1:1:2");
             Assert.Equal("1", sc.TraceId.High.ToString());
             Assert.Equal("1", sc.TraceId.Low.ToString());
-            Assert.Equal(2, sc.Flags);
+            Assert.Equal((ContextFlags)2, sc.Flags);
 
             sc = SpanContext.FromString("1:1:1:1");
             Assert.Equal("0", sc.TraceId.High.ToString());
             Assert.Equal("1", sc.TraceId.Low.ToString());
             Assert.Equal("1", sc.SpanId.ToString());
             Assert.Equal("1", sc.SpanId.ToString());
-            Assert.Equal(1, sc.Flags);
+            Assert.Equal(ContextFlags.Sampled, sc.Flags);
         }
 
         [Fact]

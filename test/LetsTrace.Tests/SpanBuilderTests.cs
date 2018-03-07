@@ -219,7 +219,7 @@ namespace LetsTrace.Tests
             var tracer = Substitute.For<ILetsTraceTracer>();
             var operationName = "testing";
             var sampler = Substitute.For<ISampler>();
-            byte flags = 2;
+            ContextFlags flags = (ContextFlags)2;
 
             var traceId = new TraceId{ High = 4867928, Low = 543789 };
             var parentSpanId = new SpanId(139546);
@@ -254,7 +254,7 @@ namespace LetsTrace.Tests
             var builtSpan = (ILetsTraceSpan)sb.Start();
 
             var context = (ILetsTraceSpanContext)builtSpan.Context;
-            Assert.Equal(Constants.FlagSampled, context.Flags);
+            Assert.Equal(ContextFlags.Sampled, context.Flags);
             Assert.Equal(samplerTags, builtSpan.Tags);
         }
 
@@ -272,7 +272,7 @@ namespace LetsTrace.Tests
             var builtSpan = (ILetsTraceSpan)sb.Start();
 
             var context = (ILetsTraceSpanContext)builtSpan.Context;
-            Assert.Equal(0, context.Flags);
+            Assert.Equal(ContextFlags.None, context.Flags);
         }
 
         [Fact]

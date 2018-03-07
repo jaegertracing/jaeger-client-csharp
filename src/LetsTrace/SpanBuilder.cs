@@ -61,7 +61,7 @@ namespace LetsTrace
             SpanId parentId = null;
             SpanId spanId = new SpanId(RandomGenerator.RandomId());
             Dictionary<string, string> baggage = null;
-            byte flags = 0;
+            ContextFlags flags = ContextFlags.None;
 
             foreach(var reference in _references)
             {
@@ -86,7 +86,7 @@ namespace LetsTrace
                 foreach(var samplingTag in samplingInfo.Tags) {
                     _tags[samplingTag.Key] = samplingTag.Value;
                 }
-                flags = samplingInfo.Sampled ? Constants.FlagSampled : (byte)0;
+                flags = samplingInfo.Sampled ? ContextFlags.Sampled : ContextFlags.None;
             }
 
             var spanContext = new SpanContext(traceId, spanId, parentId, baggage, flags);

@@ -16,8 +16,8 @@ namespace LetsTrace.Samplers
         {
             if (samplingRate < 0.0 || samplingRate > 1.0) throw new ArgumentOutOfRangeException(nameof(samplingRate), samplingRate, "sampling rate must be between 0.0 and 1.0");
             _tags = new Dictionary<string, Field> {
-                { Constants.SamplerTypeTagKey, new Field<string> { Value = Constants.SamplerTypeConst } },
-                { Constants.SamplerParamTagKey, new Field<double> { Value = samplingRate } }
+                { Constants.SAMPLER_TYPE_TAG_KEY, new Field<string> { Value = Constants.SAMPLER_TYPE_PROBABILISTIC } },
+                { Constants.SAMPLER_PARAM_TAG_KEY, new Field<double> { Value = samplingRate } }
             };
 
             _samplingBoundary = (UInt64) (UInt64.MaxValue * samplingRate);
