@@ -2,8 +2,8 @@
 {
     public static class Propagators
     {
-        public static readonly IPropagator Console = new ConsolePropagator();
+        public static readonly IPropagationRegistry Console = new ConsolePropagationRegistry();
 
-        public static readonly IPropagator TextMap = TextMapPropagator.DefaultTextMapPropagator();
+        public static readonly IPropagationRegistry TextMap = new TextMapPropagationRegistry();
     }
 }

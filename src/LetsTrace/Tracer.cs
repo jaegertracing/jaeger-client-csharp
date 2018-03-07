@@ -25,18 +25,18 @@ namespace LetsTrace
         public IDictionary<string, Field> Tags { get; }
         public IReporter Reporter { get; }
         public ISampler Sampler { get; }
-        public IPropagator Propagator { get; }
+        public IPropagationRegistry PropagationRegistry { get; }
 
         //public IMetrics Metrics => _metrics; TODO
 
         // TODO: support trace options
         // TODO: add logger
-        private Tracer(string serviceName, IDictionary<string, Field> tags, IScopeManager scopeManager, IPropagator propagator, ISampler sampler, IReporter reporter/*, IMetrics metrics*/)
+        private Tracer(string serviceName, IDictionary<string, Field> tags, IScopeManager scopeManager, IPropagationRegistry propagationRegistry, ISampler sampler, IReporter reporter/*, IMetrics metrics*/)
         {
             ServiceName = serviceName;
             Tags = tags;
             ScopeManager = scopeManager;
-            Propagator = propagator;
+            PropagationRegistry = propagationRegistry;
             Sampler = sampler;
             Reporter = reporter;
             //_metrics = metrics; TODO
@@ -69,13 +69,13 @@ namespace LetsTrace
 
         public ISpanContext Extract<TCarrier>(IFormat<TCarrier> format, TCarrier carrier)
         {
-            return Propagator.Extract(format, carrier);
+            return PropagationRegistry.Extract(format, carrier);
         }
 
 
         public void Inject<TCarrier>(ISpanContext spanContext, IFormat<TCarrier> format, TCarrier carrier)
         {
-            Propagator.Inject(spanContext, format, carrier);
+            PropagationRegistry.Inject(spanContext, format, carrier);
         }
 
         // TODO: setup baggage restriction
@@ -93,7 +93,7 @@ namespace LetsTrace
             private readonly string _serviceName;
             private readonly Dictionary<string, Field> _initialTags = new Dictionary<string, Field>();
             private IScopeManager _scopeManager;
-            private IPropagator _propagator;
+            private IPropagationRegistry _propagationRegistry;
             private ISampler _sampler;
             private IReporter _reporter;
             //private IMetrics _metrics; TODO
@@ -122,9 +122,9 @@ namespace LetsTrace
                 }
             }
 
-            public Builder WithPropagator(IPropagator propagator)
+            public Builder WithPropagationRegistry(IPropagationRegistry propagationRegistry)
             {
-                this._propagator = propagator;
+                this._propagationRegistry = propagationRegistry;
                 return this;
             }
 
@@ -201,12 +201,12 @@ namespace LetsTrace
                 {
                     _scopeManager = new AsyncLocalScopeManager();
                 }
-                if (_propagator == null)
+                if (_propagationRegistry == null)
                 {
-                    _propagator = Propagators.TextMap;
+                    _propagationRegistry = Propagators.TextMap;
                 }
 
-                return new Tracer(_serviceName, _initialTags, _scopeManager, _propagator, _sampler, _reporter/*, _metrics*/);
+                return new Tracer(_serviceName, _initialTags, _scopeManager, _propagationRegistry, _sampler, _reporter/*, _metrics*/);
             }
 
             public static string CheckValidServiceName(String serviceName)

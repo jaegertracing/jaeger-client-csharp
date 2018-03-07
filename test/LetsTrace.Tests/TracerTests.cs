@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using LetsTrace.Propagation;
 using LetsTrace.Reporters;
 using LetsTrace.Samplers;
-using LetsTrace.Util;
 using NSubstitute;
 using OpenTracing;
 using OpenTracing.Propagation;
@@ -91,13 +90,13 @@ namespace LetsTrace.Tests
                 .WithScopeManager(scopeManager)
                 .Build();
 
-            Assert.IsType<DynamicPropagator>(tracer.Propagator);
+            Assert.IsType<TextMapPropagationRegistry>(tracer.PropagationRegistry);
 
-            var propagator = (DynamicPropagator)tracer.Propagator;
-            Assert.Contains(propagator._injectors, i => i.Key == BuiltinFormats.TextMap.ToString());
-            Assert.Contains(propagator._injectors, i => i.Key == BuiltinFormats.HttpHeaders.ToString());
-            Assert.Contains(propagator._extractors, i => i.Key == BuiltinFormats.TextMap.ToString());
-            Assert.Contains(propagator._extractors, i => i.Key == BuiltinFormats.HttpHeaders.ToString());
+            var propagationRegistry = (TextMapPropagationRegistry)tracer.PropagationRegistry;
+            Assert.Contains(propagationRegistry._injectors, i => i.Key == BuiltinFormats.TextMap.ToString());
+            Assert.Contains(propagationRegistry._injectors, i => i.Key == BuiltinFormats.HttpHeaders.ToString());
+            Assert.Contains(propagationRegistry._extractors, i => i.Key == BuiltinFormats.TextMap.ToString());
+            Assert.Contains(propagationRegistry._extractors, i => i.Key == BuiltinFormats.HttpHeaders.ToString());
         }
 
         [Fact]
@@ -178,14 +177,14 @@ namespace LetsTrace.Tests
             extractor.Extract(Arg.Is<string>(c => c == carrier));
             injector.Inject(Arg.Is<ISpanContext>(sc => sc == spanContext), Arg.Is<string>(c => c == carrier));
 
-            var propagator = new DynamicPropagator();
+            var propagator = new PropagationRegistry();
             propagator.AddCodec(format, injector, extractor);
 
             var tracer = new Tracer.Builder("testingService")
                 .WithReporter(reporter)
                 .WithSampler(sampler)
                 .WithScopeManager(scopeManager)
-                .WithPropagator(propagator)
+                .WithPropagationRegistry(propagator)
                 .Build();
 
             tracer.Extract(format, carrier);

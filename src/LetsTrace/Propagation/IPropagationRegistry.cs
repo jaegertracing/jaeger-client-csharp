@@ -3,8 +3,9 @@ using OpenTracing.Propagation;
 
 namespace LetsTrace.Propagation
 {
-    public interface IPropagator
+    public interface IPropagationRegistry
     {
+        void AddCodec<TCarrier>(IFormat<TCarrier> format, IInjector injector, IExtractor extractor);
         void Inject<TCarrier>(ISpanContext spanContext, IFormat<TCarrier> format, TCarrier carrier);
         ISpanContext Extract<TCarrier>(IFormat<TCarrier> format, TCarrier carrier);
     }

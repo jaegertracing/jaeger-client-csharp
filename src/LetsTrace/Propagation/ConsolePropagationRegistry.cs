@@ -4,8 +4,14 @@ using OpenTracing.Propagation;
 
 namespace LetsTrace.Propagation
 {
-    public sealed class ConsolePropagator : IPropagator
+    public sealed class ConsolePropagationRegistry : IPropagationRegistry
     {
+        // TODO: Use ILogger
+        public void AddCodec<TCarrier>(IFormat<TCarrier> format, IInjector injector, IExtractor extractor)
+        {
+            Console.WriteLine($"AddCodec({format}, {injector}, {extractor}");
+        }
+
         public void Inject<TCarrier>(ISpanContext context, IFormat<TCarrier> format, TCarrier carrier)
         {
             Console.WriteLine($"Inject({context}, {format}, {carrier}");
