@@ -81,28 +81,28 @@ namespace LetsTrace.Tests
             ex = Assert.Throws<Exception>(() => SpanContext.FromString("1:1:x:1"));
             Assert.Equal("Cannot parse SpanId from string: x", ex.Message);
 
-            var tooLongTraceId = "01234567890123456789012345678901234";
+            var tooLongTraceId = "0123456789abcdef0123456789abcdef012";
             ex = Assert.Throws<Exception>(() => SpanContext.FromString($"{tooLongTraceId}:1:1:2"));
             Assert.Equal($"TraceId cannot be longer than 32 hex characters: {tooLongTraceId}", ex.Message);
 
-            var justRightTraceId = "01234567890123456789012345678901";
+            var justRightTraceId = "0123456789abcdeffedcba9876543210";
             var sc = SpanContext.FromString($"{justRightTraceId}:1:1:2");
-            Assert.Equal("123456789012345", sc.TraceId.High.ToString());
-            Assert.Equal("6789012345678901", sc.TraceId.Low.ToString());
+            Assert.Equal("0123456789abcdef", sc.TraceId.High.ToString("x016"));
+            Assert.Equal("fedcba9876543210", sc.TraceId.Low.ToString("x016"));
 
-            var badHighTraceId = "01234_67890123456789012345678901";
+            var badHighTraceId = "01234_6789abcdeffedcba9876543210";
             ex = Assert.Throws<Exception>(() => SpanContext.FromString($"{badHighTraceId}:1:1:2"));
-            Assert.Equal("Cannot parse High TraceId from string: 01234_6789012345", ex.Message);
+            Assert.Equal("Cannot parse High TraceId from string: 01234_6789abcdef", ex.Message);
 
-            var badLowTraceId = "0123456789012345678901_345678901";
+            var badLowTraceId = "0123456789abcdeffedcba_876543210";
             ex = Assert.Throws<Exception>(() => SpanContext.FromString($"{badLowTraceId}:1:1:2"));
-            Assert.Equal("Cannot parse Low TraceId from string: 678901_345678901", ex.Message);
+            Assert.Equal("Cannot parse Low TraceId from string: fedcba_876543210", ex.Message);
 
-            var validSpanId = "0123456789012345";
+            var validSpanId = "0123456789abcdef";
             sc = SpanContext.FromString($"1:{validSpanId}:1:2");
-            Assert.Equal("7048860ddf79", sc.SpanId.ToString());
+            Assert.Equal("123456789abcdef", sc.SpanId.ToString());
 
-            var badSpanId = "01234567890123456";
+            var badSpanId = "0123456789abcdef0";
             ex = Assert.Throws<Exception>(() => SpanContext.FromString($"1:{badSpanId}:1:2"));
             Assert.Equal($"SpanId cannot be longer than 16 hex characters: {badSpanId}", ex.Message);
 
