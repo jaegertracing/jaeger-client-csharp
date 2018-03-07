@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 using OpenTracing;
 
 namespace LetsTrace
@@ -12,6 +13,6 @@ namespace LetsTrace
         List<Reference> References { get; }
         DateTimeOffset StartTimestamp { get; }
         Dictionary<string, Field> Tags { get; }
-        ILetsTraceTracer Tracer { get; }
+        [JsonIgnore] ILetsTraceTracer Tracer { get; }
     }
 }
