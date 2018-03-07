@@ -59,7 +59,7 @@ namespace LetsTrace
             SpanContext parent = null;
             TraceId traceId = null;
             SpanId parentId = null;
-            SpanId spanId = new SpanId(RandomGenerator.RandomId());
+            SpanId spanId = null;
             Dictionary<string, string> baggage = null;
             ContextFlags flags = ContextFlags.None;
 
@@ -75,13 +75,15 @@ namespace LetsTrace
             {
                 traceId = parent.TraceId;
                 parentId = parent.SpanId;
+                spanId = new SpanId(RandomGenerator.RandomId());
                 baggage = parent.GetBaggageItems().ToDictionary(x => x.Key, x => x.Value);
                 flags = parent.Flags;
             } 
             else
             {
-                traceId = new TraceId{ High = RandomGenerator.RandomId(), Low = RandomGenerator.RandomId() };
+                traceId = new TraceId{ /*High = RandomGenerator.RandomId(),*/ Low = RandomGenerator.RandomId() }; // TODO: Jaeger does not support high values, otherwise root span id can not match
                 parentId = new SpanId(0);
+                spanId = new SpanId(traceId.Low);   // TODO: Jaeger expects the root span id to match the trace id, otherwise the operation name is not shown.
                 var samplingInfo = _sampler.IsSampled(traceId, _operationName);
                 foreach(var samplingTag in samplingInfo.Tags) {
                     _tags[samplingTag.Key] = samplingTag.Value;
