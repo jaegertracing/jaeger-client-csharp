@@ -15,6 +15,20 @@ namespace LetsTrace.Propagation
         private Func<string, string> _encodeValue { get; }
         private Func<string, string> _decodeValue { get; }
 
+        public static IPropagator DefaultTextMapPropagator()
+        {
+            // set up default options - TODO: allow these to be overridden via options
+            var defaultHeadersConfig = new HeadersConfig(Constants.TRACE_CONTEXT_HEADER_NAME, Constants.TRACE_BAGGAGE_HEADER_PREFIX);
+            var propagator = new DynamicPropagator();
+
+            var textMapPropagator = NewTextMapPropagator(defaultHeadersConfig);
+            propagator.AddCodec(BuiltinFormats.TextMap, textMapPropagator, textMapPropagator);
+
+            var httpPropagator = NewHTTPHeaderPropagator(defaultHeadersConfig);
+            propagator.AddCodec(BuiltinFormats.HttpHeaders, httpPropagator, httpPropagator);
+            return propagator;
+        }
+
         public TextMapPropagator(IHeadersConfig headersConfig, Func<string, string> encodeValue, Func<string, string> decodeValue)
         {
             _headersConfig = headersConfig ?? throw new ArgumentNullException(nameof(headersConfig));

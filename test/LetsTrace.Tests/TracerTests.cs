@@ -34,35 +34,36 @@ namespace LetsTrace.Tests
         [Fact]
         public void Tracer_Constructor_ShouldThrowWhenServiceNameIsNull()
         {
-            var ex = Assert.Throws<ArgumentNullException>(() => new Tracer(null, null, null, null, null));
+            var ex = Assert.Throws<ArgumentException>(() => new Tracer.Builder(null).Build());
             Assert.Equal("serviceName", ex.ParamName);
         }
 
-        [Fact]
-        public void Tracer_Constructor_ShouldThrowWhenReporterIsNull()
-        {
-            var ex = Assert.Throws<ArgumentNullException>(() => new Tracer("testingService", null, null, null, null));
-            Assert.Equal("reporter", ex.ParamName);
-        }
+        // TODO: Those can't happen through use of builder anymore!
+        //[Fact]
+        //public void Tracer_Constructor_ShouldThrowWhenReporterIsNull()
+        //{
+        //    var ex = Assert.Throws<ArgumentNullException>(() => new Tracer("testingService", null, null, null, null));
+        //    Assert.Equal("reporter", ex.ParamName);
+        //}
 
-        [Fact]
-        public void Tracer_Constructor_ShouldThrowWhenHostIPv4IsNull()
-        {
-            var reporter = Substitute.For<IReporter>();
+        //[Fact]
+        //public void Tracer_Constructor_ShouldThrowWhenHostIPv4IsNull()
+        //{
+        //    var reporter = Substitute.For<IReporter>();
 
-            var ex = Assert.Throws<ArgumentNullException>(() => new Tracer("testingService", reporter, null, null, null));
-            Assert.Equal("hostIPv4", ex.ParamName);
-        }
+        //    var ex = Assert.Throws<ArgumentNullException>(() => new Tracer("testingService", reporter, null, null, null));
+        //    Assert.Equal("hostIPv4", ex.ParamName);
+        //}
 
-        [Fact]
-        public void Tracer_Constructor_ShouldThrowWhenSamplerIsNull()
-        {
-            var reporter = Substitute.For<IReporter>();
-            var sampler = Substitute.For<ISampler>();
+        //[Fact]
+        //public void Tracer_Constructor_ShouldThrowWhenSamplerIsNull()
+        //{
+        //    var reporter = Substitute.For<IReporter>();
+        //    var sampler = Substitute.For<ISampler>();
 
-            var ex = Assert.Throws<ArgumentNullException>(() => new Tracer("testingService", reporter, "192.168.1.1", null, null));
-            Assert.Equal("sampler", ex.ParamName);
-        }
+        //    var ex = Assert.Throws<ArgumentNullException>(() => new Tracer("testingService", reporter, "192.168.1.1", null, null));
+        //    Assert.Equal("sampler", ex.ParamName);
+        //}
 
         [Fact]
         public void Tracer_Constructor_ShouldUseOpenTracingScopeManagerWhenScopeManagerIsNull()
@@ -70,7 +71,10 @@ namespace LetsTrace.Tests
             var reporter = Substitute.For<IReporter>();
             var sampler = Substitute.For<ISampler>();
 
-            var tracer = new Tracer("testingService", reporter, "", sampler, null);
+            var tracer = new Tracer.Builder("testingService")
+                .WithReporter(reporter)
+                .WithSampler(sampler)
+                .Build();
             Assert.True(tracer.ScopeManager is AsyncLocalScopeManager);
         }
 
@@ -81,12 +85,19 @@ namespace LetsTrace.Tests
             var sampler = Substitute.For<ISampler>();
             var scopeManager = Substitute.For<IScopeManager>();
             
-            var tracer = new Tracer("testingService", reporter, "192.168.1.1", sampler, scopeManager);
+            var tracer = new Tracer.Builder("testingService")
+                .WithReporter(reporter)
+                .WithSampler(sampler)
+                .WithScopeManager(scopeManager)
+                .Build();
 
-            Assert.Contains(tracer._injectors, i => i.Key == BuiltinFormats.TextMap.ToString());
-            Assert.Contains(tracer._injectors, i => i.Key == BuiltinFormats.HttpHeaders.ToString());
-            Assert.Contains(tracer._extractors, i => i.Key == BuiltinFormats.TextMap.ToString());
-            Assert.Contains(tracer._extractors, i => i.Key == BuiltinFormats.HttpHeaders.ToString());
+            Assert.IsType<DynamicPropagator>(tracer.Propagator);
+
+            var propagator = (DynamicPropagator)tracer.Propagator;
+            Assert.Contains(propagator._injectors, i => i.Key == BuiltinFormats.TextMap.ToString());
+            Assert.Contains(propagator._injectors, i => i.Key == BuiltinFormats.HttpHeaders.ToString());
+            Assert.Contains(propagator._extractors, i => i.Key == BuiltinFormats.TextMap.ToString());
+            Assert.Contains(propagator._extractors, i => i.Key == BuiltinFormats.HttpHeaders.ToString());
         }
 
         [Fact]
@@ -98,7 +109,12 @@ namespace LetsTrace.Tests
             var scopeManager = Substitute.For<IScopeManager>();
             sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, Field>()));
 
-            var tracer = new Tracer("testingService", reporter, "192.168.1.1", sampler, scopeManager);
+            var tracer = new Tracer.Builder("testingService")
+                .WithReporter(reporter)
+                .WithSampler(sampler)
+                .WithScopeManager(scopeManager)
+                .Build();
+
             var span = (ILetsTraceSpan)tracer.BuildSpan(operationName).Start();
 
             Assert.Equal(operationName, span.OperationName);
@@ -113,12 +129,16 @@ namespace LetsTrace.Tests
             var sampler = Substitute.For<ISampler>();
             var scopeManager = Substitute.For<IScopeManager>();
             var context = Substitute.For<ILetsTraceSpanContext>();
-            context.IsSampled().Returns(true);
+            context.IsSampled.Returns(true);
             span.Context.Returns(context);
 
-            var tracer = new Tracer("testingService", reporter, "192.168.1.1", sampler, scopeManager);
-            tracer.ReportSpan(span);
+            var tracer = new Tracer.Builder("testingService")
+                .WithReporter(reporter)
+                .WithSampler(sampler)
+                .WithScopeManager(scopeManager)
+                .Build();
 
+            tracer.ReportSpan(span);
             reporter.Received(1).Report(Arg.Any<ILetsTraceSpan>());
         }
 
@@ -130,12 +150,16 @@ namespace LetsTrace.Tests
             var sampler = Substitute.For<ISampler>();
             var scopeManager = Substitute.For<IScopeManager>();
             var context = Substitute.For<ILetsTraceSpanContext>();
-            context.IsSampled().Returns(false);
+            context.IsSampled.Returns(false);
             span.Context.Returns(context);
 
-            var tracer = new Tracer("testingService", reporter, "192.168.1.1", sampler, scopeManager);
-            tracer.ReportSpan(span);
+            var tracer = new Tracer.Builder("testingService")
+                .WithReporter(reporter)
+                .WithSampler(sampler)
+                .WithScopeManager(scopeManager)
+                .Build();
 
+            tracer.ReportSpan(span);
             reporter.Received(0).Report(Arg.Any<ILetsTraceSpan>());
         }
 
@@ -151,12 +175,19 @@ namespace LetsTrace.Tests
             var scopeManager = Substitute.For<IScopeManager>();
 
             var format = new Builtin<string>("format");
-
             extractor.Extract(Arg.Is<string>(c => c == carrier));
             injector.Inject(Arg.Is<ISpanContext>(sc => sc == spanContext), Arg.Is<string>(c => c == carrier));
 
-            var tracer = new Tracer("testingService", reporter, "192.168.1.1", sampler, scopeManager);
-            tracer.AddCodec(format.ToString(), injector, extractor);
+            var propagator = new DynamicPropagator();
+            propagator.AddCodec(format, injector, extractor);
+
+            var tracer = new Tracer.Builder("testingService")
+                .WithReporter(reporter)
+                .WithSampler(sampler)
+                .WithScopeManager(scopeManager)
+                .WithPropagator(propagator)
+                .Build();
+
             tracer.Extract(format, carrier);
             tracer.Inject(spanContext, format, carrier);
 
@@ -174,7 +205,12 @@ namespace LetsTrace.Tests
             var sampler = Substitute.For<ISampler>();
             var scopeManager = Substitute.For<IScopeManager>();
 
-            var tracer = new Tracer("testingService", reporter, "192.168.1.1", sampler, scopeManager);
+            var tracer = new Tracer.Builder("testingService")
+                .WithReporter(reporter)
+                .WithSampler(sampler)
+                .WithScopeManager(scopeManager)
+                .Build();
+
             var ex = Assert.Throws<Exception>(() => tracer.Extract(format, carrier));
             Assert.Equal($"{format} is not a supported extraction format", ex.Message);
 
@@ -190,7 +226,12 @@ namespace LetsTrace.Tests
             var sampler = Substitute.For<ISampler>();
             var scopeManager = Substitute.For<IScopeManager>();
 
-            var tracer = new Tracer("testingService", reporter, "192.168.1.1", sampler, scopeManager);
+            var tracer = new Tracer.Builder("testingService")
+                .WithReporter(reporter)
+                .WithSampler(sampler)
+                .WithScopeManager(scopeManager)
+                .Build();
+
             var span = new Span(tracer, "testing", spanContext);
 
             var key = "key1";
