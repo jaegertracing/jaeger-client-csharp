@@ -55,12 +55,6 @@ namespace LetsTrace
         public const string SAMPLER_TYPE_RATE_LIMITING = "ratelimiting";
 
         /// <summary>
-        /// RemoteControlledSampler is the type of sampler that samples
-        /// based on a remote configuration that may change over time.
-        /// </summary>
-        public const string SAMPLER_TYPE_REMOTE = "remote";
-
-        /// <summary>
         /// TODO
         /// </summary>
         public const string SAMPLER_TYPE_LOWERBOUND = "lowerbound";

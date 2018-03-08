@@ -36,6 +36,30 @@ namespace LetsTrace.Samplers
             };
         }
 
+        /// <summary>
+        /// Updates the probabilistic and lowerBound samplers.
+        /// </summary>
+        /// <param name="samplingRate">The sampling rate for probabilistic sampling</param>
+        /// <param name="lowerBound">The lower bound limit for lower bound sampling</param>
+        /// <returns>true, iff any samplers were updated</returns>
+        [MethodImpl(MethodImplOptions.Synchronized)]
+        public bool Update(double samplingRate, double lowerBound)
+        {
+            bool isUpdated = false;
+            if (Math.Abs(samplingRate - _probabilisticSampler.SamplingRate) > double.Epsilon)
+            {
+                _probabilisticSampler = new ProbabilisticSampler(samplingRate);
+                ((Field<double>)_tags[Constants.SAMPLER_PARAM_TAG_KEY]).Value = samplingRate;
+                isUpdated = true;
+            }
+            if (Math.Abs(lowerBound - _rateLimitingSampler.MaxTracesPerSecond) > double.Epsilon)
+            {
+                _rateLimitingSampler = new RateLimitingSampler(lowerBound);
+                isUpdated = true;
+            }
+            return isUpdated;
+        }
+
         public void Dispose()
         {
             _probabilisticSampler.Dispose();

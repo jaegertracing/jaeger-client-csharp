@@ -95,6 +95,7 @@ namespace LetsTrace
             private readonly Dictionary<string, Field> _initialTags = new Dictionary<string, Field>();
             private IScopeManager _scopeManager;
             private IPropagationRegistry _propagationRegistry;
+            private ISamplingManager _samplingManager;
             private ISampler _sampler;
             private ITransport _transport;
             private IReporter _reporter;
@@ -148,6 +149,12 @@ namespace LetsTrace
                 return this;
             }
 
+            public Builder WithSamplingManager(ISamplingManager samplingManager)
+            {
+                this._samplingManager = samplingManager;
+                return this;
+            }
+
             public Builder WithMetrics(IMetrics metrics)
             {
                 this._metrics = metrics;
@@ -194,7 +201,6 @@ namespace LetsTrace
                     }
                     else
                     {
-                        //TODO: Should really be remote reporter...
                         _reporter = new RemoteReporter.Builder(_transport)
                             .WithMetrics(_metrics)
                             .Build();
@@ -202,11 +208,16 @@ namespace LetsTrace
                 }
                 if (_sampler == null)
                 {
-                    // TODO: Do this by using extension method, but how to get the metrics in best?
-                    _sampler = new ConstSampler(true);
-                    //_sampler = new RemoteControlledSampler.Builder(_serviceName)
-                    //    .withMetrics(metrics)
-                    //    .build();
+                    if (_samplingManager == null)
+                    {
+                        _sampler = new ConstSampler(true);
+                    }
+                    else
+                    {
+                        _sampler = new RemoteControlledSampler.Builder(_serviceName, _samplingManager)
+                           .WithMetrics(_metrics)
+                           .Build();
+                    }
                 }
                 if (_scopeManager == null)
                 {

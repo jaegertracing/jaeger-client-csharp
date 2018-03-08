@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using LetsTrace.Propagation;
 using NSubstitute;
-using OpenTracing;
 using Xunit;
 
 namespace LetsTrace.Tests

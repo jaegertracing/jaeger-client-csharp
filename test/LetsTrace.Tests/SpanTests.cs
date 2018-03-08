@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using LetsTrace.Util;
 using NSubstitute;
-using OpenTracing;
 using Xunit;
 
 namespace LetsTrace.Tests
