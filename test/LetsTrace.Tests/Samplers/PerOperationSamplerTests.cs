@@ -31,6 +31,7 @@ namespace LetsTrace.Tests.Samplers
             var lowerBound = 0.5;
             var operationName = "op";
             var maxOperations = 3;
+            var traceId = new TraceId(1);
 
             var gtpSampler = Substitute.For<IGuaranteedThroughputProbabilisticSampler>();
             var loggerFactory = Substitute.For<ILoggerFactory>();
@@ -45,9 +46,9 @@ namespace LetsTrace.Tests.Samplers
             ).Returns(defaultSampler);
 
             var sampler = new PerOperationSampler(maxOperations, samplingRate, lowerBound, loggerFactory, samplerFactory);
-            sampler.IsSampled(new TraceId(), operationName);
-            sampler.IsSampled(new TraceId(), operationName);
-            sampler.IsSampled(new TraceId(), operationName);
+            sampler.IsSampled(traceId, operationName);
+            sampler.IsSampled(traceId, operationName);
+            sampler.IsSampled(traceId, operationName);
 
             samplerFactory.Received(1).NewProbabilisticSampler(Arg.Any<double>());
             samplerFactory.Received(1).NewGuaranteedThroughputProbabilisticSampler(Arg.Any<double>(), Arg.Any<double>());
@@ -61,6 +62,7 @@ namespace LetsTrace.Tests.Samplers
             var samplingRate = 1.0;
             var lowerBound = 0.5;
             var maxOperations = 3;
+            var traceId = new TraceId(1);
 
             var gtpSampler = Substitute.For<IGuaranteedThroughputProbabilisticSampler>();
             var loggerFactory = Substitute.For<ILoggerFactory>();
@@ -75,10 +77,10 @@ namespace LetsTrace.Tests.Samplers
             ).Returns(defaultSampler);
 
             var sampler = new PerOperationSampler(maxOperations, samplingRate, lowerBound, loggerFactory, samplerFactory);
-            sampler.IsSampled(new TraceId(), "1");
-            sampler.IsSampled(new TraceId(), "2");
-            sampler.IsSampled(new TraceId(), "3");
-            sampler.IsSampled(new TraceId(), "4");
+            sampler.IsSampled(traceId, "1");
+            sampler.IsSampled(traceId, "2");
+            sampler.IsSampled(traceId, "3");
+            sampler.IsSampled(traceId, "4");
 
             samplerFactory.Received(1).NewProbabilisticSampler(Arg.Any<double>());
             samplerFactory.Received(3).NewGuaranteedThroughputProbabilisticSampler(Arg.Any<double>(), Arg.Any<double>());

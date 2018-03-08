@@ -8,8 +8,19 @@ namespace LetsTrace
     // TraceId represents unique 128bit identifier of a trace
     public class TraceId
     {
-        public UInt64 High { get; set; }
-        public UInt64 Low { get; set;}
+        public ulong High { get; }
+        public ulong Low { get; }
+        public bool IsValid => High != 0 || Low != 0;
+
+        public TraceId(ulong low) : this(0, low)
+        {
+        }
+
+        public TraceId(ulong high, ulong low)
+        {
+            High = high;
+            Low = low;
+        }
 
         public override string ToString()
         {
@@ -21,11 +32,6 @@ namespace LetsTrace
             return $"{High:x}{Low:x016}";
         }
 
-        public bool IsValid()
-        {
-            return High != 0 || Low != 0;
-        }
-
         public static TraceId FromString(string from)
         {
             if (from.Length > 32)
@@ -33,7 +39,7 @@ namespace LetsTrace
                 throw new Exception($"TraceId cannot be longer than 32 hex characters: {from}");
             }
 
-            UInt64 high = 0, low = 0;
+            ulong high = 0, low = 0;
 
             if (from.Length > 16)
             {
@@ -41,51 +47,51 @@ namespace LetsTrace
                 var highString = from.Substring(0, highLength);
                 var lowString = from.Substring(highLength);
                 
-                if (!UInt64.TryParse(highString, NumberStyles.HexNumber, null, out high))
+                if (!ulong.TryParse(highString, NumberStyles.HexNumber, null, out high))
                 {
                     throw new Exception($"Cannot parse High TraceId from string: {highString}");
                 }
 
-                if (!UInt64.TryParse(lowString, NumberStyles.HexNumber, null, out low))
+                if (!ulong.TryParse(lowString, NumberStyles.HexNumber, null, out low))
                 {
                     throw new Exception($"Cannot parse Low TraceId from string: {lowString}");
                 }
             }
             else
             {
-                if (!UInt64.TryParse(from, NumberStyles.HexNumber, null, out low))
+                if (!ulong.TryParse(from, NumberStyles.HexNumber, null, out low))
                 {
                     throw new Exception($"Cannot parse Low TraceId from string: {from}");
                 }
             }
 
-            return new TraceId{ High = high, Low = low };
+            return new TraceId(high, low);
         }
     }
 
     // SpanId represents unique 64bit identifier of a span
     public class SpanId
     {
-        private UInt64 _spanId;
+        private ulong Id { get; }
 
-        public SpanId(UInt64 spanId)
+        public SpanId(ulong spanId)
         {
-            _spanId = spanId;
+            Id = spanId;
         }
 
-        public static implicit operator UInt64(SpanId s)
+        public static implicit operator ulong(SpanId s)
         {
-            return s._spanId;
+            return s.Id;
         }
 
         public static implicit operator long(SpanId s)
         {
-            return (long)s._spanId;
+            return (long)s.Id;
         }
 
         public override string ToString()
         {
-            return _spanId.ToString("x");
+            return Id.ToString("x");
         }
 
         public static SpanId FromString(string from) {
@@ -93,9 +99,8 @@ namespace LetsTrace
             {
                 throw new Exception($"SpanId cannot be longer than 16 hex characters: {from}");
             }
-            UInt64 result;
-            
-            if (!UInt64.TryParse(from, NumberStyles.HexNumber, null, out result))
+
+            if (!ulong.TryParse(from, NumberStyles.HexNumber, null, out var result))
             {
                 throw new Exception($"Cannot parse SpanId from string: {from}");
             }
@@ -112,6 +117,7 @@ namespace LetsTrace
         public SpanId SpanId { get; }
         public SpanId ParentId { get; }
         public ContextFlags Flags { get; }
+
         private Dictionary<string, string> _baggage;
 
         public SpanContext(TraceId traceId, SpanId spanId = null, SpanId parentId = null, Dictionary<string, string> baggage = null, ContextFlags flags = ContextFlags.Sampled)

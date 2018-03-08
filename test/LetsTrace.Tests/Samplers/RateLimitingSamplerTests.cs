@@ -20,6 +20,7 @@ namespace LetsTrace.Tests.Samplers
         public void RateLimitingSampler_UsesTheRateLimiter()
         {
             var maxTracesPerSecond = 3.6;
+            var traceId = new TraceId(1);
             var expectedTags = new Dictionary<string, Field> {
                 { Constants.SAMPLER_TYPE_TAG_KEY, new Field<string> { Value = Constants.SAMPLER_TYPE_RATE_LIMITING } },
                 { Constants.SAMPLER_PARAM_TAG_KEY, new Field<double> { Value = maxTracesPerSecond } }
@@ -33,13 +34,13 @@ namespace LetsTrace.Tests.Samplers
             });
             
             var sampler = new RateLimitingSampler(maxTracesPerSecond, rateLimiter);
-            var isSampled = sampler.IsSampled(new TraceId(), "op");
+            var isSampled = sampler.IsSampled(traceId, "op");
 
             Assert.False(isSampled.Sampled);
             Assert.Equal(1.0, calledWith);
 
             shouldReturn = true;
-            isSampled = sampler.IsSampled(new TraceId(), "op");
+            isSampled = sampler.IsSampled(traceId, "op");
 
             Assert.True(isSampled.Sampled);
             Assert.Equal(1.0, calledWith);

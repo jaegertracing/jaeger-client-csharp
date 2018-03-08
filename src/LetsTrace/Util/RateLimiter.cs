@@ -14,11 +14,12 @@ namespace LetsTrace.Util
     // as bytes/second, and calling CheckCredit() with the actual message size.
     public class RateLimiter : IRateLimiter
     {
-        private double _creditsPerMillisecond;
+        private readonly double _creditsPerMillisecond;
+        private readonly double _maxBalance;
+        private readonly IClock _clock;
+
         private double _balance;
-        private double _maxBalance;
         private long _lastTick;
-        private IClock _clock;
 
         public RateLimiter(double creditsPerSecond, double maxBalance)
             : this(creditsPerSecond, maxBalance, new Clock())
@@ -26,10 +27,11 @@ namespace LetsTrace.Util
 
         public RateLimiter(double creditsPerSecond, double maxBalance, IClock clock)
         {
-            _clock = clock;
-            _balance = maxBalance;
-            _maxBalance = maxBalance;
             _creditsPerMillisecond = creditsPerSecond / 1000;
+            _maxBalance = maxBalance;
+            _clock = clock;
+
+            _balance = maxBalance;
             _lastTick = _clock.CurrentTime().ToUnixTimeMilliseconds();
         }
 

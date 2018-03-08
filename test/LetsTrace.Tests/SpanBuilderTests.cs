@@ -74,7 +74,7 @@ namespace LetsTrace.Tests
             var sampler = Substitute.For<ISampler>();
             var metrics = Substitute.For<IMetrics>();
 
-            var traceId = new TraceId{ High = 4867928, Low = 543789 };
+            var traceId = new TraceId(4867928, 543789);
             var parentSpanId = new SpanId(139546);
             var baggage = new Dictionary<string, string> { { "key", "value" } };
 
@@ -241,7 +241,7 @@ namespace LetsTrace.Tests
             var metrics = Substitute.For<IMetrics>();
             ContextFlags flags = (ContextFlags)2;
 
-            var traceId = new TraceId{ High = 4867928, Low = 543789 };
+            var traceId = new TraceId(4867928, 543789);
             var parentSpanId = new SpanId(139546);
             var baggage = new Dictionary<string, string> { { "key", "value" } };
 
@@ -335,7 +335,7 @@ namespace LetsTrace.Tests
             var operationName = "testing";
             var activeScope = Substitute.For<IScope>();
             var activeSpan = Substitute.For<ISpan>();
-            var activeTraceId = new TraceId { Low = 34967, High = 31298 };
+            var activeTraceId = new TraceId(34967, 31298);
             var activeSpanId = new SpanId(3829);
             var activeContext = new SpanContext(activeTraceId, activeSpanId);
 
@@ -376,7 +376,7 @@ namespace LetsTrace.Tests
             var activeScope = Substitute.For<IScope>();
             var activeSpan = Substitute.For<ISpan>();
             var activeContext = Substitute.For<ILetsTraceSpanContext>();
-            var activeTraceId = new TraceId { Low = 34967, High = 31298 };
+            var activeTraceId = new TraceId(34967, 31298);
             var activeSpanId = new SpanId(3829);
 
             sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, Field>()));
@@ -421,7 +421,7 @@ namespace LetsTrace.Tests
             var activeScope = Substitute.For<IScope>();
             var activeSpan = Substitute.For<ISpan>();
             var activeContext = Substitute.For<ILetsTraceSpanContext>();
-            var activeTraceId = new TraceId { Low = 34967, High = 31298 };
+            var activeTraceId = new TraceId(34967, 31298);
             var activeSpanId = new SpanId(3829);
 
             sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, Field>()));

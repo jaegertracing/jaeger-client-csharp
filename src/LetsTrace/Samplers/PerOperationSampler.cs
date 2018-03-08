@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using LetsTrace.Samplers.HTTP;
 using Microsoft.Extensions.Logging;
+using SamplerDictionary = System.Collections.Generic.Dictionary<string, LetsTrace.Samplers.IGuaranteedThroughputProbabilisticSampler>;
 
 namespace LetsTrace.Samplers
 {
@@ -11,13 +12,13 @@ namespace LetsTrace.Samplers
     // for each operation
     public class PerOperationSampler : ISampler
     {
-        private int _maxOperations;
-        private double _samplingRate;
+        private readonly int _maxOperations;
+        private readonly double _samplingRate;
         private double _lowerBound;
-        private Dictionary<string, IGuaranteedThroughputProbabilisticSampler> _samplers = new Dictionary<string, IGuaranteedThroughputProbabilisticSampler>();
+        private readonly ILogger<PerOperationSampler> _logger;
+        private readonly ISamplerFactory _factory;
+        private readonly SamplerDictionary _samplers = new SamplerDictionary();
         private ISampler _defaultSampler;
-        private ISamplerFactory _factory;
-        private ILogger<PerOperationSampler> _logger;
 
         public PerOperationSampler(int maxOperations, double samplingRate, double lowerBound, ILoggerFactory loggerFactory)
             : this(maxOperations, samplingRate, lowerBound, loggerFactory, new SamplerFactory())
@@ -25,11 +26,11 @@ namespace LetsTrace.Samplers
 
         internal PerOperationSampler(int maxOperations, double samplingRate, double lowerBound, ILoggerFactory loggerFactory, ISamplerFactory samplerFactory)
         {
-            _logger = loggerFactory?.CreateLogger<PerOperationSampler>() ?? throw new ArgumentNullException(nameof(loggerFactory));
-            _factory = samplerFactory ?? throw new ArgumentNullException(nameof(samplerFactory));
             _maxOperations = maxOperations;
             _samplingRate = samplingRate;
             _lowerBound = lowerBound;
+            _logger = loggerFactory?.CreateLogger<PerOperationSampler>() ?? throw new ArgumentNullException(nameof(loggerFactory));
+            _factory = samplerFactory ?? throw new ArgumentNullException(nameof(samplerFactory));
             _defaultSampler = _factory.NewProbabilisticSampler(_samplingRate);
         }
 
@@ -56,7 +57,7 @@ namespace LetsTrace.Samplers
             var defaultSampler = _factory.NewProbabilisticSampler(strategies.DefaultSamplingProbability);
             if (!defaultSampler.Equals(_defaultSampler))
             {
-                this._defaultSampler = defaultSampler;
+                _defaultSampler = defaultSampler;
                 isUpdated = true;
             }
 

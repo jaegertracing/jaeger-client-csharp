@@ -15,15 +15,15 @@ namespace LetsTrace
     {
         private T _value;
         public T Value { 
-            get { return _value; } 
+            get => _value;
             set {
                 _value = value;
                 TypeCode = Type.GetTypeCode(value.GetType());
             }
         }
 
-        public override string StringValue { get { return _value.ToString(); } }
+        public override string StringValue => _value.ToString();
 
-        public bool Equals(Field<T> other) => Value is T && Value.Equals(other.Value) && base.Equals(other);
+        public bool Equals(Field<T> other) => Value != null && Value.Equals(other.Value) && base.Equals(other);
     }
 }

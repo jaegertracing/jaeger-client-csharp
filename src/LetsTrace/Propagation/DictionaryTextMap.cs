@@ -6,8 +6,8 @@ namespace LetsTrace.Propagation
 {
     // TODO: make an extension method to convert dictionaries to DictionaryTextMap
     public class DictionaryTextMap : ITextMap
-    {   
-        private IDictionary<string, string> _map { get; }
+    {
+        private readonly IDictionary<string, string> _map;
 
         public DictionaryTextMap(IDictionary<string, string> map = null)
         {

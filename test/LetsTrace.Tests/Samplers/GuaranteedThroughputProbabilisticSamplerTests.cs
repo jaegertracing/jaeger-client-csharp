@@ -27,12 +27,13 @@ namespace LetsTrace.Tests.Samplers
         {
             var probabilisticSampler = Substitute.For<IProbabilisticSampler>();
             var rateLimitingSampler = Substitute.For<IRateLimitingSampler>();
+            var traceId = new TraceId(1);
             var operationName = "op";
             var sampler = new GuaranteedThroughputProbabilisticSampler(probabilisticSampler, rateLimitingSampler);
 
-            probabilisticSampler.IsSampled(Arg.Any<TraceId>(), Arg.Is<string>(o => o == operationName)).Returns((true, new Dictionary<string, Field>()));
+            probabilisticSampler.IsSampled(Arg.Is<TraceId>(t => t == traceId), Arg.Is<string>(o => o == operationName)).Returns((true, new Dictionary<string, Field>()));
 
-            sampler.IsSampled(new TraceId(), operationName);
+            sampler.IsSampled(traceId, operationName);
             sampler.Dispose();
 
             probabilisticSampler.Received(1).IsSampled(Arg.Any<TraceId>(), Arg.Any<string>());
@@ -46,13 +47,14 @@ namespace LetsTrace.Tests.Samplers
         {
             var probabilisticSampler = Substitute.For<IProbabilisticSampler>();
             var rateLimitingSampler = Substitute.For<IRateLimitingSampler>();
+            var traceId = new TraceId(1);
             var operationName = "op";
             var sampler = new GuaranteedThroughputProbabilisticSampler(probabilisticSampler, rateLimitingSampler);
 
-            probabilisticSampler.IsSampled(Arg.Any<TraceId>(), Arg.Is<string>(o => o == operationName)).Returns((false, new Dictionary<string, Field>()));
-            rateLimitingSampler.IsSampled(Arg.Any<TraceId>(), Arg.Is<string>(o => o == operationName));
+            probabilisticSampler.IsSampled(Arg.Is<TraceId>(t => t == traceId), Arg.Is<string>(o => o == operationName)).Returns((false, new Dictionary<string, Field>()));
+            rateLimitingSampler.IsSampled(Arg.Is<TraceId>(t => t == traceId), Arg.Is<string>(o => o == operationName));
 
-            sampler.IsSampled(new TraceId(), operationName);
+            sampler.IsSampled(traceId, operationName);
 
             probabilisticSampler.Received(1).IsSampled(Arg.Any<TraceId>(), Arg.Any<string>());
             rateLimitingSampler.Received(1).IsSampled(Arg.Any<TraceId>(), Arg.Any<string>());

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using LetsTrace.Samplers;
+using NSubstitute;
 using Xunit;
 
 namespace LetsTrace.Tests.Samplers
@@ -16,7 +17,7 @@ namespace LetsTrace.Tests.Samplers
             };
             var sampler = new ConstSampler(sample);
 
-            var isSampled = sampler.IsSampled(new TraceId(), "op");
+            var isSampled = sampler.IsSampled(new TraceId(1), "op");
 
             Assert.Equal(sample, sampler.Decision);
             Assert.Equal(sample, isSampled.Sampled);

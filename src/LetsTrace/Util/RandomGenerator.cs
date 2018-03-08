@@ -4,12 +4,12 @@ namespace LetsTrace.Util
 {
     public class RandomGenerator
     {
-        public static readonly Random random = new Random();
+        private static readonly Random Random = new Random();
 
-        public static UInt64 RandomId()
+        public static ulong RandomId()
         {
             var bytes = new byte[8];
-            random.NextBytes(bytes);
+            Random.NextBytes(bytes);
             return BitConverter.ToUInt64(bytes, 0);
         }
     }

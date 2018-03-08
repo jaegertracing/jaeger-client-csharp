@@ -102,8 +102,8 @@ namespace LetsTrace
         public sealed class Builder
         {
             private readonly string _serviceName;
-            private ILoggerFactory _loggerFactory;
             private readonly Dictionary<string, Field> _initialTags = new Dictionary<string, Field>();
+            private ILoggerFactory _loggerFactory;
             private IScopeManager _scopeManager;
             private IPropagationRegistry _propagationRegistry;
             private ISamplingManager _samplingManager;
@@ -263,7 +263,7 @@ namespace LetsTrace
                 return new Tracer(_serviceName, _initialTags, _scopeManager, _loggerFactory, _propagationRegistry, _sampler, _reporter, _metrics);
             }
 
-            public static string CheckValidServiceName(String serviceName)
+            private static string CheckValidServiceName(String serviceName)
             {
                 if (string.IsNullOrEmpty(serviceName?.Trim()))
                 {

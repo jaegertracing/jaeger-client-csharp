@@ -17,13 +17,14 @@ namespace LetsTrace.Samplers
         internal readonly ISamplingManager _samplingManager;
 
         private readonly int _maxOperations = 2000;
+
         private readonly string _serviceName;
         private readonly ILoggerFactory _loggerFactory;
         private readonly ILogger _logger;
-        private readonly Task _pollTimer;
         private readonly IMetrics _metrics;
         private ISampler _sampler;
         private readonly CancellationTokenSource _cancellationTokenSource;
+        private readonly Task _pollTimer;
 
         private RemoteControlledSampler(string serviceName, ISamplingManager samplingManager, ILoggerFactory loggerFactory, IMetrics metrics, ISampler sampler, int poolingIntervalMs)
         {
@@ -112,9 +113,9 @@ namespace LetsTrace.Samplers
 
             lock (this)
             {
-                if (!this._sampler.Equals(sampler))
+                if (!_sampler.Equals(sampler))
                 {
-                    this._sampler = sampler;
+                    _sampler = sampler;
                     _metrics.SamplerUpdated.Inc(1);
                 }
             }

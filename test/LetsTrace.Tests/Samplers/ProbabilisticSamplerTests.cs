@@ -44,12 +44,12 @@ namespace LetsTrace.Tests.Samplers
                 { Constants.SAMPLER_PARAM_TAG_KEY, new Field<double> { Value = samplingRate } }
             };
             var sampler = new ProbabilisticSampler(samplingRate);
-            var isSampled = sampler.IsSampled(new TraceId { Low = (UInt64) middleId + 10 }, "op");
+            var isSampled = sampler.IsSampled(new TraceId((ulong)(middleId + 10)), "op");
 
             Assert.Equal(expectedTags, isSampled.Tags);
             Assert.False(isSampled.Sampled);
 
-            isSampled = sampler.IsSampled(new TraceId { Low = (UInt64) middleId - 20 }, "op");
+            isSampled = sampler.IsSampled(new TraceId((ulong)(middleId - 20)), "op");
             Assert.Equal(expectedTags, isSampled.Tags);
             Assert.True(isSampled.Sampled);
         }

@@ -10,14 +10,15 @@ namespace LetsTrace
 {
     public class SpanBuilder : ISpanBuilder
     {
-        private ILetsTraceTracer _tracer;
-        private string _operationName;
-        private bool _ignoreActiveSpan = false;
-        private List<Reference> _references = new List<Reference>();
-        private ISampler _sampler;
-        private IMetrics _metrics;
+        private readonly ILetsTraceTracer _tracer;
+        private readonly string _operationName;
+        private readonly ISampler _sampler;
+        private readonly IMetrics _metrics;
+        private readonly List<Reference> _references;
+        private readonly Dictionary<string, Field> _tags;
+
+        private bool _ignoreActiveSpan;
         private DateTimeOffset? _startTimestamp;
-        private Dictionary<string, Field> _tags = new Dictionary<string, Field>();
 
         public SpanBuilder(ILetsTraceTracer tracer, string operationName, ISampler sampler, IMetrics metrics)
         {
@@ -25,6 +26,8 @@ namespace LetsTrace
             _operationName = operationName ?? throw new ArgumentNullException(nameof(operationName));
             _sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
             _metrics = metrics ?? throw new ArgumentNullException(nameof(metrics));
+            _references = new List<Reference>();
+            _tags = new Dictionary<string, Field>();
         }
 
         public ISpanBuilder AddReference(string referenceType, ISpanContext referencedContext)
@@ -107,11 +110,7 @@ namespace LetsTrace
 
         private SpanContext CreateChildSpanContext()
         {
-            var traceId = new TraceId
-            {
-                /*High = RandomGenerator.RandomId(),*/
-                Low = RandomGenerator.RandomId()
-            };
+            var traceId = new TraceId(RandomGenerator.RandomId(), RandomGenerator.RandomId());
             var parentId = new SpanId(0);
             var spanId = new SpanId(traceId.Low);
             var baggage = new Dictionary<string, string>();

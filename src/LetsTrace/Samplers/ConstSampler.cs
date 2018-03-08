@@ -6,7 +6,8 @@ namespace LetsTrace.Samplers
     public class ConstSampler : ISampler
     {
         public bool Decision { get; }
-        private Dictionary<string, Field> _tags;
+
+        private readonly Dictionary<string, Field> _tags;
 
         public ConstSampler(bool sample)
         {

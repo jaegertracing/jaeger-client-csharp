@@ -65,17 +65,17 @@ namespace LetsTrace
                 case TypeCode.Boolean:
                     return kv.Value.ToField<bool>(kv.Key);
                 case TypeCode.UInt16:
-                    return kv.Value.ToField<UInt16>(kv.Key);
+                    return kv.Value.ToField<ushort>(kv.Key);
                 case TypeCode.UInt32:
-                    return kv.Value.ToField<UInt32>(kv.Key);
+                    return kv.Value.ToField<uint>(kv.Key);
                 case TypeCode.UInt64:
-                    return kv.Value.ToField<UInt64>(kv.Key);
+                    return kv.Value.ToField<ulong>(kv.Key);
                 case TypeCode.Int16:
-                    return kv.Value.ToField<Int16>(kv.Key);
+                    return kv.Value.ToField<short>(kv.Key);
                 case TypeCode.Int32:
-                    return kv.Value.ToField<Int32>(kv.Key);
+                    return kv.Value.ToField<int>(kv.Key);
                 case TypeCode.Int64:
-                    return kv.Value.ToField<Int64>(kv.Key);
+                    return kv.Value.ToField<long>(kv.Key);
                 default:
                     return new Field<string> { Key = kv.Key, Value = kv.Value.ToString() };
             }

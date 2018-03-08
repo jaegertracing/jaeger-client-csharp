@@ -7,8 +7,8 @@ namespace LetsTrace.Propagation
 {
     public class PropagationRegistry : IPropagationRegistry
     {
-        internal Dictionary<string, IInjector> _injectors { get; } = new Dictionary<string, IInjector>();
-        internal Dictionary<string, IExtractor> _extractors { get; } = new Dictionary<string, IExtractor>();
+        internal readonly Dictionary<string, IInjector> _injectors = new Dictionary<string, IInjector>();
+        internal readonly Dictionary<string, IExtractor> _extractors = new Dictionary<string, IExtractor>();
 
         public void AddCodec<TCarrier>(IFormat<TCarrier> format, IInjector injector, IExtractor extractor)
         {

@@ -116,7 +116,7 @@ namespace LetsTrace.Tests
         [Fact]
         public void Tracer_SetBaggageItem_ShouldAddAndSetBaggageItems()
         {
-            var spanContext = new SpanContext(new TraceId());
+            var spanContext = new SpanContext(new TraceId(1));
 
             var span = new Span(_builtTracer, "testing", spanContext);
 

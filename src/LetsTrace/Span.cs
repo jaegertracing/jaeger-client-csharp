@@ -38,8 +38,7 @@ namespace LetsTrace
             }
 
             OperationName = operationName;
-            this.Context = context ?? throw new ArgumentNullException(nameof(context));
-
+            Context = context ?? throw new ArgumentNullException(nameof(context));
             StartTimestamp = startTimestamp ?? Tracer.Clock.CurrentTime();
             Tags = tags ?? new Dictionary<string, Field>();
             References = references ?? new List<Reference>();

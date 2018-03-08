@@ -8,12 +8,12 @@ namespace LetsTrace.Propagation
 {
     public class TextMapPropagator : IInjector, IExtractor
     {
-        private IHeadersConfig _headersConfig { get; }
+        private readonly IHeadersConfig _headersConfig;
 
         // functions to encode and decode strings so that they are safe over
         // the wire
-        private Func<string, string> _encodeValue { get; }
-        private Func<string, string> _decodeValue { get; }
+        private readonly Func<string, string> _encodeValue;
+        private readonly Func<string, string> _decodeValue;
         
         public TextMapPropagator(IHeadersConfig headersConfig, Func<string, string> encodeValue, Func<string, string> decodeValue)
         {

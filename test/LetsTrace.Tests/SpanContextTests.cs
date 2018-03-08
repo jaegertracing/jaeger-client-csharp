@@ -9,7 +9,7 @@ namespace LetsTrace.Tests
         [Fact]
         public void SpanContext_Constructor_ShouldSetAllItemsPassedIn()
         {
-            var traceId = new TraceId { High = 1, Low = 2 };
+            var traceId = new TraceId(1, 2);
             var spanId = new SpanId(3);
             var parentId = new SpanId(4);
             var baggage = new Dictionary<string, string> { { "key", "value" } };
@@ -34,8 +34,7 @@ namespace LetsTrace.Tests
         [Fact]
         public void SpanContext_Constructor_ShouldDefaultToEmptyBaggage_AndSampledFlag()
         {
-            var traceId = new TraceId { High = 1, Low = 2 };
-
+            var traceId = new TraceId(1, 2);
             var t2 = new SpanContext(traceId);
             Assert.Equal(new Dictionary<string, string>(), t2.GetBaggageItems());
             Assert.Equal(ContextFlags.Sampled, t2.Flags);
@@ -44,8 +43,7 @@ namespace LetsTrace.Tests
         [Fact]
         public void SpanContext_Constructor_ShouldLetNullSpanAndParentIdsIn()
         {
-            var traceId = new TraceId { High = 1, Low = 2 };
-
+            var traceId = new TraceId(1, 2);
             var t3 = new SpanContext(traceId, null, null);
             Assert.Null(t3.SpanId);
             Assert.Null(t3.ParentId);
@@ -54,7 +52,7 @@ namespace LetsTrace.Tests
         [Fact]
         public void SpanContext_ToString()
         {
-            var traceId = new TraceId { High = 1, Low = 2 };
+            var traceId = new TraceId(1, 2);
             var spanId = new SpanId(3);
             var parentId = new SpanId(4);
             ContextFlags flags = (ContextFlags)3;
@@ -122,7 +120,7 @@ namespace LetsTrace.Tests
         [Fact]
         public void SpanContext_SetBaggageItems()
         {
-            var traceId = new TraceId { High = 1, Low = 2 };
+            var traceId = new TraceId(1, 2);
             var spanId = new SpanId(3);
             var parentId = new SpanId(4);
             var baggage = new Dictionary<string, string> { { "key", "value" } };
