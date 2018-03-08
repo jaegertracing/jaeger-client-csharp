@@ -41,6 +41,11 @@ namespace LetsTrace
             Reporter = reporter;
             Metrics = metrics;
             Clock = new Clock();
+
+            if (tags.TryGetValue(Constants.TRACER_IP_TAG_KEY, out var field))
+            {
+                HostIPv4 = field.StringValue;
+            } 
         }
 
         private static string GetVersion()
