@@ -18,8 +18,8 @@ namespace LetsTrace.Samplers
     // of 1.0 / (60 * 10) will sample an operation at least once every 10 minutes.
     public class GuaranteedThroughputProbabilisticSampler : IGuaranteedThroughputProbabilisticSampler
     {
-        private IProbabilisticSampler _probabilisticSampler;
-        private IRateLimitingSampler _rateLimitingSampler;
+        internal IProbabilisticSampler _probabilisticSampler;
+        internal IRateLimitingSampler _rateLimitingSampler;
         private Dictionary<string, Field> _tags;
 
         public GuaranteedThroughputProbabilisticSampler(double samplingRate, double lowerBound)
@@ -45,7 +45,7 @@ namespace LetsTrace.Samplers
         [MethodImpl(MethodImplOptions.Synchronized)]
         public bool Update(double samplingRate, double lowerBound)
         {
-            bool isUpdated = false;
+            var isUpdated = false;
             if (Math.Abs(samplingRate - _probabilisticSampler.SamplingRate) > double.Epsilon)
             {
                 _probabilisticSampler = new ProbabilisticSampler(samplingRate);

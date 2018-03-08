@@ -33,9 +33,12 @@ namespace LetsTrace.Tests.Samplers
             probabilisticSampler.IsSampled(Arg.Any<TraceId>(), Arg.Is<string>(o => o == operationName)).Returns((true, new Dictionary<string, Field>()));
 
             sampler.IsSampled(new TraceId(), operationName);
+            sampler.Dispose();
 
             probabilisticSampler.Received(1).IsSampled(Arg.Any<TraceId>(), Arg.Any<string>());
             rateLimitingSampler.Received(1).IsSampled(Arg.Any<TraceId>(), Arg.Any<string>());
+            probabilisticSampler.Received(1).Dispose();
+            rateLimitingSampler.Received(1).Dispose();
         }
 
         [Fact]
@@ -53,6 +56,46 @@ namespace LetsTrace.Tests.Samplers
 
             probabilisticSampler.Received(1).IsSampled(Arg.Any<TraceId>(), Arg.Any<string>());
             rateLimitingSampler.Received(1).IsSampled(Arg.Any<TraceId>(), Arg.Any<string>());
+        }
+
+        [Fact]
+        public void GuaranteedThroughputProbabilisticSampler_UsesDefaultSamplers()
+        {
+            var samplingRate = 0.4;
+            double lowerBound = 5;
+
+            var sampler = new GuaranteedThroughputProbabilisticSampler(samplingRate, lowerBound);
+
+            Assert.IsType<ProbabilisticSampler>(sampler._probabilisticSampler);
+            Assert.IsType<RateLimitingSampler>(sampler._rateLimitingSampler);
+            Assert.Equal(samplingRate, sampler._probabilisticSampler.SamplingRate);
+            Assert.Equal(lowerBound, sampler._rateLimitingSampler.MaxTracesPerSecond);
+        }
+
+        [Fact]
+        public void GuaranteedThroughputProbabilisticSampler_Update_ShouldNotCreateNewSamplersWhenTheValuesDoNotChange()
+        {
+            var samplingRate = 0.4;
+            double lowerBound = 5;
+
+            var sampler = new GuaranteedThroughputProbabilisticSampler(samplingRate, lowerBound);
+            var updated = sampler.Update(samplingRate, lowerBound);
+
+            Assert.False(updated);
+        }
+
+        [Fact]
+        public void GuaranteedThroughputProbabilisticSampler_Update_ShouldCreateNewSamplersWhenTheValuesChange()
+        {
+            var samplingRate = 0.4;
+            double lowerBound = 5;
+
+            var sampler = new GuaranteedThroughputProbabilisticSampler(0.2, 4);
+            var updated = sampler.Update(samplingRate, lowerBound);
+
+            Assert.True(updated);
+            Assert.Equal(samplingRate, sampler._probabilisticSampler.SamplingRate);
+            Assert.Equal(lowerBound, sampler._rateLimitingSampler.MaxTracesPerSecond);
         }
     }
 }

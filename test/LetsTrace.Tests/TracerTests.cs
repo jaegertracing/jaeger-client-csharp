@@ -13,17 +13,17 @@ namespace LetsTrace.Tests
 {
     public class TracerTests
     {
-        private ILetsTraceTracer _builtTracer;
-        private IReporter _mockReporter;
-        private string _operationName;
-        private string _serviceName;
-        private ISampler _mockSampler;
-        private IScopeManager _mockScopeManager;
-        private IInjector _mockInjector;
-        private IExtractor _mockExtractor;
-        private IFormat<string> _format;
-        private IPropagationRegistry _mockPropagationRegistry;
-        private string _ip;
+        private readonly ILetsTraceTracer _builtTracer;
+        private readonly IReporter _mockReporter;
+        private readonly string _operationName;
+        private readonly string _serviceName;
+        private readonly ISampler _mockSampler;
+        private readonly IScopeManager _mockScopeManager;
+        private readonly IInjector _mockInjector;
+        private readonly IExtractor _mockExtractor;
+        private readonly IFormat<string> _format;
+        private readonly IPropagationRegistry _propagationRegistry;
+        private readonly string _ip;
 
         public TracerTests()
         {
@@ -35,15 +35,15 @@ namespace LetsTrace.Tests
             _mockInjector = Substitute.For<IInjector>();
             _mockExtractor = Substitute.For<IExtractor>();
             _format = new Builtin<string>("format");
-            _mockPropagationRegistry = new PropagationRegistry();
-            _mockPropagationRegistry.AddCodec(_format, _mockInjector, _mockExtractor);
+            _propagationRegistry = new PropagationRegistry();
+            _propagationRegistry.AddCodec(_format, _mockInjector, _mockExtractor);
             _ip = "192.168.1.1";
 
             _builtTracer = new Tracer.Builder(_serviceName)
                 .WithReporter(_mockReporter)
                 .WithSampler(_mockSampler)
                 .WithScopeManager(_mockScopeManager)
-                .WithPropagationRegistry(_mockPropagationRegistry)
+                .WithPropagationRegistry(_propagationRegistry)
                 .WithTag(Constants.TRACER_IP_TAG_KEY, _ip)
                 .Build();
         }

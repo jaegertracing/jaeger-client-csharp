@@ -45,5 +45,16 @@ namespace LetsTrace.Tests.Samplers
             Assert.Equal(1.0, calledWith);
             Assert.Equal(expectedTags, isSampled.Tags);
         }
+
+        [Fact]
+        public void RateLimitingSampler_UsesDefaultRateLimiter()
+        {
+            var maxTracesPerSecond = 5.4;
+            var sampler = new RateLimitingSampler(maxTracesPerSecond);
+
+            Assert.Equal(maxTracesPerSecond, sampler.MaxTracesPerSecond);
+            Assert.IsType<RateLimiter>(sampler._rateLimiter);
+
+        }
     }
 }

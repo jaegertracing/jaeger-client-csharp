@@ -1,7 +1,9 @@
 ﻿using System;
+using LetsTrace.Metrics;
 using LetsTrace.Propagation;
 using LetsTrace.Reporters;
 using LetsTrace.Samplers;
+using LetsTrace.Transport;
 using NSubstitute;
 using OpenTracing;
 using OpenTracing.Propagation;
@@ -12,6 +14,30 @@ namespace LetsTrace.Tests
 {
     public class TracerBuilderTests
     {
+        private readonly Tracer.Builder _baseBuilder;
+        private readonly IReporter _mockReporter;
+        private readonly string _operationName;
+        private readonly string _serviceName;
+        private readonly ISampler _mockSampler;
+        private readonly IScopeManager _mockScopeManager;
+        private readonly IPropagationRegistry _mockPropagationRegistry;
+        private readonly IMetrics _mockMetrics;
+        private readonly ITransport _mockTransport;
+
+        public TracerBuilderTests()
+        {
+            _mockReporter = Substitute.For<IReporter>();
+            _operationName = "GET::api/values/";
+            _serviceName = "testingService";
+            _mockSampler = Substitute.For<ISampler>();
+            _mockScopeManager = Substitute.For<IScopeManager>();
+            _mockPropagationRegistry = Substitute.For<IPropagationRegistry>();
+            _mockMetrics = Substitute.For<IMetrics>();
+            _mockTransport = Substitute.For<ITransport>();
+
+            _baseBuilder = new Tracer.Builder(_serviceName);
+        }
+
         [Fact]
         public void Builder_Constructor_ShouldThrowWhenServiceNameIsNull()
         {
@@ -20,29 +46,53 @@ namespace LetsTrace.Tests
         }
 
         [Fact]
-        public void Builder_ShouldUseOpenTracingScopeManagerWhenScopeManagerIsNull()
+        public void Builder_ShouldPassAlongAllTracerConstructorVars()
         {
-            var reporter = Substitute.For<IReporter>();
-            var sampler = Substitute.For<ISampler>();
+            var stringTagName = "stringTagName";
+            var stringTagValue = "stringTagValue";
+            var boolTagName = "boolTagName";
+            var boolTagValue = true;
+            var doubleTagName = "doubleTagName";
+            var doubleTagValue = 3D;
+            var intTagName = "intTagName";
+            var intTagValue = 16;
 
-            var tracer = new Tracer.Builder("testingService")
-                .WithReporter(reporter)
-                .WithSampler(sampler)
+            var tracer = _baseBuilder
+                .WithReporter(_mockReporter)
+                .WithSampler(_mockSampler)
+                .WithScopeManager(_mockScopeManager)
+                .WithTag(stringTagName, stringTagValue)
+                .WithTag(boolTagName, boolTagValue)
+                .WithTag(doubleTagName, doubleTagValue)
+                .WithTag(intTagName, intTagValue)
+                .WithPropagationRegistry(_mockPropagationRegistry)
+                .WithMetrics(_mockMetrics)
                 .Build();
 
-            Assert.True(tracer.ScopeManager is AsyncLocalScopeManager);
+            Assert.Equal(_serviceName, tracer.ServiceName);
+            Assert.Equal(stringTagValue, tracer.Tags[stringTagName].StringValue);
+            Assert.Equal(boolTagValue, tracer.Tags[boolTagName].ValueAs<bool>());
+            Assert.Equal(doubleTagValue, tracer.Tags[doubleTagName].ValueAs<double>());
+            Assert.Equal(intTagValue, tracer.Tags[intTagName].ValueAs<int>());
+            Assert.Equal(_mockScopeManager, tracer.ScopeManager);
+            Assert.Equal(_mockPropagationRegistry, tracer.PropagationRegistry);
+            Assert.Equal(_mockSampler, tracer.Sampler);
+            Assert.Equal(_mockReporter, tracer.Reporter);
+            Assert.Equal(_mockMetrics, tracer.Metrics);
+        }
+
+        [Fact]
+        public void Builder_ShouldUseOpenTracingScopeManagerWhenScopeManagerIsNull()
+        {
+            Assert.True(_baseBuilder.Build().ScopeManager is AsyncLocalScopeManager);
         }
 
         [Fact]
         public void Builder_ShouldSetupDefaultInjectorsAndExtractors()
         {
-            var reporter = Substitute.For<IReporter>();
-            var sampler = Substitute.For<ISampler>();
             var scopeManager = Substitute.For<IScopeManager>();
 
-            var tracer = new Tracer.Builder("testingService")
-                .WithReporter(reporter)
-                .WithSampler(sampler)
+            var tracer = _baseBuilder
                 .WithScopeManager(scopeManager)
                 .Build();
 
@@ -56,31 +106,43 @@ namespace LetsTrace.Tests
         }
 
         [Fact]
-        public void Builder_ShouldUsePassedInPropagationRegistry()
+        public void Builder_ShouldUsePassedInTransportAndMetricsForReporter()
         {
-            var reporter = Substitute.For<IReporter>();
-            var sampler = Substitute.For<ISampler>();
-            var scopeManager = Substitute.For<IScopeManager>();
-            var pReg = Substitute.For<IPropagationRegistry>();
-
-            IFormat<string> format = new Builtin<string>("format");
-            var carrier = "carrier, yo";
-            pReg.Extract(Arg.Is<IFormat<string>>(f => f == format), Arg.Is<string>(c => c == carrier));
-            var spanContext = Substitute.For<ILetsTraceSpanContext>();
-            pReg.Inject(Arg.Is<ISpanContext>(sc => sc == spanContext), Arg.Is<IFormat<string>>(f => f == format), Arg.Is<string>(c => c == carrier));
-
-            var tracer = new Tracer.Builder("testingService")
-                .WithReporter(reporter)
-                .WithSampler(sampler)
-                .WithScopeManager(scopeManager)
-                .WithPropagationRegistry(pReg)
+            var tracer = _baseBuilder
+                .WithTransport(_mockTransport)
+                .WithMetrics(_mockMetrics)
                 .Build();
 
-            tracer.Extract(format, carrier);
-            tracer.Inject(spanContext, format, carrier);
+            Assert.Equal(_mockTransport, ((RemoteReporter)tracer.Reporter)._transport);
+            Assert.Equal(_mockMetrics, ((RemoteReporter)tracer.Reporter)._metrics);
+        }
 
-            pReg.Received(1).Extract(Arg.Any<IFormat<string>>(), Arg.Any<string>());
-            pReg.Received(1).Inject(Arg.Any<ISpanContext>(), Arg.Any<IFormat<string>>(), Arg.Any<string>());
+        [Fact]
+        public void Builder_ShouldUseSamplingManagerWhenSamplerIsNull()
+        {
+            var samplingManager = Substitute.For<ISamplingManager>();
+
+            var tracer = _baseBuilder
+                .WithSamplingManager(samplingManager)
+                .Build();
+
+            Assert.Equal(samplingManager, ((RemoteControlledSampler)tracer.Sampler)._samplingManager);
+        }
+
+
+        [Fact]
+        public void Builder_WithMetricsFactory_ShouldCallCreateMetrics()
+        {
+            var metricsFactory = Substitute.For<IMetricsFactory>();
+            var metrics = Substitute.For<IMetrics>();
+            metricsFactory.CreateMetrics().Returns(metrics);
+
+            var tracer = _baseBuilder
+                .WithMetricsFactory(metricsFactory)
+                .Build();
+
+            Assert.Equal(metrics, tracer.Metrics);
+            metricsFactory.Received(1).CreateMetrics();
         }
     }
 }

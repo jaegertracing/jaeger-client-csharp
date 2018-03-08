@@ -18,7 +18,7 @@ namespace LetsTrace.Samplers
     // sequential requests can be sampled each second.
     public class RateLimitingSampler : IRateLimitingSampler
     {
-        private IRateLimiter _rateLimiter;
+        internal IRateLimiter _rateLimiter;
         private Dictionary<string, Field> _tags;
 
         public double MaxTracesPerSecond { get; }

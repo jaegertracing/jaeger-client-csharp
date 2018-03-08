@@ -11,13 +11,13 @@ namespace LetsTrace.Samplers
 {
     public class RemoteControlledSampler : ISampler
     {
-
         // TODO: Constants!
         private const int DEFAULT_POLLING_INTERVAL_MS = 60000;
 
+        internal readonly ISamplingManager _samplingManager;
+
         private readonly int _maxOperations = 2000;
         private readonly string _serviceName;
-        private readonly ISamplingManager _samplingManager;
         private readonly ILoggerFactory _loggerFactory;
         private readonly ILogger _logger;
         private readonly Task _pollTimer;

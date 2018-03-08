@@ -14,9 +14,10 @@ namespace LetsTrace.Reporters
         public static readonly TimeSpan REMOTE_REPORTER_DEFAULT_FLUSH_INTERVAL_MS = TimeSpan.FromMilliseconds(100);
         public const int REMOTE_REPORTER_DEFAULT_MAX_QUEUE_SIZE = 100;
 
-        private readonly ITransport _transport;
+        internal readonly ITransport _transport;
+        internal readonly IMetrics _metrics;
+
         private readonly ILogger _logger;
-        private readonly IMetrics _metrics;
 
         private RemoteReporter(ITransport transport, ILoggerFactory loggerFactory, IMetrics metrics)
         {
