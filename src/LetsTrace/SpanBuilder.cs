@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using LetsTrace.Metrics;
 using LetsTrace.Samplers;
 using LetsTrace.Util;
 using OpenTracing;
@@ -14,14 +15,16 @@ namespace LetsTrace
         private bool _ignoreActiveSpan = false;
         private List<Reference> _references = new List<Reference>();
         private ISampler _sampler;
+        private IMetrics _metrics;
         private DateTimeOffset? _startTimestamp;
         private Dictionary<string, Field> _tags = new Dictionary<string, Field>();
 
-        public SpanBuilder(ILetsTraceTracer tracer, string operationName, ISampler sampler)
+        public SpanBuilder(ILetsTraceTracer tracer, string operationName, ISampler sampler, IMetrics metrics)
         {
             _tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
             _operationName = operationName ?? throw new ArgumentNullException(nameof(operationName));
             _sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
+            _metrics = metrics ?? throw new ArgumentNullException(nameof(metrics));
         }
 
         public ISpanBuilder AddReference(string referenceType, ISpanContext referencedContext)
@@ -57,12 +60,6 @@ namespace LetsTrace
         public ISpan Start()
         {
             SpanContext parent = null;
-            TraceId traceId = null;
-            SpanId parentId = null;
-            SpanId spanId = null;
-            Dictionary<string, string> baggage = null;
-            ContextFlags flags = ContextFlags.None;
-
             foreach(var reference in _references)
             {
                 if (reference.Type == References.ChildOf) {
@@ -71,29 +68,73 @@ namespace LetsTrace
                 }
             }
 
-            if (parent != null)
+            var spanContext = parent != null 
+                ? CreateRootSpanContext(parent) 
+                : CreateChildSpanContext();
+
+            var span = new Span(_tracer, _operationName, spanContext, _startTimestamp, _tags, _references);
+            if (spanContext.IsSampled)
             {
-                traceId = parent.TraceId;
-                parentId = parent.SpanId;
-                spanId = new SpanId(RandomGenerator.RandomId());
-                baggage = parent.GetBaggageItems().ToDictionary(x => x.Key, x => x.Value);
-                flags = parent.Flags;
-            } 
+                _metrics.SpansStartedSampled.Inc(1);
+            }
             else
             {
-                traceId = new TraceId{ /*High = RandomGenerator.RandomId(),*/ Low = RandomGenerator.RandomId() }; // TODO: Jaeger does not support high values, otherwise root span id can not match
-                parentId = new SpanId(0);
-                spanId = new SpanId(traceId.Low);   // TODO: Jaeger expects the root span id to match the trace id, otherwise the operation name is not shown.
-                var samplingInfo = _sampler.IsSampled(traceId, _operationName);
-                foreach(var samplingTag in samplingInfo.Tags) {
-                    _tags[samplingTag.Key] = samplingTag.Value;
-                }
-                flags = samplingInfo.Sampled ? ContextFlags.Sampled : ContextFlags.None;
+                _metrics.SpansStartedNotSampled.Inc(1);
+            }
+            return span;
+        }
+
+        private SpanContext CreateRootSpanContext(SpanContext parent)
+        {
+            var traceId = parent.TraceId;
+            var parentId = parent.SpanId;
+            var spanId = new SpanId(RandomGenerator.RandomId());
+            var baggage = parent.GetBaggageItems().ToDictionary(x => x.Key, x => x.Value);
+            var flags = parent.Flags;
+
+            if (parent.IsSampled)
+            {
+                _metrics.TracesJoinedSampled.Inc(1);
+            }
+            else
+            {
+                _metrics.TracesJoinedNotSampled.Inc(1);
             }
 
             var spanContext = new SpanContext(traceId, spanId, parentId, baggage, flags);
+            return spanContext;
+        }
 
-            return new Span(_tracer, _operationName, spanContext, _startTimestamp, _tags, _references);
+        private SpanContext CreateChildSpanContext()
+        {
+            var traceId = new TraceId
+            {
+                /*High = RandomGenerator.RandomId(),*/
+                Low = RandomGenerator.RandomId()
+            };
+            var parentId = new SpanId(0);
+            var spanId = new SpanId(traceId.Low);
+            var baggage = new Dictionary<string, string>();
+            var flags = ContextFlags.None;
+
+            var (isSampled, samplerTags) = _sampler.IsSampled(traceId, _operationName);
+            if (isSampled)
+            {
+                foreach (var samplingTag in samplerTags)
+                {
+                    _tags[samplingTag.Key] = samplingTag.Value;
+                }
+
+                flags |= ContextFlags.Sampled;
+                _metrics.TraceStartedSampled.Inc(1);
+            }
+            else
+            {
+                _metrics.TraceStartedNotSampled.Inc(1);
+            }
+
+            var spanContext = new SpanContext(traceId, spanId, parentId, baggage, flags);
+            return spanContext;
         }
 
         public ISpanBuilder WithStartTimestamp(DateTimeOffset startTimestamp)

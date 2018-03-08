@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
 using System.Reflection;
+using LetsTrace.Metrics;
 using LetsTrace.Propagation;
 using LetsTrace.Reporters;
 using LetsTrace.Samplers;
@@ -17,7 +18,6 @@ namespace LetsTrace
     // Tracer is the main object that consumers use to start spans
     public class Tracer : ILetsTraceTracer
     {
-        //private readonly IMetrics _metrics; TODO
         public IScopeManager ScopeManager { get; }
         public IClock Clock { get; }
         public ISpan ActiveSpan => ScopeManager.Active?.Span;
@@ -27,12 +27,11 @@ namespace LetsTrace
         public IReporter Reporter { get; }
         public ISampler Sampler { get; }
         public IPropagationRegistry PropagationRegistry { get; }
-
-        //public IMetrics Metrics => _metrics; TODO
+        public IMetrics Metrics { get; }
 
         // TODO: support trace options
         // TODO: add logger
-        private Tracer(string serviceName, IDictionary<string, Field> tags, IScopeManager scopeManager, IPropagationRegistry propagationRegistry, ISampler sampler, IReporter reporter/*, IMetrics metrics*/)
+        private Tracer(string serviceName, IDictionary<string, Field> tags, IScopeManager scopeManager, IPropagationRegistry propagationRegistry, ISampler sampler, IReporter reporter, IMetrics metrics)
         {
             ServiceName = serviceName;
             Tags = tags;
@@ -40,7 +39,7 @@ namespace LetsTrace
             PropagationRegistry = propagationRegistry;
             Sampler = sampler;
             Reporter = reporter;
-            //_metrics = metrics; TODO
+            Metrics = metrics;
             Clock = new Clock();
         }
 
@@ -58,13 +57,14 @@ namespace LetsTrace
 
         public ISpanBuilder BuildSpan(string operationName)
         {
-            return new SpanBuilder(this, operationName, Sampler);
+            return new SpanBuilder(this, operationName, Sampler, Metrics);
         }
 
         public void ReportSpan(ILetsTraceSpan span)
         {
-            if (span.Context is ILetsTraceSpanContext context && context.IsSampled) {
+            if (span.Context.IsSampled) {
                 Reporter.Report(span);
+                Metrics.SpansFinished.Inc(1);
             }
         }
 
@@ -98,7 +98,7 @@ namespace LetsTrace
             private ISampler _sampler;
             private ITransport _transport;
             private IReporter _reporter;
-            //private IMetrics _metrics; TODO
+            private IMetrics _metrics;
 
             public Builder(String serviceName)
             {
@@ -148,18 +148,17 @@ namespace LetsTrace
                 return this;
             }
 
-            //TODO
-            //public Builder WithMetrics(IMetrics metrics)
-            //{
-            //    this._metrics = metrics;
-            //    return this;
-            //}
+            public Builder WithMetrics(IMetrics metrics)
+            {
+                this._metrics = metrics;
+                return this;
+            }
 
-            //public Builder WithMetricsFactory(IMetricsFactory factory)
-            //{
-            //    this._metrics = factory.CreateMetrics();
-            //    return this;
-            //}
+            public Builder WithMetricsFactory(IMetricsFactory factory)
+            {
+                this._metrics = factory.CreateMetrics();
+                return this;
+            }
 
             public Builder WithScopeManager(IScopeManager scopeManager)
             {
@@ -183,11 +182,10 @@ namespace LetsTrace
 
             public Tracer Build()
             {
-                // TODO
-                //if (_metrics == null)
-                //{
-                //    _metrics = NoopMetricsFactory.Instance.CreateMetrics();
-                //}
+                if (_metrics == null)
+                {
+                    _metrics = NoopMetricsFactory.Instance.CreateMetrics();
+                }
                 if (_reporter == null)
                 {
                     if (_transport == null)
@@ -198,13 +196,13 @@ namespace LetsTrace
                     {
                         //TODO: Should really be remote reporter...
                         _reporter = new RemoteReporter.Builder(_transport)
-                            //.WithMetrics(_metrics)
+                            .WithMetrics(_metrics)
                             .Build();
                     }
                 }
                 if (_sampler == null)
                 {
-                    // TODO: RemoteControlledSampler still missing!
+                    // TODO: Do this by using extension method, but how to get the metrics in best?
                     _sampler = new ConstSampler(true);
                     //_sampler = new RemoteControlledSampler.Builder(_serviceName)
                     //    .withMetrics(metrics)
@@ -219,7 +217,7 @@ namespace LetsTrace
                     _propagationRegistry = Propagators.TextMap;
                 }
 
-                return new Tracer(_serviceName, _initialTags, _scopeManager, _propagationRegistry, _sampler, _reporter/*, _metrics*/);
+                return new Tracer(_serviceName, _initialTags, _scopeManager, _propagationRegistry, _sampler, _reporter, _metrics);
             }
 
             public static string CheckValidServiceName(String serviceName)
