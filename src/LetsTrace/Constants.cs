@@ -53,5 +53,10 @@ namespace LetsTrace
         /// only up to a fixed number of traces per second.
         /// </summary>
         public const string SAMPLER_TYPE_RATE_LIMITING = "ratelimiting";
+
+        /// <summary>
+        /// TODO
+        /// </summary>
+        public const string SAMPLER_TYPE_LOWERBOUND = "lowerbound";
     }
 }

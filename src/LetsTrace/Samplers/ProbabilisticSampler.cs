@@ -3,16 +3,27 @@ using System.Collections.Generic;
 
 namespace LetsTrace.Samplers
 {
+    /// <summary>
+    /// Only used for unit testing
+    /// </summary>
+    internal interface IProbabilisticSampler : ISampler
+    {
+        double SamplingRate { get; }
+    }
+
     // ProbabilisticSampler creates a sampler that randomly samples a certain percentage of traces specified by the
     // samplingRate, in the range between 0.0 and 1.0.
-    public class ProbabilisticSampler : ISampler
+    public class ProbabilisticSampler : IProbabilisticSampler
     {
+        // TODO: Constants!
+        public const double DEFAULT_SAMPLING_PROBABILITY = 0.001;
+
         private UInt64 _samplingBoundary;
         private Dictionary<string, Field> _tags;
 
         public double SamplingRate { get; }
 
-        public ProbabilisticSampler(double samplingRate)
+        public ProbabilisticSampler(double samplingRate = DEFAULT_SAMPLING_PROBABILITY)
         {
             if (samplingRate < 0.0 || samplingRate > 1.0) throw new ArgumentOutOfRangeException(nameof(samplingRate), samplingRate, "sampling rate must be between 0.0 and 1.0");
             _tags = new Dictionary<string, Field> {

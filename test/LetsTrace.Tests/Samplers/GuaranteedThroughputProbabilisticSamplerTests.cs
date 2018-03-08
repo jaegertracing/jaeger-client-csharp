@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using LetsTrace.Samplers;
-using LetsTrace.Util;
 using NSubstitute;
 using Xunit;
 
@@ -26,8 +25,8 @@ namespace LetsTrace.Tests.Samplers
         [Fact]
         public void GuaranteedThroughputProbabilisticSampler_IsSampled_UsesProbabilisticSampler()
         {
-            var probabilisticSampler = Substitute.For<ISampler>();
-            var rateLimitingSampler = Substitute.For<ISampler>();
+            var probabilisticSampler = Substitute.For<IProbabilisticSampler>();
+            var rateLimitingSampler = Substitute.For<IRateLimitingSampler>();
             var operationName = "op";
             var sampler = new GuaranteedThroughputProbabilisticSampler(probabilisticSampler, rateLimitingSampler);
 
@@ -42,8 +41,8 @@ namespace LetsTrace.Tests.Samplers
         [Fact]
         public void GuaranteedThroughputProbabilisticSampler_IsSampled_FallsBackToRateLimitingSampler()
         {
-            var probabilisticSampler = Substitute.For<ISampler>();
-            var rateLimitingSampler = Substitute.For<ISampler>();
+            var probabilisticSampler = Substitute.For<IProbabilisticSampler>();
+            var rateLimitingSampler = Substitute.For<IRateLimitingSampler>();
             var operationName = "op";
             var sampler = new GuaranteedThroughputProbabilisticSampler(probabilisticSampler, rateLimitingSampler);
 

@@ -22,8 +22,8 @@ namespace LetsTrace.Tests.Samplers
             var operationName = "op";
             var maxOperations = 3;
 
-            var gtpSampler = Substitute.For<ISampler>();
-            var defaultSampler = Substitute.For<ISampler>();
+            var gtpSampler = Substitute.For<IGuaranteedThroughputProbabilisticSampler>();
+            var defaultSampler = Substitute.For<IProbabilisticSampler>();
             var factory = Substitute.For<ISamplerFactory>();
             factory.NewGuaranteedThroughputProbabilisticSampler(
                 Arg.Is<double>(x => x == samplingRate),
@@ -51,8 +51,8 @@ namespace LetsTrace.Tests.Samplers
             var lowerBound = 0.5;
             var maxOperations = 3;
 
-            var gtpSampler = Substitute.For<ISampler>();
-            var defaultSampler = Substitute.For<ISampler>();
+            var gtpSampler = Substitute.For<IGuaranteedThroughputProbabilisticSampler>();
+            var defaultSampler = Substitute.For<IProbabilisticSampler>();
             var factory = Substitute.For<ISamplerFactory>();
             factory.NewGuaranteedThroughputProbabilisticSampler(
                 Arg.Is<double>(x => x == samplingRate),
