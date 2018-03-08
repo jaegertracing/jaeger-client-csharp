@@ -10,13 +10,22 @@ using JaegerBatch = Jaeger.Thrift.Batch;
 
 namespace LetsTrace.Jaeger.Transport
 {
-    public abstract class JaegerHTTPTransport : JaegerThriftTransport
+    public /*abstract*/ class JaegerHTTPTransport : JaegerThriftTransport
     {
         public Uri Uri { get; }
+
+        // TODO: Constants
+        public const string DEFAULT_AGENT_HTTP_HOST = "localhost";
+        public const int DEFAULT_AGENT_HTTP_BINARY_PORT = 14268;
         private const string HTTP_COLLECTOR_JAEGER_THRIFT_FORMAT_PARAM = "format=jaeger.thrift"; // TODO: Constants
 
         private readonly THttpClientTransport httpTransport;
         private readonly TProtocol protocol;
+
+        public JaegerHTTPTransport(string hostname = DEFAULT_AGENT_HTTP_HOST, int port = DEFAULT_AGENT_HTTP_BINARY_PORT) 
+            : this(new Uri($"http://{hostname}:{port}/api/traces"))
+        {
+        }
 
         protected JaegerHTTPTransport(Uri uri, int bufferSize = 0) : base(new TBinaryProtocol.Factory(), bufferSize)
         {

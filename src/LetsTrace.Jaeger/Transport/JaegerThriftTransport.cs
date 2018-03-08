@@ -25,7 +25,7 @@ namespace LetsTrace.Jaeger.Transport
     {
         public const int JAEGER_THRIFT_TRANSPORT_DEFAULT_BUFFER_SIZE = 10; // TODO: Constants
 
-        private readonly List<JaegerSpan> _buffer = new List<JaegerSpan>(); // TODO: look into making this thread safe
+        private readonly List<JaegerSpan> _buffer = new List<JaegerSpan>();
         protected readonly ITProtocolFactory _protocolFactory;
         private readonly int _bufferSize = 0;
         protected JaegerProcess _process = null;
@@ -48,9 +48,14 @@ namespace LetsTrace.Jaeger.Transport
             }
             var jaegerSpan = BuildJaegerThriftSpan(span);
 
-            _buffer.Add(jaegerSpan);
+            int curBuffCount;
+            lock (_buffer)
+            {
+                _buffer.Add(jaegerSpan);
+                curBuffCount = _buffer.Count;
+            }
 
-            if (_buffer.Count > _bufferSize) {
+            if (curBuffCount > _bufferSize) {
                 return await FlushAsync(canellationToken);
             }
 
@@ -137,19 +142,22 @@ namespace LetsTrace.Jaeger.Transport
 
         public async Task<int> FlushAsync(CancellationToken cancellationToken)
         {
-            var count = _buffer.Count;
+            int count;
+            List<JaegerSpan> sendBuffer;
+            lock (_buffer)
+            {
+                count = _buffer.Count;
+                sendBuffer = new List<JaegerSpan>(_buffer);
+                _buffer.Clear();
+            }
 
             try
             {
-                await SendAsync(_buffer, cancellationToken);
+                await SendAsync(sendBuffer, cancellationToken);
             }
             catch (Exception e)
             {
                 throw new SenderException("Failed to flush spans.", e, count);
-            }
-            finally
-            {
-                _buffer.Clear();
             }
 
             return count;
