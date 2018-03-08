@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using Jaeger.Thrift.Agent;
 
 namespace LetsTrace.Samplers
 {
@@ -11,7 +13,7 @@ namespace LetsTrace.Samplers
         private int _maxOperations;
         private double _samplingRate;
         private double _lowerBound;
-        private Dictionary<string, ISampler> _samplers = new Dictionary<string, ISampler>();
+        private Dictionary<string, IGuaranteedThroughputProbabilisticSampler> _samplers = new Dictionary<string, IGuaranteedThroughputProbabilisticSampler>();
         private ISampler _defaultSampler;
         private ISamplerFactory _factory;
 
@@ -25,7 +27,6 @@ namespace LetsTrace.Samplers
             _maxOperations = maxOperations;
             _samplingRate = samplingRate;
             _lowerBound = lowerBound;
-
             _defaultSampler = _factory.NewProbabilisticSampler(_samplingRate);
         }
 
@@ -41,8 +42,8 @@ namespace LetsTrace.Samplers
         {
             var operationKey = operation.ToLower();
 
-            if (_samplers.ContainsKey(operationKey)) {
-                return _samplers[operationKey].IsSampled(id, operation);
+            if (_samplers.TryGetValue(operationKey, out var sampler)) {
+                return sampler.IsSampled(id, operation);
             }
 
             if (_samplers.Count >= _maxOperations) {
