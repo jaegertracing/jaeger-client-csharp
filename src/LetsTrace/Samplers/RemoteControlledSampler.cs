@@ -4,6 +4,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using LetsTrace.Metrics;
 using LetsTrace.Samplers.HTTP;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace LetsTrace.Samplers
 {
@@ -16,15 +18,19 @@ namespace LetsTrace.Samplers
         private readonly int _maxOperations = 2000;
         private readonly string _serviceName;
         private readonly ISamplingManager _samplingManager;
+        private readonly ILoggerFactory _loggerFactory;
+        private readonly ILogger _logger;
         private readonly Task _pollTimer;
         private readonly IMetrics _metrics;
         private ISampler _sampler;
         private readonly CancellationTokenSource _cancellationTokenSource;
 
-        private RemoteControlledSampler(string serviceName, ISamplingManager samplingManager, IMetrics metrics, ISampler sampler, int poolingIntervalMs)
+        private RemoteControlledSampler(string serviceName, ISamplingManager samplingManager, ILoggerFactory loggerFactory, IMetrics metrics, ISampler sampler, int poolingIntervalMs)
         {
             this._serviceName = serviceName;
             this._samplingManager = samplingManager;
+            this._loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
+            this._logger = loggerFactory.CreateLogger<RemoteControlledSampler>();
             this._metrics = metrics;
             this._sampler = sampler;
             this._cancellationTokenSource = new CancellationTokenSource();
@@ -100,7 +106,7 @@ namespace LetsTrace.Samplers
             else
             {
                 _metrics.SamplerParsingFailure.Inc(1);
-                Console.Error.WriteLine("No strategy present in response. Not updating sampler."); // TODO: Use ILogger
+                _logger.LogError("No strategy present in response. Not updating sampler.");
                 return;
             }
 
@@ -129,7 +135,8 @@ namespace LetsTrace.Samplers
                 {
                     _sampler = new PerOperationSampler(_maxOperations, 
                         samplingParameters.DefaultSamplingProbability,
-                        samplingParameters.DefaultLowerBoundTracesPerSecond);
+                        samplingParameters.DefaultLowerBoundTracesPerSecond,
+                        _loggerFactory);
                 }
             }
         }
@@ -164,6 +171,7 @@ namespace LetsTrace.Samplers
         {
             private readonly string _serviceName;
             private readonly ISamplingManager _samplingManager;
+            private ILoggerFactory _loggerFactory;
             private ISampler _initialSampler;
             private IMetrics _metrics;
             private int _poolingIntervalMs = DEFAULT_POLLING_INTERVAL_MS;
@@ -172,6 +180,12 @@ namespace LetsTrace.Samplers
             {
                 this._serviceName = serviceName;
                 this._samplingManager = samplingManager ?? throw new ArgumentNullException(nameof(samplingManager));
+            }
+
+            public Builder WithLoggerFactory(ILoggerFactory loggerFactory)
+            {
+                this._loggerFactory = loggerFactory;
+                return this;
             }
 
             public Builder WithInitialSampler(ISampler initialSampler)
@@ -194,6 +208,10 @@ namespace LetsTrace.Samplers
 
             public RemoteControlledSampler Build()
             {
+                if (_loggerFactory == null)
+                {
+                    _loggerFactory = NullLoggerFactory.Instance;
+                }
                 if (_initialSampler == null)
                 {
                     _initialSampler = new ProbabilisticSampler();
@@ -202,7 +220,7 @@ namespace LetsTrace.Samplers
                 {
                     _metrics = NoopMetricsFactory.Instance.CreateMetrics();
                 }
-                return new RemoteControlledSampler(_serviceName, _samplingManager, _metrics, _initialSampler, _poolingIntervalMs);
+                return new RemoteControlledSampler(_serviceName, _samplingManager, _loggerFactory, _metrics, _initialSampler, _poolingIntervalMs);
             }
         }
     }

@@ -3,6 +3,7 @@ using System.Threading;
 using LetsTrace.Exceptions;
 using LetsTrace.Metrics;
 using LetsTrace.Transport;
+using Microsoft.Extensions.Logging;
 
 namespace LetsTrace.Reporters
 {
@@ -14,11 +15,13 @@ namespace LetsTrace.Reporters
         public const int REMOTE_REPORTER_DEFAULT_MAX_QUEUE_SIZE = 100;
 
         private readonly ITransport _transport;
+        private readonly ILogger _logger;
         private readonly IMetrics _metrics;
 
-        public RemoteReporter(ITransport transport, IMetrics metrics)
+        private RemoteReporter(ITransport transport, ILoggerFactory loggerFactory, IMetrics metrics)
         {
             _transport = transport;
+            _logger = loggerFactory.CreateLogger<RemoteReporter>();
             _metrics = metrics;
         }
 
@@ -31,6 +34,7 @@ namespace LetsTrace.Reporters
             }
             catch (SenderException e)
             {
+                _logger.LogError(e, "Unable to cleanly close RemoteReporter");
                 _metrics.ReporterFailure.Inc(e.DroppedSpans);
             }
         }
@@ -43,8 +47,9 @@ namespace LetsTrace.Reporters
                 // TODO: This Task should be queued and be processed in a separate thread
                 await _transport.AppendAsync(span, CancellationToken.None).ConfigureAwait(false);
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                _logger.LogError(e, "Unable to report span in RemoteReporter");
                 _metrics.ReporterDropped.Inc(1);
             }
         }
@@ -61,6 +66,7 @@ namespace LetsTrace.Reporters
             }
             catch (SenderException e)
             {
+                _logger.LogError(e, "Unable to flush RemoteReporter");
                 _metrics.ReporterFailure.Inc(e.DroppedSpans);
             }
         }
@@ -68,6 +74,7 @@ namespace LetsTrace.Reporters
         public class Builder
         {
             private readonly ITransport transport;
+            private ILoggerFactory _loggerFactory;
             //private TimeSpan flushInterval = REMOTE_REPORTER_DEFAULT_FLUSH_INTERVAL_MS;
             //private int maxQueueSize = REMOTE_REPORTER_DEFAULT_MAX_QUEUE_SIZE;
             private IMetrics metrics;
@@ -75,6 +82,12 @@ namespace LetsTrace.Reporters
             public Builder(ITransport transport)
             {
                 this.transport = transport ?? throw new ArgumentNullException(nameof(transport));
+            }
+
+            public Builder WithLoggerFactory(ILoggerFactory loggerFactory)
+            {
+                this._loggerFactory = loggerFactory;
+                return this;
             }
 
             //public Builder WithFlushInterval(TimeSpan flushInterval)
@@ -101,7 +114,7 @@ namespace LetsTrace.Reporters
                 {
                     metrics = NoopMetricsFactory.Instance.CreateMetrics();
                 }
-                return new RemoteReporter(transport/*, flushInterval, maxQueueSize*/, metrics);
+                return new RemoteReporter(transport, _loggerFactory/*, flushInterval, maxQueueSize*/, metrics);
             }
         }
     }

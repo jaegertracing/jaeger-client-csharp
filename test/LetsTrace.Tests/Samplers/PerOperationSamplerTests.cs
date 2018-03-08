@@ -1,5 +1,6 @@
 using System;
 using LetsTrace.Samplers;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Xunit;
 
@@ -8,10 +9,19 @@ namespace LetsTrace.Tests.Samplers
     public class PerOperationSamplerTests
     {
         [Fact]
-        public void PerOperationSampler_Constructor_ThrowsIfFactoryIsNull()
+        public void PerOperationSampler_Constructor_ThrowsIfLoggerFactoryIsNull()
         {
-            var ex = Assert.Throws<ArgumentNullException>(() => new PerOperationSampler(10, 1.0, 1.0, null));
-            Assert.Equal("factory", ex.ParamName);
+            var ex = Assert.Throws<ArgumentNullException>(() => new PerOperationSampler(10, 1.0, 1.0, null, null));
+            Assert.Equal("loggerFactory", ex.ParamName);
+        }
+
+        [Fact]
+        public void PerOperationSampler_Constructor_ThrowsIfSamplerFactoryIsNull()
+        {
+            var loggerFactory = Substitute.For<ILoggerFactory>();
+
+            var ex = Assert.Throws<ArgumentNullException>(() => new PerOperationSampler(10, 1.0, 1.0, loggerFactory, null));
+            Assert.Equal("samplerFactory", ex.ParamName);
         }
 
         [Fact]
@@ -23,23 +33,24 @@ namespace LetsTrace.Tests.Samplers
             var maxOperations = 3;
 
             var gtpSampler = Substitute.For<IGuaranteedThroughputProbabilisticSampler>();
+            var loggerFactory = Substitute.For<ILoggerFactory>();
             var defaultSampler = Substitute.For<IProbabilisticSampler>();
-            var factory = Substitute.For<ISamplerFactory>();
-            factory.NewGuaranteedThroughputProbabilisticSampler(
+            var samplerFactory = Substitute.For<ISamplerFactory>();
+            samplerFactory.NewGuaranteedThroughputProbabilisticSampler(
                 Arg.Is<double>(x => x == samplingRate),
                 Arg.Is<double>(x => x == lowerBound)
             ).Returns(gtpSampler);
-            factory.NewProbabilisticSampler(
+            samplerFactory.NewProbabilisticSampler(
                 Arg.Is<double>(x => x == samplingRate)
             ).Returns(defaultSampler);
 
-            var sampler = new PerOperationSampler(maxOperations, samplingRate, lowerBound, factory);
+            var sampler = new PerOperationSampler(maxOperations, samplingRate, lowerBound, loggerFactory, samplerFactory);
             sampler.IsSampled(new TraceId(), operationName);
             sampler.IsSampled(new TraceId(), operationName);
             sampler.IsSampled(new TraceId(), operationName);
 
-            factory.Received(1).NewProbabilisticSampler(Arg.Any<double>());
-            factory.Received(1).NewGuaranteedThroughputProbabilisticSampler(Arg.Any<double>(), Arg.Any<double>());
+            samplerFactory.Received(1).NewProbabilisticSampler(Arg.Any<double>());
+            samplerFactory.Received(1).NewGuaranteedThroughputProbabilisticSampler(Arg.Any<double>(), Arg.Any<double>());
             gtpSampler.Received(3).IsSampled(Arg.Any<TraceId>(), Arg.Any<string>());
             defaultSampler.Received(0).IsSampled(Arg.Any<TraceId>(), Arg.Any<string>());
         }
@@ -52,24 +63,25 @@ namespace LetsTrace.Tests.Samplers
             var maxOperations = 3;
 
             var gtpSampler = Substitute.For<IGuaranteedThroughputProbabilisticSampler>();
+            var loggerFactory = Substitute.For<ILoggerFactory>();
             var defaultSampler = Substitute.For<IProbabilisticSampler>();
-            var factory = Substitute.For<ISamplerFactory>();
-            factory.NewGuaranteedThroughputProbabilisticSampler(
+            var samplerFactory = Substitute.For<ISamplerFactory>();
+            samplerFactory.NewGuaranteedThroughputProbabilisticSampler(
                 Arg.Is<double>(x => x == samplingRate),
                 Arg.Is<double>(x => x == lowerBound)
             ).Returns(gtpSampler);
-            factory.NewProbabilisticSampler(
+            samplerFactory.NewProbabilisticSampler(
                 Arg.Is<double>(x => x == samplingRate)
             ).Returns(defaultSampler);
 
-            var sampler = new PerOperationSampler(maxOperations, samplingRate, lowerBound, factory);
+            var sampler = new PerOperationSampler(maxOperations, samplingRate, lowerBound, loggerFactory, samplerFactory);
             sampler.IsSampled(new TraceId(), "1");
             sampler.IsSampled(new TraceId(), "2");
             sampler.IsSampled(new TraceId(), "3");
             sampler.IsSampled(new TraceId(), "4");
 
-            factory.Received(1).NewProbabilisticSampler(Arg.Any<double>());
-            factory.Received(3).NewGuaranteedThroughputProbabilisticSampler(Arg.Any<double>(), Arg.Any<double>());
+            samplerFactory.Received(1).NewProbabilisticSampler(Arg.Any<double>());
+            samplerFactory.Received(3).NewGuaranteedThroughputProbabilisticSampler(Arg.Any<double>(), Arg.Any<double>());
             gtpSampler.Received(3).IsSampled(Arg.Any<TraceId>(), Arg.Any<string>());
             defaultSampler.Received(1).IsSampled(Arg.Any<TraceId>(), Arg.Any<string>());
         }

@@ -9,6 +9,8 @@ using LetsTrace.Reporters;
 using LetsTrace.Samplers;
 using LetsTrace.Transport;
 using LetsTrace.Util;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using OpenTracing;
 using OpenTracing.Propagation;
 using OpenTracing.Util;
@@ -18,6 +20,8 @@ namespace LetsTrace
     // Tracer is the main object that consumers use to start spans
     public class Tracer : ILetsTraceTracer
     {
+        private readonly ILogger _logger;
+
         public IScopeManager ScopeManager { get; }
         public IClock Clock { get; }
         public ISpan ActiveSpan => ScopeManager.Active?.Span;
@@ -30,8 +34,8 @@ namespace LetsTrace
         public IMetrics Metrics { get; }
 
         // TODO: support trace options
-        // TODO: add logger
-        private Tracer(string serviceName, IDictionary<string, Field> tags, IScopeManager scopeManager, IPropagationRegistry propagationRegistry, ISampler sampler, IReporter reporter, IMetrics metrics)
+        private Tracer(string serviceName, IDictionary<string, Field> tags, IScopeManager scopeManager, ILoggerFactory loggerFactory,
+            IPropagationRegistry propagationRegistry, ISampler sampler, IReporter reporter, IMetrics metrics)
         {
             ServiceName = serviceName;
             Tags = tags;
@@ -41,6 +45,8 @@ namespace LetsTrace
             Reporter = reporter;
             Metrics = metrics;
             Clock = new Clock();
+
+            _logger = loggerFactory.CreateLogger<Tracer>();
 
             if (tags.TryGetValue(Constants.TRACER_IP_TAG_KEY, out var field))
             {
@@ -78,7 +84,6 @@ namespace LetsTrace
             return PropagationRegistry.Extract(format, carrier);
         }
 
-
         public void Inject<TCarrier>(ISpanContext spanContext, IFormat<TCarrier> format, TCarrier carrier)
         {
             PropagationRegistry.Inject(spanContext, format, carrier);
@@ -97,6 +102,7 @@ namespace LetsTrace
         public sealed class Builder
         {
             private readonly string _serviceName;
+            private ILoggerFactory _loggerFactory;
             private readonly Dictionary<string, Field> _initialTags = new Dictionary<string, Field>();
             private IScopeManager _scopeManager;
             private IPropagationRegistry _propagationRegistry;
@@ -128,6 +134,12 @@ namespace LetsTrace
                     {
                     }
                 }
+            }
+
+            public Builder WithLoggerFactory(ILoggerFactory loggerFactory)
+            {
+                this._loggerFactory = loggerFactory;
+                return this;
             }
 
             public Builder WithPropagationRegistry(IPropagationRegistry propagationRegistry)
@@ -194,6 +206,10 @@ namespace LetsTrace
 
             public Tracer Build()
             {
+                if (_loggerFactory == null)
+                {
+                    _loggerFactory = NullLoggerFactory.Instance;
+                }
                 if (_metrics == null)
                 {
                     _metrics = NoopMetricsFactory.Instance.CreateMetrics();
@@ -202,11 +218,21 @@ namespace LetsTrace
                 {
                     if (_transport == null)
                     {
-                        _reporter = new NullReporter();
+                        if (_loggerFactory == NullLoggerFactory.Instance)
+                        {
+                            // TODO: Technically, it would be fine to get rid of NullReporter since the NullLogger does the same.
+                            // Check the performance penalty between using LoggingReporter with NullReporter compared to NullReporter!
+                            _reporter = new NullReporter();
+                        }
+                        else
+                        {
+                            _reporter = new LoggingReporter(_loggerFactory);
+                        }
                     }
                     else
                     {
                         _reporter = new RemoteReporter.Builder(_transport)
+                            .WithLoggerFactory(_loggerFactory)
                             .WithMetrics(_metrics)
                             .Build();
                     }
@@ -220,8 +246,9 @@ namespace LetsTrace
                     else
                     {
                         _sampler = new RemoteControlledSampler.Builder(_serviceName, _samplingManager)
-                           .WithMetrics(_metrics)
-                           .Build();
+                            .WithLoggerFactory(_loggerFactory)
+                            .WithMetrics(_metrics)
+                            .Build();
                     }
                 }
                 if (_scopeManager == null)
@@ -233,7 +260,7 @@ namespace LetsTrace
                     _propagationRegistry = Propagators.TextMap;
                 }
 
-                return new Tracer(_serviceName, _initialTags, _scopeManager, _propagationRegistry, _sampler, _reporter, _metrics);
+                return new Tracer(_serviceName, _initialTags, _scopeManager, _loggerFactory, _propagationRegistry, _sampler, _reporter, _metrics);
             }
 
             public static string CheckValidServiceName(String serviceName)

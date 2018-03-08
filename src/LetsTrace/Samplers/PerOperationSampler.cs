@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using LetsTrace.Samplers.HTTP;
+using Microsoft.Extensions.Logging;
 
 namespace LetsTrace.Samplers
 {
@@ -16,14 +17,16 @@ namespace LetsTrace.Samplers
         private Dictionary<string, IGuaranteedThroughputProbabilisticSampler> _samplers = new Dictionary<string, IGuaranteedThroughputProbabilisticSampler>();
         private ISampler _defaultSampler;
         private ISamplerFactory _factory;
+        private ILogger<PerOperationSampler> _logger;
 
-        public PerOperationSampler(int maxOperations, double samplingRate, double lowerBound)
-            : this(maxOperations, samplingRate, lowerBound, new SamplerFactory())
+        public PerOperationSampler(int maxOperations, double samplingRate, double lowerBound, ILoggerFactory loggerFactory)
+            : this(maxOperations, samplingRate, lowerBound, loggerFactory, new SamplerFactory())
         {}
 
-        internal PerOperationSampler(int maxOperations, double samplingRate, double lowerBound, ISamplerFactory factory)
+        internal PerOperationSampler(int maxOperations, double samplingRate, double lowerBound, ILoggerFactory loggerFactory, ISamplerFactory samplerFactory)
         {
-            _factory = factory ?? throw new ArgumentNullException(nameof(factory));
+            _logger = loggerFactory?.CreateLogger<PerOperationSampler>() ?? throw new ArgumentNullException(nameof(loggerFactory));
+            _factory = samplerFactory ?? throw new ArgumentNullException(nameof(samplerFactory));
             _maxOperations = maxOperations;
             _samplingRate = samplingRate;
             _lowerBound = lowerBound;
@@ -75,8 +78,7 @@ namespace LetsTrace.Samplers
                     }
                     else
                     {
-                        // TODO: Use ILogger log.info
-                        Console.WriteLine("Exceeded the maximum number of operations ({0}) for per operations sampling",
+                        _logger.LogInformation("Exceeded the maximum number of operations ({0}) for per operations sampling",
                             _maxOperations);
                     }
                 }

@@ -6,7 +6,6 @@ namespace LetsTrace.Propagation
 {
     public sealed class ConsolePropagationRegistry : IPropagationRegistry
     {
-        // TODO: Use ILogger
         public void AddCodec<TCarrier>(IFormat<TCarrier> format, IInjector injector, IExtractor extractor)
         {
             Console.WriteLine($"AddCodec({format}, {injector}, {extractor}");

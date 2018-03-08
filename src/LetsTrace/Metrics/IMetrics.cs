@@ -48,23 +48,23 @@
 
         // Current number of spans in the reporter queue
         [Metric("reporter_queue_length")]
-        IGauge ReporterQueueLength { get; }
+        IGauge ReporterQueueLength { get; } // TODO: Not implemented yet!
 
         // Number of times the Sampler succeeded to retrieve sampling strategy
         [Metric("sampler_queries", result: MetricAttribute.MetricResult.Ok)]
-        ICounter SamplerRetrieved { get; } // TODO: Not implemented yet!
+        ICounter SamplerRetrieved { get; }
 
         // Number of times the Sampler failed to retrieve sampling strategy
         [Metric("sampler_queries", result: MetricAttribute.MetricResult.Error)]
-        ICounter SamplerQueryFailure { get; } // TODO: Not implemented yet!
+        ICounter SamplerQueryFailure { get; }
 
         // Number of times the Sampler succeeded to retrieve and update sampling strategy
         [Metric("sampler_updates", result: MetricAttribute.MetricResult.Ok)]
-        ICounter SamplerUpdated { get; } // TODO: Not implemented yet!
+        ICounter SamplerUpdated { get; }
 
         // Number of times the Sampler failed to update sampling strategy
         [Metric("sampler_updates", result: MetricAttribute.MetricResult.Error)]
-        ICounter SamplerParsingFailure { get; } // TODO: Not implemented yet!
+        ICounter SamplerParsingFailure { get; }
 
         // Number of times baggage was successfully written or updated on spans.
         [Metric("baggage_updates", result: MetricAttribute.MetricResult.Ok)]
