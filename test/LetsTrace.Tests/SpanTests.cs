@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using LetsTrace.Util;
 using NSubstitute;
+using OpenTracing;
 using Xunit;
 
 namespace LetsTrace.Tests
@@ -274,7 +275,7 @@ namespace LetsTrace.Tests
             span.Log(eventName);
 
             clock.Received(1).CurrentTime();
-            Assert.Equal("event", span.Logs[0].Fields[0].Key);
+            Assert.Equal(LogFields.Event, span.Logs[0].Fields[0].Key);
             Assert.True(span.Logs[0].Fields[0] is Field<string>);
             Assert.Equal(eventName, span.Logs[0].Fields[0].ValueAs<string>());
             Assert.Equal(currentTime, span.Logs[0].Timestamp);
@@ -294,7 +295,7 @@ namespace LetsTrace.Tests
             var span = new Span(tracer, operationName, spanContext, startTimestamp);
             span.Log(logTimestamp, eventName);
 
-            Assert.Equal("event", span.Logs[0].Fields[0].Key);
+            Assert.Equal(LogFields.Event, span.Logs[0].Fields[0].Key);
             Assert.True(span.Logs[0].Fields[0] is Field<string>);
             Assert.Equal(eventName, span.Logs[0].Fields[0].ValueAs<string>());
             Assert.Equal(logTimestamp, span.Logs[0].Timestamp);
