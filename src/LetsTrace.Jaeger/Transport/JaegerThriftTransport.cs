@@ -1,20 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Threading;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
-
+using LetsTrace.Exceptions;
 using OpenTracing;
 
 using LetsTrace.Util;
 using LetsTrace.Transport;
 
 using Thrift.Protocols;
-using Thrift.Transports;
-using Thrift.Transports.Client;
-
 using JaegerProcess = Jaeger.Thrift.Process;
 using JaegerSpan = Jaeger.Thrift.Span;
 using JaegerTag = Jaeger.Thrift.Tag;
@@ -28,17 +23,25 @@ namespace LetsTrace.Jaeger.Transport
 {
     public abstract class JaegerThriftTransport : ITransport
     {
-        private List<JaegerSpan> _buffer = new List<JaegerSpan>(); // TODO: look into making this thread safe
-        private int _bufferSize = 10;
-        protected JaegerProcess _process = null;
-        protected static readonly HttpClient HttpClient = new HttpClient();
+        public const int JAEGER_THRIFT_TRANSPORT_DEFAULT_BUFFER_SIZE = 10; // TODO: Constants
 
-        public JaegerThriftTransport(int bufferSize)
+        private readonly List<JaegerSpan> _buffer = new List<JaegerSpan>(); // TODO: look into making this thread safe
+        protected readonly ITProtocolFactory _protocolFactory;
+        private readonly int _bufferSize = 0;
+        protected JaegerProcess _process = null;
+
+        protected JaegerThriftTransport(ITProtocolFactory protocolFactory, int bufferSize = 0)
         {
+            if (bufferSize <= 0)
+            {
+                bufferSize = JAEGER_THRIFT_TRANSPORT_DEFAULT_BUFFER_SIZE;
+            }
+
+            _protocolFactory = protocolFactory;
             _bufferSize = bufferSize;
         }
 
-        public async Task<int> Append(ILetsTraceSpan span)
+        public async Task<int> AppendAsync(ILetsTraceSpan span, CancellationToken canellationToken)
         {
             if (_process == null) {
                 _process = BuildJaegerProcessThrift(span.Tracer);
@@ -48,7 +51,7 @@ namespace LetsTrace.Jaeger.Transport
             _buffer.Add(jaegerSpan);
 
             if (_buffer.Count > _bufferSize) {
-                return await Flush();
+                return await FlushAsync(canellationToken);
             }
 
             return 0;
@@ -56,14 +59,12 @@ namespace LetsTrace.Jaeger.Transport
 
         internal static JaegerSpan BuildJaegerThriftSpan(ILetsTraceSpan span)
         {
-            var context = (ILetsTraceSpanContext) span.Context;
+            var context = span.Context;
             var startTime = span.StartTimestamp.ToUnixTimeMicroseconds();
-            var duration = span.FinishTimestamp == null ?
-                0
-                : span.FinishTimestamp.GetValueOrDefault().ToUnixTimeMicroseconds() - span.StartTimestamp.ToUnixTimeMicroseconds();
+            var duration = (span.FinishTimestamp?.ToUnixTimeMicroseconds() - startTime) ?? 0;
 
             var jaegerSpan = new JaegerSpan(
-                (long)context.TraceId.Low, 
+                (long)context.TraceId.Low,
                 (long)context.TraceId.High,
                 context.SpanId,
                 context.ParentId,
@@ -71,17 +72,25 @@ namespace LetsTrace.Jaeger.Transport
                 0,
                 startTime,
                 duration
-            );
-            span.References.Select(r => r);
-            foreach(var tag in span.Tags)
+            )
             {
-                tag.Value.Key = tag.Key;
-                tag.Value.Marshal(jaegerSpan.Tags);
-            }
-            jaegerSpan.Logs = span.Logs.Select(BuildJaegerLog).ToList();
-            jaegerSpan.References = span.References.Select(BuildJaegerReference).Where(r => r != null).ToList();
+                Tags = BuildJaegerTags(span.Tags),
+                Logs = span.Logs.Select(BuildJaegerLog).ToList(),
+                References = span.References.Select(BuildJaegerReference).Where(r => r != null).ToList()
+            };
 
             return jaegerSpan;
+        }
+
+        internal static List<JaegerTag> BuildJaegerTags(IDictionary<string, Field> inTags)
+        {
+            var tags = new List<JaegerTag>();
+            foreach (var tag in inTags)
+            {
+                tag.Value.Key = tag.Key;
+                tag.Value.Marshal(tags);
+            }
+            return tags;
         }
 
         // BuildJaegerReference builds a jaeger reference object from a lets
@@ -115,25 +124,47 @@ namespace LetsTrace.Jaeger.Transport
 
         internal static JaegerProcess BuildJaegerProcessThrift(ILetsTraceTracer tracer)
         {
-            return new JaegerProcess(tracer.ServiceName);
+            return new JaegerProcess(tracer.ServiceName)
+            {
+                Tags = BuildJaegerTags(tracer.Tags)
+            };
         }
 
         public void Dispose()
         {
-            Flush().ConfigureAwait(false).GetAwaiter().GetResult();
+            CloseAsync(CancellationToken.None).ConfigureAwait(false).GetAwaiter().GetResult();
         }
 
-        public async Task<int> Flush()
+        public async Task<int> FlushAsync(CancellationToken cancellationToken)
         {
             var count = _buffer.Count;
 
-            await Send(_buffer);
-
-            _buffer.Clear();
+            try
+            {
+                await SendAsync(_buffer, cancellationToken);
+            }
+            catch (Exception e)
+            {
+                throw new SenderException("Failed to flush spans.", e, count);
+            }
+            finally
+            {
+                _buffer.Clear();
+            }
 
             return count;
         }
 
-        public abstract Task Send(List<JaegerSpan> spans);
+        protected abstract Task SendAsync(List<JaegerSpan> spans, CancellationToken cancellationToken);
+
+        public virtual Task<int> CloseAsync(CancellationToken cancellationToken)
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return Task.FromCanceled<int>(cancellationToken);
+            }
+
+            return FlushAsync(cancellationToken);
+        }
     }
 }
