@@ -4,6 +4,7 @@ using LetsTrace.Propagation;
 using LetsTrace.Reporters;
 using LetsTrace.Samplers;
 using NSubstitute;
+using NSubstitute.ReturnsExtensions;
 using OpenTracing;
 using OpenTracing.Propagation;
 using Xunit;
@@ -22,6 +23,7 @@ namespace LetsTrace.Tests
         private IExtractor _mockExtractor;
         private IFormat<string> _format;
         private IPropagationRegistry _mockPropagationRegistry;
+        private string _ip;
 
         public TracerTests()
         {
@@ -35,12 +37,14 @@ namespace LetsTrace.Tests
             _format = new Builtin<string>("format");
             _mockPropagationRegistry = new PropagationRegistry();
             _mockPropagationRegistry.AddCodec(_format, _mockInjector, _mockExtractor);
+            _ip = "192.168.1.1";
 
             _builtTracer = new Tracer.Builder(_serviceName)
                 .WithReporter(_mockReporter)
                 .WithSampler(_mockSampler)
                 .WithScopeManager(_mockScopeManager)
                 .WithPropagationRegistry(_mockPropagationRegistry)
+                .WithTag(Constants.TRACER_IP_TAG_KEY, _ip)
                 .Build();
         }
 
@@ -125,6 +129,41 @@ namespace LetsTrace.Tests
 
             _builtTracer.SetBaggageItem(span, key, value2);
             Assert.Equal(value2, span.GetBaggageItem(key));
+        }
+
+        [Fact]
+        public void Tracer_ShouldHaveVarsSetFromBuilder()
+        {
+            Assert.Equal(_ip, _builtTracer.HostIPv4);
+            Assert.Equal(_mockScopeManager, _builtTracer.ScopeManager);
+            Assert.Equal(_serviceName, _builtTracer.ServiceName);
+            Assert.Equal(_ip, _builtTracer.Tags[Constants.TRACER_IP_TAG_KEY].StringValue);
+        }
+
+        [Fact]
+        public void Tracer_ActiveSpan_ShouldPullFromTheScopeManager()
+        {
+            var span = Substitute.For<ISpan>();
+            _mockScopeManager.Active.Span.Returns(span);
+
+            Assert.Equal(span, _builtTracer.ActiveSpan);
+        }
+
+        [Fact]
+        public void Tracer_ActiveSpan_ShouldReturnNullWhenTheActiveSpanIsNull()
+        {
+            _mockScopeManager.Active.ReturnsNull();
+
+            Assert.Null(_builtTracer.ActiveSpan);
+        }
+
+        [Fact]
+        public void Tracer_Dispose_ShouldDisposeCorrectly()
+        {
+            _builtTracer.Dispose();
+
+            _mockSampler.Received(1).Dispose();
+            _mockReporter.Received(1).Dispose();
         }
     }
 }
