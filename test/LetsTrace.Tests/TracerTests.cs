@@ -131,7 +131,7 @@ namespace LetsTrace.Tests
             IFormat<string> format = new Builtin<string>("format");
             var carrier = "carrier, yo";
             pReg.Extract(Arg.Is<IFormat<string>>(f => f == format), Arg.Is<string>(c => c == carrier));
-            var spanContext = Substitute.For<ISpanContext>();
+            var spanContext = Substitute.For<ILetsTraceSpanContext>();
             pReg.Inject(Arg.Is<ISpanContext>(sc => sc == spanContext), Arg.Is<IFormat<string>>(f => f == format), Arg.Is<string>(c => c == carrier));
 
             var tracer = new Tracer.Builder("testingService")
@@ -195,7 +195,7 @@ namespace LetsTrace.Tests
         {
             var reporter = Substitute.For<IReporter>();
             var carrier = "carrier, yo";
-            var spanContext = Substitute.For<ISpanContext>();
+            var spanContext = Substitute.For<ILetsTraceSpanContext>();
             var format = new Builtin<string>("format");
             var sampler = Substitute.For<ISampler>();
             var scopeManager = Substitute.For<IScopeManager>();
@@ -220,7 +220,7 @@ namespace LetsTrace.Tests
             var injector = Substitute.For<IInjector>();
             var extractor = Substitute.For<IExtractor>();
             var carrier = "carrier, yo";
-            var spanContext = Substitute.For<ISpanContext>();
+            var spanContext = Substitute.For<ILetsTraceSpanContext>();
             var sampler = Substitute.For<ISampler>();
             var scopeManager = Substitute.For<IScopeManager>();
 

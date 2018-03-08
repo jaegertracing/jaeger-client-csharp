@@ -7,6 +7,7 @@ namespace LetsTrace
 {
     public interface ILetsTraceSpan : ISpan, IDisposable
     {
+        new ILetsTraceSpanContext Context { get; }
         DateTimeOffset? FinishTimestamp { get; }
         List<LogRecord> Logs { get; }
         string OperationName { get; }

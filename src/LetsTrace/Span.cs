@@ -9,7 +9,11 @@ namespace LetsTrace
     public class Span : ILetsTraceSpan
     {
         // OpenTracing API: Retrieve the Spans SpanContext
-        public ISpanContext Context { get; private set; }
+        // C# doesn't have "return type covariance" so we use the trick with the explicit interface implementation
+        // and this separate property.
+        public ILetsTraceSpanContext Context { get; }
+        ISpanContext ISpan.Context => Context;
+
         public DateTimeOffset? FinishTimestamp { get; private set; }
         public List<LogRecord> Logs { get; private set; } = new List<LogRecord>();
         public string OperationName { get; private set; }
@@ -23,7 +27,7 @@ namespace LetsTrace
         public Dictionary<string, Field> Tags { get; }
         public ILetsTraceTracer Tracer { get; }
 
-        public Span(ILetsTraceTracer tracer, string operationName, ISpanContext context, DateTimeOffset? startTimestamp = null, Dictionary<string, Field> tags = null, List<Reference> references = null)
+        public Span(ILetsTraceTracer tracer, string operationName, ILetsTraceSpanContext context, DateTimeOffset? startTimestamp = null, Dictionary<string, Field> tags = null, List<Reference> references = null)
         {
             Tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
 
@@ -34,7 +38,7 @@ namespace LetsTrace
             }
 
             OperationName = operationName;
-            Context = context ?? throw new ArgumentNullException(nameof(context));
+            this.Context = context ?? throw new ArgumentNullException(nameof(context));
 
             StartTimestamp = startTimestamp ?? Tracer.Clock.CurrentTime();
             Tags = tags ?? new Dictionary<string, Field>();

@@ -35,7 +35,7 @@ namespace LetsTrace.Tests
         public void TextMapPropagator_Inject_ThrowsWhenCarrierIsNotITextMap()
         {
             var propagator = new TextMapPropagator(new HeadersConfig("", ""), (val) => val, (val) => val);
-            var spanContext = Substitute.For<ISpanContext>();
+            var spanContext = Substitute.For<ILetsTraceSpanContext>();
 
             var ex = Assert.Throws<ArgumentException>(() => propagator.Inject(spanContext, new List<string>()));
             Assert.Equal("carrier is not ITextMap", ex.Message);
@@ -47,7 +47,7 @@ namespace LetsTrace.Tests
             var headersConfig = new HeadersConfig("TraceContextHeaderName", "TraceBaggageHeaderPrefix");
             var propagator = new TextMapPropagator(headersConfig, (val) => val, (val) => val);
             var baggage = new Dictionary<string, string> { { "key1", "value1" }, { "key2", "value2" } };
-            var spanContext = Substitute.For<ISpanContext>();
+            var spanContext = Substitute.For<ILetsTraceSpanContext>();
             var carrier = new DictionaryTextMap();
 
             spanContext.GetBaggageItems().Returns(baggage);
@@ -56,7 +56,7 @@ namespace LetsTrace.Tests
 
             var carrierDict = carrier.ToDictionary(c => c.Key, c => c.Value);
 
-            Assert.Equal("Castle.Proxies.ISpanContextProxy", carrierDict[headersConfig.TraceContextHeaderName]); // cannot mock ToString
+            Assert.Equal("Castle.Proxies.ILetsTraceSpanContextProxy", carrierDict[headersConfig.TraceContextHeaderName]); // cannot mock ToString
             Assert.Equal(baggage["key1"], carrierDict[$"{headersConfig.TraceBaggageHeaderPrefix}-key1"]);
             Assert.Equal(baggage["key2"], carrierDict[$"{headersConfig.TraceBaggageHeaderPrefix}-key2"]);
         }
@@ -65,7 +65,7 @@ namespace LetsTrace.Tests
         public void TextMapPropagator_Extract_ThrowsWhenCarrierIsNotITextMap()
         {
             var propagator = new TextMapPropagator(new HeadersConfig("", ""), (val) => val, (val) => val);
-            var spanContext = Substitute.For<ISpanContext>();
+            var spanContext = Substitute.For<ILetsTraceSpanContext>();
 
             var ex = Assert.Throws<ArgumentException>(() => propagator.Extract(new List<string>()));
             Assert.Equal("carrier is not ITextMap", ex.Message);
