@@ -58,7 +58,7 @@ namespace LetsTrace.Samplers
             _pollTimer = pollTimer(UpdateSampler, pollingIntervalMs, _cancellationTokenSource.Token);
         }
 
-        private static async Task PollTimer(Action updateFunc, int pollingIntervalMs, CancellationToken cancellationToken)
+        internal static async Task PollTimer(Action updateFunc, int pollingIntervalMs, CancellationToken cancellationToken)
         {
             while (!cancellationToken.IsCancellationRequested)
             {

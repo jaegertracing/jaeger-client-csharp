@@ -241,5 +241,55 @@ namespace LetsTrace.Tests.Samplers
             Assert.Equal(_pollingIntervalMs, passedInPollingInt);
             Assert.True(passedInCancelToken.IsCancellationRequested);
         }
+
+        [Fact] public void Equals_ShouldBeTrue_WhenItsTheSameObject()
+        {
+            Assert.True(_testingSampler.Equals(_testingSampler));
+        }
+
+        [Fact]
+        public void Equals_ShouldBeTrue_WhenTheSamplerIsTheSame()
+        {
+            var equalSampler = new RemoteControlledSampler(
+                _serivceName,
+                _mockSamplingManager,
+                _mockLoggerFactory,
+                _mockMetrics,
+                _mockSampler,
+                _mockSamplerFactory,
+                _pollingIntervalMs,
+                _mockPollTimer
+            );
+
+            Assert.True(_testingSampler.Equals(equalSampler));
+        }
+
+        [Fact]
+        public void Equals_ShouldBeFalse_WhenItsNull()
+        {
+            Assert.False(_testingSampler.Equals(null));
+        }
+
+        [Fact]
+        public void Equals_ShouldBeFalse_WhenItsNotARemoteControlledSampler()
+        {
+            var notRCSampler = new ConstSampler(true);
+
+            Assert.False(_testingSampler.Equals(notRCSampler));
+        }
+
+        [Fact]
+        public async void PollTimer_DelaysAndCallsUpdateFunc()
+        {
+            var updateFunc = Substitute.For<Action>();
+            var pollingIntervalMs = 1000;
+            var cts = new CancellationTokenSource();
+            cts.CancelAfter(2200);
+
+            await RemoteControlledSampler.PollTimer(updateFunc, pollingIntervalMs, cts.Token);
+
+            updateFunc.Received(3)();
+        }
     }
 }
+
