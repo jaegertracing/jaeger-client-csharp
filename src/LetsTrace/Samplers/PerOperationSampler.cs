@@ -46,11 +46,11 @@ namespace LetsTrace.Samplers
         /// Updates the GuaranteedThroughputSampler for each operation.
         /// </summary>
         /// <param name="strategies">The parameters for operation sampling</param>
-        /// <returns>true, iff any samplers were updated</returns>
+        /// <returns>true, if any samplers were updated</returns>
         [MethodImpl(MethodImplOptions.Synchronized)]
         public bool Update(PerOperationSamplingStrategies strategies)
         {
-            bool isUpdated = false;
+            var isUpdated = false;
 
             _lowerBound = strategies.DefaultLowerBoundTracesPerSecond;
 
@@ -63,8 +63,8 @@ namespace LetsTrace.Samplers
 
             foreach (var strategy in strategies.PerOperationStrategies)
             {
-                String operation = strategy.Operation;
-                double samplingRate = strategy.ProbabilisticSampling.SamplingRate;
+                var operation = strategy.Operation;
+                var samplingRate = strategy.ProbabilisticSampling.SamplingRate;
                 if (_samplers.TryGetValue(operation, out var sampler))
                 {
                     isUpdated = sampler.Update(samplingRate, _lowerBound) || isUpdated;
@@ -73,7 +73,7 @@ namespace LetsTrace.Samplers
                 {
                     if (_samplers.Count < _maxOperations)
                     {
-                        sampler = _factory.NewGuaranteedThroughputProbabilisticSampler(samplingRate, _lowerBound);
+                        sampler = (IGuaranteedThroughputProbabilisticSampler)_factory.NewGuaranteedThroughputProbabilisticSampler(samplingRate, _lowerBound);
                         _samplers.Add(operation, sampler);
                         isUpdated = true;
                     }
@@ -100,7 +100,7 @@ namespace LetsTrace.Samplers
                 return _defaultSampler.IsSampled(id, operation);
             }
 
-            var newSampler = _factory.NewGuaranteedThroughputProbabilisticSampler(_samplingRate, _lowerBound);
+            var newSampler = (IGuaranteedThroughputProbabilisticSampler)_factory.NewGuaranteedThroughputProbabilisticSampler(_samplingRate, _lowerBound);
             _samplers[operationKey] = newSampler;
             return newSampler.IsSampled(id, operation);
         }

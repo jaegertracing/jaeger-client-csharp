@@ -23,29 +23,49 @@ namespace LetsTrace.Samplers
         private readonly ILogger _logger;
         private readonly IMetrics _metrics;
         private ISampler _sampler;
+        private readonly ISamplerFactory _samplerFactory;
         private readonly CancellationTokenSource _cancellationTokenSource;
         private readonly Task _pollTimer;
 
-        private RemoteControlledSampler(string serviceName, ISamplingManager samplingManager, ILoggerFactory loggerFactory, IMetrics metrics, ISampler sampler, int poolingIntervalMs)
+        private RemoteControlledSampler(
+            string serviceName, 
+            ISamplingManager samplingManager,
+            ILoggerFactory loggerFactory, 
+            IMetrics metrics, 
+            ISampler sampler,
+            int pollingIntervalMs)
+        : this(serviceName, samplingManager, loggerFactory, metrics, sampler, new SamplerFactory(), pollingIntervalMs, PollTimer)
+        {}
+
+        internal RemoteControlledSampler(
+            string serviceName, 
+            ISamplingManager samplingManager, 
+            ILoggerFactory loggerFactory, 
+            IMetrics metrics, 
+            ISampler sampler, 
+            ISamplerFactory samplerFactory,
+            int pollingIntervalMs,
+            Func<Action, int, CancellationToken, Task> pollTimer)
         {
-            this._serviceName = serviceName;
-            this._samplingManager = samplingManager;
-            this._loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
-            this._logger = loggerFactory.CreateLogger<RemoteControlledSampler>();
-            this._metrics = metrics;
-            this._sampler = sampler;
-            this._cancellationTokenSource = new CancellationTokenSource();
-            this._pollTimer = UpdateSamplerTimer(poolingIntervalMs, _cancellationTokenSource.Token);
+            _serviceName = serviceName;
+            _samplingManager = samplingManager;
+            _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
+            _logger = loggerFactory.CreateLogger<RemoteControlledSampler>();
+            _metrics = metrics;
+            _sampler = sampler;
+            _samplerFactory = samplerFactory;
+            _cancellationTokenSource = new CancellationTokenSource();
+            _pollTimer = pollTimer(UpdateSampler, pollingIntervalMs, _cancellationTokenSource.Token);
         }
 
-        private async Task UpdateSamplerTimer(int poolingIntervalMs, CancellationToken cancellationToken)
+        private static async Task PollTimer(Action updateFunc, int pollingIntervalMs, CancellationToken cancellationToken)
         {
             while (!cancellationToken.IsCancellationRequested)
             {
                 try
                 {
-                    UpdateSampler();
-                    await Task.Delay(poolingIntervalMs, cancellationToken);
+                    updateFunc();
+                    await Task.Delay(pollingIntervalMs, cancellationToken);
                 }
                 catch (TaskCanceledException)
                 {
@@ -63,7 +83,7 @@ namespace LetsTrace.Samplers
         /// <summary>
         /// Updates <see cref="_sampler"/> to a new sampler when it is different.
         /// </summary>
-        void UpdateSampler()
+        internal void UpdateSampler()
         {
             SamplingStrategyResponse response;
             try
@@ -81,47 +101,56 @@ namespace LetsTrace.Samplers
             {
                 UpdatePerOperationSampler(response.OperationSampling);
             }
+            else if (response.ProbabilisticSampling != null)
+            {
+                UpdateProbabilisticSampler(response.ProbabilisticSampling);
+            }
+            else if (response.RateLimitingSampling != null)
+            {
+                UpdateRateLimitingSampler(response.RateLimitingSampling);
+            }
             else
             {
-                UpdateRateLimitingOrProbabilisticSampler(response);
+                _metrics.SamplerParsingFailure.Inc(1);
+                _logger.LogError("No strategy present in response. Not updating sampler.");
+            }
+        }
+
+        internal void SetSamplerIfNotTheSame(ISampler newSampler)
+        {
+            lock (this)
+            {
+                if (!_sampler.Equals(newSampler))
+                {
+                    _sampler = newSampler;
+                    _metrics.SamplerUpdated.Inc(1);
+                }
             }
         }
 
         /// <summary>
         /// Replace <see cref="_sampler"/> with a new instance when parameters are updated.
         /// </summary>
-        /// <param name="response">Contains either a <see cref="ProbabilisticSampler"/> or <see cref="RateLimitingSampler"/></param>
-        private void UpdateRateLimitingOrProbabilisticSampler(SamplingStrategyResponse response)
+        /// <param name="strategy"><see cref="ProbabilisticSamplingStrategy"/></param>
+        internal void UpdateProbabilisticSampler(ProbabilisticSamplingStrategy strategy)
         {
-            ISampler sampler;
-            if (response.ProbabilisticSampling != null)
-            {
-                ProbabilisticSamplingStrategy strategy = response.ProbabilisticSampling;
-                sampler = new ProbabilisticSampler(strategy.SamplingRate);
-            }
-            else if (response.RateLimitingSampling != null)
-            {
-                RateLimitingSamplingStrategy strategy = response.RateLimitingSampling;
-                sampler = new RateLimitingSampler(strategy.MaxTracesPerSecond);
-            }
-            else
-            {
-                _metrics.SamplerParsingFailure.Inc(1);
-                _logger.LogError("No strategy present in response. Not updating sampler.");
-                return;
-            }
+            var sampler = _samplerFactory.NewProbabilisticSampler(strategy.SamplingRate);
 
-            lock (this)
-            {
-                if (!_sampler.Equals(sampler))
-                {
-                    _sampler = sampler;
-                    _metrics.SamplerUpdated.Inc(1);
-                }
-            }
+            SetSamplerIfNotTheSame(sampler);
         }
 
-        private void UpdatePerOperationSampler(PerOperationSamplingStrategies samplingParameters)
+        /// <summary>
+        /// Replace <see cref="_sampler"/> with a new instance when parameters are updated.
+        /// </summary>
+        /// <param name="strategy"><see cref="RateLimitingSamplingStrategy"/></param>
+        internal void UpdateRateLimitingSampler(RateLimitingSamplingStrategy strategy)
+        {
+            var sampler = _samplerFactory.NewRateLimitingSampler(strategy.MaxTracesPerSecond);
+            
+            SetSamplerIfNotTheSame(sampler);
+        }
+
+        internal void UpdatePerOperationSampler(PerOperationSamplingStrategies samplingParameters)
         {
             lock (this)
             {
@@ -134,7 +163,7 @@ namespace LetsTrace.Samplers
                 }
                 else
                 {
-                    _sampler = new PerOperationSampler(_maxOperations, 
+                    _sampler = _samplerFactory.NewPerOperationSampler(_maxOperations, 
                         samplingParameters.DefaultSamplingProbability,
                         samplingParameters.DefaultLowerBoundTracesPerSecond,
                         _loggerFactory);
@@ -175,35 +204,35 @@ namespace LetsTrace.Samplers
             private ILoggerFactory _loggerFactory;
             private ISampler _initialSampler;
             private IMetrics _metrics;
-            private int _poolingIntervalMs = DEFAULT_POLLING_INTERVAL_MS;
+            private int _pollingIntervalMs = DEFAULT_POLLING_INTERVAL_MS;
 
-            public Builder(String serviceName, ISamplingManager samplingManager)
+            public Builder(string serviceName, ISamplingManager samplingManager)
             {
-                this._serviceName = serviceName;
-                this._samplingManager = samplingManager ?? throw new ArgumentNullException(nameof(samplingManager));
+                _serviceName = serviceName;
+                _samplingManager = samplingManager ?? throw new ArgumentNullException(nameof(samplingManager));
             }
 
             public Builder WithLoggerFactory(ILoggerFactory loggerFactory)
             {
-                this._loggerFactory = loggerFactory;
+                _loggerFactory = loggerFactory;
                 return this;
             }
 
             public Builder WithInitialSampler(ISampler initialSampler)
             {
-                this._initialSampler = initialSampler;
+                _initialSampler = initialSampler;
                 return this;
             }
 
             public Builder WithMetrics(IMetrics metrics)
             {
-                this._metrics = metrics;
+                _metrics = metrics;
                 return this;
             }
 
             public Builder WithPollingInterval(int pollingIntervalMs)
             {
-                this._poolingIntervalMs = pollingIntervalMs;
+                _pollingIntervalMs = pollingIntervalMs;
                 return this;
             }
 
@@ -221,7 +250,7 @@ namespace LetsTrace.Samplers
                 {
                     _metrics = NoopMetricsFactory.Instance.CreateMetrics();
                 }
-                return new RemoteControlledSampler(_serviceName, _samplingManager, _loggerFactory, _metrics, _initialSampler, _poolingIntervalMs);
+                return new RemoteControlledSampler(_serviceName, _samplingManager, _loggerFactory, _metrics, _initialSampler, _pollingIntervalMs);
             }
         }
     }
