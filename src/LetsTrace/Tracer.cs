@@ -116,7 +116,6 @@ namespace LetsTrace
             {
                 this._serviceName = CheckValidServiceName(serviceName);
 
-                // TODO: Have this in Jaeger specific context
                 var version = GetVersion();
                 this.WithTag(Constants.LETSTRACE_CLIENT_VERSION_TAG_KEY, version);
 

@@ -15,7 +15,7 @@ namespace LetsTrace
         ISpanContext ISpan.Context => Context;
 
         public DateTimeOffset? FinishTimestamp { get; private set; }
-        public List<LogRecord> Logs { get; private set; } = new List<LogRecord>();
+        public List<LogRecord> Logs { get; } = new List<LogRecord>();
         public string OperationName { get; private set; }
 
         // these references are only references - when the span is built the
