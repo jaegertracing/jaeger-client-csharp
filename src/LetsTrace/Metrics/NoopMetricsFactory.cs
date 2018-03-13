@@ -1,5 +1,8 @@
-﻿namespace LetsTrace.Metrics
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace LetsTrace.Metrics
 {
+    [ExcludeFromCodeCoverage]
     public class NoopMetricsFactory : BaseMetricsFactory
     {
         public static readonly NoopMetricsFactory Instance = new NoopMetricsFactory();

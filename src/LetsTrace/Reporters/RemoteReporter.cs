@@ -4,6 +4,7 @@ using LetsTrace.Exceptions;
 using LetsTrace.Metrics;
 using LetsTrace.Transport;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace LetsTrace.Reporters
 {
@@ -74,15 +75,15 @@ namespace LetsTrace.Reporters
 
         public class Builder
         {
-            private readonly ITransport transport;
+            private readonly ITransport _transport;
             private ILoggerFactory _loggerFactory;
-            //private TimeSpan flushInterval = REMOTE_REPORTER_DEFAULT_FLUSH_INTERVAL_MS;
-            //private int maxQueueSize = REMOTE_REPORTER_DEFAULT_MAX_QUEUE_SIZE;
-            private IMetrics metrics;
+            //private TimeSpan _flushInterval = REMOTE_REPORTER_DEFAULT_FLUSH_INTERVAL_MS;
+            //private int _maxQueueSize = REMOTE_REPORTER_DEFAULT_MAX_QUEUE_SIZE;
+            private IMetrics _metrics;
 
             public Builder(ITransport transport)
             {
-                this.transport = transport ?? throw new ArgumentNullException(nameof(transport));
+                this._transport = transport ?? throw new ArgumentNullException(nameof(transport));
             }
 
             public Builder WithLoggerFactory(ILoggerFactory loggerFactory)
@@ -93,29 +94,39 @@ namespace LetsTrace.Reporters
 
             //public Builder WithFlushInterval(TimeSpan flushInterval)
             //{
-            //    this.flushInterval = flushInterval;
+            //    this._flushInterval = flushInterval;
             //    return this;
             //}
 
             //public Builder WithMaxQueueSize(int maxQueueSize)
             //{
-            //    this.maxQueueSize = maxQueueSize;
+            //    this._maxQueueSize = maxQueueSize;
             //    return this;
             //}
 
             public Builder WithMetrics(IMetrics metrics)
             {
-                this.metrics = metrics;
+                this._metrics = metrics;
+                return this;
+            }
+
+            public Builder WithMetricsFactory(IMetricsFactory metricsFactory)
+            {
+                this._metrics = metricsFactory.CreateMetrics();
                 return this;
             }
 
             public RemoteReporter Build()
             {
-                if (metrics == null)
+                if (_loggerFactory == null)
                 {
-                    metrics = NoopMetricsFactory.Instance.CreateMetrics();
+                    _loggerFactory = NullLoggerFactory.Instance;
                 }
-                return new RemoteReporter(transport, _loggerFactory/*, flushInterval, maxQueueSize*/, metrics);
+                if (_metrics == null)
+                {
+                    _metrics = NoopMetricsFactory.Instance.CreateMetrics();
+                }
+                return new RemoteReporter(_transport, _loggerFactory/*, _flushInterval, _maxQueueSize*/, _metrics);
             }
         }
     }

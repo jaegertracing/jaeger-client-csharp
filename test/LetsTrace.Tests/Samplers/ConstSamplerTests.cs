@@ -21,6 +21,7 @@ namespace LetsTrace.Tests.Samplers
             Assert.Equal(sample, sampler.Decision);
             Assert.Equal(sample, isSampled.Sampled);
             Assert.Equal(expectedTags, isSampled.Tags);
+            sampler.Dispose();
         }
     }
 }

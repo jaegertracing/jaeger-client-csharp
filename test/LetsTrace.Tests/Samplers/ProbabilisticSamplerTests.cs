@@ -31,6 +31,7 @@ namespace LetsTrace.Tests.Samplers
             var samplingRate = 0.5;
             var sampler = new ProbabilisticSampler(samplingRate);
             Assert.Equal(samplingRate, sampler.SamplingRate);
+            sampler.Dispose();
         }
 
         [Fact]

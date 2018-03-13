@@ -22,7 +22,7 @@ namespace LetsTrace.Tests.Samplers
         private readonly IMetrics _mockMetrics;
         private readonly ISamplerFactory _mockSamplerFactory;
         private readonly int _pollingIntervalMs;
-        private Func<Action, int, CancellationToken, Task> _mockPollTimer;
+        private readonly Func<Action, int, CancellationToken, Task> _mockPollTimer;
         private RemoteControlledSampler _testingSampler;
 
         public RemoteControlledSamplerTests()
@@ -51,6 +51,8 @@ namespace LetsTrace.Tests.Samplers
             );
 
         }
+
+        /* TODO: Add tests for Update(PerOperationSamplingStrategies) including PerOperationStrategies */
 
         [Fact]
         public void UpdatePerOperationSampler_ShouldUpdateParams_WhenSamplerIsAlreadyPerOp()

@@ -55,7 +55,7 @@ namespace LetsTrace.Tests.Samplers
 
             Assert.Equal(maxTracesPerSecond, sampler.MaxTracesPerSecond);
             Assert.IsType<RateLimiter>(sampler._rateLimiter);
-
+            sampler.Dispose();
         }
     }
 }

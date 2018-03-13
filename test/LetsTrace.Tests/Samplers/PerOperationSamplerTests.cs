@@ -25,6 +25,15 @@ namespace LetsTrace.Tests.Samplers
         }
 
         [Fact]
+        public void PerOperationSampler_Dispose()
+        {
+            var loggerFactory = Substitute.For<ILoggerFactory>();
+            var samplerFactory = Substitute.For<ISamplerFactory>();
+            var sampler = new PerOperationSampler(10, 1.0, 1.0, loggerFactory, samplerFactory);
+            sampler.Dispose();
+        }
+
+        [Fact]
         public void GuaranteedThroughputProbabilisticSampler_IsSampled_CreatesAnReusesSamplersForOperations()
         {
             var samplingRate = 1.0;
@@ -54,6 +63,7 @@ namespace LetsTrace.Tests.Samplers
             samplerFactory.Received(1).NewGuaranteedThroughputProbabilisticSampler(Arg.Any<double>(), Arg.Any<double>());
             gtpSampler.Received(3).IsSampled(Arg.Any<TraceId>(), Arg.Any<string>());
             defaultSampler.Received(0).IsSampled(Arg.Any<TraceId>(), Arg.Any<string>());
+            sampler.Dispose();
         }
 
         [Fact]

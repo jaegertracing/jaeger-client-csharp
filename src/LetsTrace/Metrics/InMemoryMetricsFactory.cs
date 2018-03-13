@@ -10,7 +10,7 @@ namespace LetsTrace.Metrics
         {
         }
 
-        private class InMemoryElement : ICounter, ITimer, IGauge
+        internal class InMemoryElement : ICounter, ITimer, IGauge
         {
             private long value;
 
