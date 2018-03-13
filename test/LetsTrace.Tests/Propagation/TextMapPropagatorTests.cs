@@ -5,9 +5,9 @@ using LetsTrace.Propagation;
 using NSubstitute;
 using Xunit;
 
-namespace LetsTrace.Tests
+namespace LetsTrace.Tests.Propagation
 {
-    public class PropagationTests
+    public class TextMapPropagatorTests
     {
         [Fact]
         public void TextMapPropagator_Constructor_ShouldThrowIfHeadersConfigIsNull()
@@ -55,7 +55,7 @@ namespace LetsTrace.Tests
 
             var carrierDict = carrier.ToDictionary(c => c.Key, c => c.Value);
 
-            Assert.Equal("Castle.Proxies.ILetsTraceSpanContextProxy", carrierDict[headersConfig.TraceContextHeaderName]); // cannot mock ToString
+            Assert.Equal(spanContext.GetType().FullName, carrierDict[headersConfig.TraceContextHeaderName]); // cannot mock ToString
             Assert.Equal(baggage["key1"], carrierDict[$"{headersConfig.TraceBaggageHeaderPrefix}-key1"]);
             Assert.Equal(baggage["key2"], carrierDict[$"{headersConfig.TraceBaggageHeaderPrefix}-key2"]);
         }
@@ -68,6 +68,21 @@ namespace LetsTrace.Tests
 
             var ex = Assert.Throws<ArgumentException>(() => propagator.Extract(new List<string>()));
             Assert.Equal("carrier is not ITextMap", ex.Message);
+        }
+
+        [Fact]
+        public void TextMapPropagator_Extract_TraceContextHeaderMissing()
+        {
+            var headersConfig = new HeadersConfig("TraceContextHeaderName", "TraceBaggageHeaderPrefix");
+            var propagator = new TextMapPropagator(headersConfig, (val) => val, (val) => val);
+            var carrier = new DictionaryTextMap(new Dictionary<string, string> {
+                { "TraceBaggageHeaderPrefix-Item1", "item1" },
+                { "TraceBaggageHeaderPrefix-Item2", "item2" },
+            });
+
+            var sc = (SpanContext)propagator.Extract(carrier);
+
+            Assert.Null(sc);
         }
 
         [Fact]

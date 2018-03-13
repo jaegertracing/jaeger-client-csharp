@@ -1,9 +1,11 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using OpenTracing;
 using OpenTracing.Propagation;
 
 namespace LetsTrace.Propagation
 {
+    [ExcludeFromCodeCoverage]
     public sealed class ConsolePropagationRegistry : IPropagationRegistry
     {
         public void AddCodec<TCarrier>(IFormat<TCarrier> format, IInjector injector, IExtractor extractor)

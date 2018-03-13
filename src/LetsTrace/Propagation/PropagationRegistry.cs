@@ -25,7 +25,7 @@ namespace LetsTrace.Propagation
                 return _extractors[formatString].Extract(carrier);
             }
 
-            throw new Exception($"{formatString} is not a supported extraction format");
+            throw new ArgumentException($"{formatString} is not a supported extraction format", nameof(format));
         }
 
         public void Inject<TCarrier>(ISpanContext spanContext, IFormat<TCarrier> format, TCarrier carrier)
@@ -37,7 +37,7 @@ namespace LetsTrace.Propagation
                 return;
             }
 
-            throw new Exception($"{formatString} is not a supported injection format");
+            throw new ArgumentException($"{formatString} is not a supported injection format", nameof(format));
         }
     }
 }

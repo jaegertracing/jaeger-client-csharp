@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace LetsTrace
 {
@@ -6,6 +7,7 @@ namespace LetsTrace
     {
         public string Key { get; set; }
         public TypeCode TypeCode { get; protected set; }
+        [ExcludeFromCodeCoverage]
         public virtual string StringValue { get; }
 
         public bool Equals(Field other) => other.Key == Key && other.TypeCode == TypeCode && other.StringValue == StringValue;

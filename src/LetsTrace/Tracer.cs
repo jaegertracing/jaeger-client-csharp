@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Net.Sockets;
 using System.Reflection;
@@ -112,6 +113,7 @@ namespace LetsTrace
             private IReporter _reporter;
             private IMetrics _metrics;
 
+            [ExcludeFromCodeCoverage]
             public Builder(String serviceName)
             {
                 this._serviceName = CheckValidServiceName(serviceName);

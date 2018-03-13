@@ -90,11 +90,11 @@ namespace LetsTrace.Tests
             var spanContext = Substitute.For<ILetsTraceSpanContext>();
             var format = new Builtin<string>("formatDoesNotExist");
 
-            var ex = Assert.Throws<Exception>(() => _builtTracer.Extract(format, carrier));
-            Assert.Equal($"{format} is not a supported extraction format", ex.Message);
+            var ex = Assert.Throws<ArgumentException>(() => _builtTracer.Extract(format, carrier));
+            Assert.Equal($"{format} is not a supported extraction format\r\nParameter name: format", ex.Message);
 
-            ex = Assert.Throws<Exception>(() => _builtTracer.Inject(spanContext, format, carrier));
-            Assert.Equal($"{format} is not a supported injection format", ex.Message);
+            ex = Assert.Throws<ArgumentException>(() => _builtTracer.Inject(spanContext, format, carrier));
+            Assert.Equal($"{format} is not a supported injection format\r\nParameter name: format", ex.Message);
         }
 
         [Fact]

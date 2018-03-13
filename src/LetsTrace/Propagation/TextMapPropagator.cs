@@ -67,11 +67,7 @@ namespace LetsTrace.Propagation
                     }
                 }
 
-                if (context == null) {
-                    return null;
-                }
-
-                return context.SetBaggageItems(baggage);
+                return context?.SetBaggageItems(baggage);
             }
             throw new ArgumentException($"{nameof(carrier)} is not ITextMap");
         }

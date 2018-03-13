@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using OpenTracing.Propagation;
 
 namespace LetsTrace.Propagation
@@ -18,6 +19,7 @@ namespace LetsTrace.Propagation
 
         public IEnumerator<KeyValuePair<string, string>> GetEnumerator() => _map.GetEnumerator();
 
+        [ExcludeFromCodeCoverage]
         IEnumerator IEnumerable.GetEnumerator() => _map.GetEnumerator();
     }
 }
