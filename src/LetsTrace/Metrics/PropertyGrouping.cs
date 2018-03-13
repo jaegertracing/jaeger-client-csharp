@@ -1,9 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
 namespace LetsTrace.Metrics
 {
+    [ExcludeFromCodeCoverage]
     internal class PropertyGrouping
     {
         public List<AttributedProperty<MetricAttribute>> Metric { get; } = new List<AttributedProperty<MetricAttribute>>();
