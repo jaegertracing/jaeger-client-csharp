@@ -46,7 +46,7 @@ namespace LetsTrace.Samplers
         /// Updates the GuaranteedThroughputSampler for each operation.
         /// </summary>
         /// <param name="strategies">The parameters for operation sampling</param>
-        /// <returns>true, if any samplers were updated</returns>
+        /// <returns>true, iff any samplers were updated</returns>
         [MethodImpl(MethodImplOptions.Synchronized)]
         public bool Update(PerOperationSamplingStrategies strategies)
         {
