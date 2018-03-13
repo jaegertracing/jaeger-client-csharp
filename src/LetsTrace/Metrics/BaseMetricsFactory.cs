@@ -1,5 +1,8 @@
-﻿namespace LetsTrace.Metrics
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace LetsTrace.Metrics
 {
+    [ExcludeFromCodeCoverage]
     public abstract partial class BaseMetricsFactory : IMetricsFactory
     {
         private static readonly TypeConstructor Constructor = new TypeConstructor();

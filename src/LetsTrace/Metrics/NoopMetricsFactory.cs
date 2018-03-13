@@ -17,6 +17,8 @@ namespace LetsTrace.Metrics
             public string Name { get; }
             public MetricAttribute Attribute { get; }
             public long Count { get; }
+            // TODO: Not used now, but ported from java implementation
+            [ExcludeFromCodeCoverage]
             public long MillisecondsTotal { get; }
             public long Value { get; }
 
@@ -24,6 +26,8 @@ namespace LetsTrace.Metrics
             {
             }
 
+            // TODO: Not used now, but ported from java implementation
+            [ExcludeFromCodeCoverage]
             public void DurationMicros(long time)
             {
             }
@@ -38,6 +42,8 @@ namespace LetsTrace.Metrics
             return Dummy;
         }
 
+        // TODO: Not used now, but ported from java implementation
+        [ExcludeFromCodeCoverage]
         protected override ITimer CreateTimer(string name, MetricAttribute attribute)
         {
             return Dummy;

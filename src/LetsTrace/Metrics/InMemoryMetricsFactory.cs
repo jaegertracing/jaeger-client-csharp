@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Threading;
 
 namespace LetsTrace.Metrics
 {
@@ -16,6 +17,8 @@ namespace LetsTrace.Metrics
 
             public long Value => value;
             public long Count => value;
+            // TODO: Not used now, but ported from java implementation
+            [ExcludeFromCodeCoverage]
             public long MillisecondsTotal => value;
 
             public string Name { get; }
@@ -32,6 +35,8 @@ namespace LetsTrace.Metrics
                 Interlocked.Add(ref value, delta);
             }
 
+            // TODO: Not used now, but ported from java implementation
+            [ExcludeFromCodeCoverage]
             public void DurationMicros(long time)
             {
                 Interlocked.Add(ref value, time);
@@ -53,6 +58,8 @@ namespace LetsTrace.Metrics
             return new InMemoryElement(name, attribute);
         }
 
+        // TODO: Not used now, but ported from java implementation
+        [ExcludeFromCodeCoverage]
         protected override ITimer CreateTimer(string name, MetricAttribute attribute)
         {
             return new InMemoryElement(name, attribute);
