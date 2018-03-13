@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using Xunit;
 
@@ -16,7 +17,7 @@ namespace LetsTrace.Tests
         private Field<T> ExecuteFieldTest<T>(T value) where T : IConvertible
         {
             var field1 = value.ToField<T>(_key);
-            var field2 = value.ToField<T>(_key);
+            var field2 = new KeyValuePair<string, object>(_key, value).ToField();
             Assert.IsType<Field<T>>(field1);
             Assert.Equal(_key, field1.Key);
             Assert.Equal(Type.GetTypeCode(typeof(T)), field1.TypeCode);
@@ -47,55 +48,100 @@ namespace LetsTrace.Tests
         [Fact]
         public void Field_Double()
         {
-            var field = ExecuteFieldTest((double)0.5);
+            var value = (double)1.5;
+            var field = ExecuteFieldTest(value);
+            Assert.Equal(value, field.ValueAs<double>());
+            Assert.Null(field.ValueAs<string>());
+            Assert.Equal(0, field.ValueAs<int>());
+            Assert.Equal(2, field.ValueAs<int, double>());
         }
 
         [Fact]
         public void Field_Decimal()
         {
-            var field = ExecuteFieldTest((decimal)0.5);
+            var value = (decimal)1.5;
+            var field = ExecuteFieldTest(value);
+            Assert.Equal(value, field.ValueAs<decimal>());
+            Assert.Null(field.ValueAs<string>());
+            Assert.Equal(0, field.ValueAs<int>());
+            Assert.Equal(2, field.ValueAs<int, decimal>());
         }
 
         [Fact]
         public void Field_Boolean()
         {
-            var field = ExecuteFieldTest((bool)true);
+            var value = (bool)true;
+            var field = ExecuteFieldTest(value);
+            Assert.Equal(value, field.ValueAs<bool>());
+            Assert.Null(field.ValueAs<string>());
+            Assert.Equal(0, field.ValueAs<int>());
+            Assert.Equal(1, field.ValueAs<int, bool>());
         }
 
         [Fact]
         public void Field_UInt16()
         {
-            var field = ExecuteFieldTest((ushort)42);
+            var value = (ushort)42;
+            var field = ExecuteFieldTest(value);
+            Assert.Equal(value, field.ValueAs<ushort>());
+            Assert.Null(field.ValueAs<string>());
+            Assert.Equal(0, field.ValueAs<int>());
+            Assert.Equal(42, field.ValueAs<int, ushort>());
         }
 
         [Fact]
         public void Field_UInt32()
         {
-            var field = ExecuteFieldTest((uint)42);
+            var value = (uint)42;
+            var field = ExecuteFieldTest(value);
+            Assert.Equal(value, field.ValueAs<uint>());
+            Assert.Null(field.ValueAs<string>());
+            Assert.Equal(0, field.ValueAs<int>());
+            Assert.Equal(42, field.ValueAs<int, uint>());
         }
 
         [Fact]
         public void Field_UInt64()
         {
-            var field = ExecuteFieldTest((ulong)42);
+            var value = (ulong)42;
+            var field = ExecuteFieldTest(value);
+            Assert.Equal(value, field.ValueAs<ulong>());
+            Assert.Null(field.ValueAs<string>());
+            Assert.Equal(0, field.ValueAs<int>());
+            Assert.Equal(42, field.ValueAs<int, ulong>());
         }
 
         [Fact]
         public void Field_Int16()
         {
-            var field = ExecuteFieldTest((short)42);
+            var value = (short)42;
+            var field = ExecuteFieldTest(value);
+            Assert.Equal(value, field.ValueAs<short>());
+            Assert.Null(field.ValueAs<string>());
+            Assert.Equal(0, field.ValueAs<int>());
+            Assert.Equal(42, field.ValueAs<int, short>());
         }
 
         [Fact]
         public void Field_Int32()
         {
-            var field = ExecuteFieldTest((int)42);
+            var value = (int)42;
+            var field = ExecuteFieldTest(value);
+            Assert.Equal(value, field.ValueAs<int>());
+            Assert.Null(field.ValueAs<string>());
+            Assert.Equal(0, field.ValueAs<long>());
+            Assert.Equal(42L, field.ValueAs<long, int>());
         }
 
         [Fact]
         public void Field_Int64()
         {
-            var field = ExecuteFieldTest((long)42);
+            var value = (long)42;
+            var field = ExecuteFieldTest(value);
+            Assert.Equal(value, field.ValueAs<long>());
+            Assert.Null(field.ValueAs<string>());
+            Assert.Equal(0, field.ValueAs<int>());
+            Assert.Equal(42, field.ValueAs<int, long>());
         }
     }
 }
