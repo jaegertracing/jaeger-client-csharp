@@ -1,6 +1,3 @@
-using NSubstitute;
-using NSubstitute.ReturnsExtensions;
-using OpenTracing;
 using System;
 using Xunit;
 

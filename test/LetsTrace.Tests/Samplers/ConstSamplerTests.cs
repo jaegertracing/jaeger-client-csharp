@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using LetsTrace.Samplers;
-using NSubstitute;
 using Xunit;
 
 namespace LetsTrace.Tests.Samplers

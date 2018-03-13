@@ -4,6 +4,7 @@ using LetsTrace.Propagation;
 using LetsTrace.Reporters;
 using LetsTrace.Samplers;
 using LetsTrace.Transport;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using OpenTracing;
 using OpenTracing.Propagation;
@@ -128,8 +129,7 @@ namespace LetsTrace.Tests
 
             Assert.Equal(samplingManager, ((RemoteControlledSampler)tracer.Sampler)._samplingManager);
         }
-
-
+        
         [Fact]
         public void Builder_WithMetricsFactory_ShouldCallCreateMetrics()
         {
@@ -143,6 +143,26 @@ namespace LetsTrace.Tests
 
             Assert.Equal(metrics, tracer.Metrics);
             metricsFactory.Received(1).CreateMetrics();
+        }
+
+        [Fact]
+        public void Builder_WithLoggingFactory_ShouldCallCreateLogger()
+        {
+            var loggerFactory = Substitute.For<ILoggerFactory>();
+            var logger = Substitute.For<ILogger>();
+            var span = Substitute.For<ILetsTraceSpan>();
+            loggerFactory.CreateLogger<LoggingReporter>().Returns(logger);
+            span.Context.IsSampled.Returns(true);
+
+            var tracer = _baseBuilder
+                .WithLoggerFactory(loggerFactory)
+                .Build();
+
+            Assert.IsType<LoggingReporter>(tracer.Reporter);
+            loggerFactory.Received(1).CreateLogger<LoggingReporter>();
+
+            tracer.ReportSpan(span);
+            logger.Received(1).Log(LogLevel.Information, Arg.Any<EventId>(), Arg.Any<object>(), null, Arg.Any<Func<object, Exception, string>>());
         }
     }
 }
