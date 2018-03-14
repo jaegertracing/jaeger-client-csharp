@@ -40,6 +40,7 @@ namespace LetsTrace.Samplers
             {
                 samplerKV.Value.Dispose();
             }
+            _defaultSampler.Dispose();
         }
 
         /// <summary>

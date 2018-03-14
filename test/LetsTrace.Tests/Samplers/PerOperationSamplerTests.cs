@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using LetsTrace.Samplers;
+using LetsTrace.Samplers.HTTP;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Xunit;
@@ -14,6 +16,7 @@ namespace LetsTrace.Tests.Samplers
 
         private readonly IGuaranteedThroughputProbabilisticSampler _mockGtpSampler;
         private readonly ILoggerFactory _mockLoggerFactory;
+        private readonly ILogger<PerOperationSampler> _mockLogger;
         private readonly IProbabilisticSampler _mockDefaultSampler;
         private readonly ISamplerFactory _mockSamplerFactory;
 
@@ -27,6 +30,7 @@ namespace LetsTrace.Tests.Samplers
 
             _mockGtpSampler = Substitute.For<IGuaranteedThroughputProbabilisticSampler>();
             _mockLoggerFactory = Substitute.For<ILoggerFactory>();
+            _mockLogger = Substitute.For<ILogger<PerOperationSampler>>();
             _mockDefaultSampler = Substitute.For<IProbabilisticSampler>();
             _mockSamplerFactory = Substitute.For<ISamplerFactory>();
 
@@ -37,6 +41,7 @@ namespace LetsTrace.Tests.Samplers
             _mockSamplerFactory.NewProbabilisticSampler(
                 Arg.Is<double>(x => x == _samplingRate)
             ).Returns(_mockDefaultSampler);
+            _mockLoggerFactory.CreateLogger<PerOperationSampler>().Returns(_mockLogger);
 
             _testingSampler = new PerOperationSampler(_maxOperations, _samplingRate, _lowerBound, _mockLoggerFactory, _mockSamplerFactory);
         }
@@ -60,10 +65,14 @@ namespace LetsTrace.Tests.Samplers
         [Fact]
         public void PerOperationSampler_Dispose()
         {
-            var loggerFactory = Substitute.For<ILoggerFactory>();
-            var samplerFactory = Substitute.For<ISamplerFactory>();
-            var sampler = new PerOperationSampler(10, 1.0, 1.0, loggerFactory, samplerFactory);
-            sampler.Dispose();
+            _testingSampler.IsSampled(new TraceId(1), "op1");
+            _testingSampler.IsSampled(new TraceId(1), "op2");
+
+            _testingSampler.Dispose();
+
+            _mockSamplerFactory.Received(2).NewGuaranteedThroughputProbabilisticSampler(Arg.Any<double>(), Arg.Any<double>());
+            _mockGtpSampler.Received(2).Dispose();
+            _mockDefaultSampler.Received(1).Dispose();
         }
 
         [Fact]
@@ -98,12 +107,166 @@ namespace LetsTrace.Tests.Samplers
             _mockDefaultSampler.Received(1).IsSampled(Arg.Any<TraceId>(), Arg.Any<string>());
         }
 
-        // Update(strat)
-            // should update the default sampler
-            // should not update the default sampler if it's the same
-            // should update the samplers for each strategy
-                // should replace operation samplers that already exist
-                // should add a new sampler for operations that don't have a sampler yet
-                // should log and not add a new sampler when we hit the max operations
+        [Fact]
+        public void PerOperationSampler_Update_ShouldUpdateTheDefaultSampler()
+        {
+            var strat = new PerOperationSamplingStrategies
+            {
+                DefaultSamplingProbability = 0.75,
+                PerOperationStrategies = new List<OperationSamplingStrategy>()
+            };
+            var newMockDefaultSampler = Substitute.For<ISampler>();
+            _mockSamplerFactory.NewProbabilisticSampler(Arg.Is<double>(v => v == strat.DefaultSamplingProbability)).Returns(newMockDefaultSampler);
+
+            var updated = _testingSampler.Update(strat);
+
+            Assert.True(updated);
+            _mockSamplerFactory.Received(1).NewProbabilisticSampler(Arg.Is<double>(v => v == strat.DefaultSamplingProbability));
+        }
+
+        [Fact]
+        public void PerOperationSampler_Update_ShouldNotUpdateTheDefaultSamplerWhenAlreadySame()
+        {
+            var strat = new PerOperationSamplingStrategies
+            {
+                DefaultSamplingProbability = _samplingRate,
+                PerOperationStrategies = new List<OperationSamplingStrategy>()
+            };
+
+            var updated = _testingSampler.Update(strat);
+
+            Assert.False(updated);
+            _mockSamplerFactory.Received(2).NewProbabilisticSampler(Arg.Is<double>(v => v == strat.DefaultSamplingProbability));
+        }
+
+
+        [Fact]
+        public void PerOperationSampler_Update_ShouldReplaceOperationSamplersThatAlreadyExist()
+        {
+            var strat = new PerOperationSamplingStrategies
+            {
+                DefaultSamplingProbability = _samplingRate,
+                DefaultLowerBoundTracesPerSecond = 0.7,
+                PerOperationStrategies = new List<OperationSamplingStrategy>
+                {
+                    new OperationSamplingStrategy
+                    {
+                        Operation = "op1",
+                        ProbabilisticSampling = new ProbabilisticSamplingStrategy
+                        {
+                            SamplingRate = 0.25
+                        }
+                    },
+                    new OperationSamplingStrategy
+                    {
+                        Operation = "op2",
+                        ProbabilisticSampling = new ProbabilisticSamplingStrategy
+                        {
+                            SamplingRate = 0.35
+                        }
+                    }
+                }
+            };
+
+            _testingSampler.IsSampled(new TraceId(1), strat.PerOperationStrategies[0].Operation);
+            _testingSampler.IsSampled(new TraceId(1), strat.PerOperationStrategies[1].Operation);
+            _mockGtpSampler.Update(Arg.Any<double>(), Arg.Any<double>()).Returns(true);
+
+            var updated = _testingSampler.Update(strat);
+
+            Assert.True(updated);
+            _mockSamplerFactory.Received(2).NewGuaranteedThroughputProbabilisticSampler(Arg.Any<double>(), Arg.Any<double>());
+            _mockGtpSampler.Received(1).Update(Arg.Is(strat.PerOperationStrategies[0].ProbabilisticSampling.SamplingRate), Arg.Is(strat.DefaultLowerBoundTracesPerSecond));
+            _mockGtpSampler.Received(1).Update(Arg.Is(strat.PerOperationStrategies[1].ProbabilisticSampling.SamplingRate), Arg.Is(strat.DefaultLowerBoundTracesPerSecond));
+        }
+
+        [Fact]
+        public void PerOperationSampler_Update_ShouldAddSamplerToOperationThatDoesntHaveOneYet()
+        {
+            var samplingRate2 = 0.35;
+
+            var strat = new PerOperationSamplingStrategies
+            {
+                DefaultSamplingProbability = _samplingRate,
+                DefaultLowerBoundTracesPerSecond = 0.7,
+                PerOperationStrategies = new List<OperationSamplingStrategy>
+                {
+                    new OperationSamplingStrategy
+                    {
+                        Operation = "op1",
+                        ProbabilisticSampling = new ProbabilisticSamplingStrategy
+                        {
+                            SamplingRate = _samplingRate
+                        }
+                    },
+                    new OperationSamplingStrategy
+                    {
+                        Operation = "op2",
+                        ProbabilisticSampling = new ProbabilisticSamplingStrategy
+                        {
+                            SamplingRate = samplingRate2
+                        }
+                    }
+                }
+            };
+
+            _mockSamplerFactory.NewGuaranteedThroughputProbabilisticSampler(
+                Arg.Is<double>(x => x == _samplingRate),
+                Arg.Is<double>(x => x == strat.DefaultLowerBoundTracesPerSecond)
+            ).Returns(_mockGtpSampler);
+            _mockSamplerFactory.NewGuaranteedThroughputProbabilisticSampler(
+                Arg.Is<double>(x => x == samplingRate2),
+                Arg.Is<double>(x => x == strat.DefaultLowerBoundTracesPerSecond)
+            ).Returns(_mockGtpSampler);
+
+            var updated = _testingSampler.Update(strat);
+
+            Assert.True(updated);
+            _mockSamplerFactory.Received(1).NewGuaranteedThroughputProbabilisticSampler(Arg.Is(_samplingRate), Arg.Is(strat.DefaultLowerBoundTracesPerSecond));
+            _mockSamplerFactory.Received(1).NewGuaranteedThroughputProbabilisticSampler(Arg.Is(samplingRate2), Arg.Is(strat.DefaultLowerBoundTracesPerSecond));
+            _mockGtpSampler.Received(0).Update(Arg.Any<double>(), Arg.Any<double>());
+        }
+
+        [Fact]
+        public void PerOperationSampler_Update_ShouldLogAndNotAddSamplerWhenWeHitTheMaxOps()
+        {
+            var expectedLogMessage = $"Exceeded the maximum number of operations ({_maxOperations}) for per operations sampling";
+            var strat = new PerOperationSamplingStrategies
+            {
+                DefaultSamplingProbability = _samplingRate,
+                DefaultLowerBoundTracesPerSecond = 0.7,
+                PerOperationStrategies = new List<OperationSamplingStrategy>
+                {
+                    new OperationSamplingStrategy
+                    {
+                        Operation = "op4",
+                        ProbabilisticSampling = new ProbabilisticSamplingStrategy
+                        {
+                            SamplingRate = 0.25
+                        }
+                    },
+                    new OperationSamplingStrategy
+                    {
+                        Operation = "op5",
+                        ProbabilisticSampling = new ProbabilisticSamplingStrategy
+                        {
+                            SamplingRate = 0.35
+                        }
+                    }
+                }
+            };
+
+            _testingSampler.IsSampled(new TraceId(1), "op1");
+            _testingSampler.IsSampled(new TraceId(1), "op2");
+            _testingSampler.IsSampled(new TraceId(1), "op3");
+
+            var updated = _testingSampler.Update(strat);
+
+            Assert.False(updated);
+            _mockSamplerFactory.Received(3).NewGuaranteedThroughputProbabilisticSampler(Arg.Is(_samplingRate), Arg.Is(_lowerBound));
+            _mockGtpSampler.Received(0).Update(Arg.Any<double>(), Arg.Any<double>());
+            // cannot mock extension methods :/ _mockLogger.Received(1).LogError(Arg.Is<string>(lm => lm == expectedLogMessage));
+            //_mockLogger.Received(1).Log(Arg.Any<LogLevel>(), Arg.Any<EventId>(), Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<Func<object, Exception, string>>());
+        }
     }
 }
