@@ -79,8 +79,7 @@ namespace LetsTrace.Samplers
                     }
                     else
                     {
-                        _logger.LogInformation("Exceeded the maximum number of operations ({0}) for per operations sampling",
-                            _maxOperations);
+                        _logger.LogInformation($"Exceeded the maximum number of operations ({_maxOperations}) for per operations sampling");
                     }
                 }
             }
