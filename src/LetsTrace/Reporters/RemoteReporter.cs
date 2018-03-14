@@ -11,10 +11,6 @@ namespace LetsTrace.Reporters
     // TODO: use this to load up spans into a processing queue that will be taken care of by a thread
     public class RemoteReporter : IReporter
     {
-        // TODO: Constants
-        public static readonly TimeSpan REMOTE_REPORTER_DEFAULT_FLUSH_INTERVAL_MS = TimeSpan.FromMilliseconds(100);
-        public const int REMOTE_REPORTER_DEFAULT_MAX_QUEUE_SIZE = 100;
-
         internal readonly ITransport _transport;
         internal readonly IMetrics _metrics;
 

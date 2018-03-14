@@ -31,8 +31,8 @@ namespace LetsTrace.Samplers
             _probabilisticSampler = probabilisticSampler;
             _rateLimitingSampler = rateLimitingSampler;
             _tags = new Dictionary<string, Field> {
-                { Constants.SAMPLER_TYPE_TAG_KEY, new Field<string> { Value = Constants.SAMPLER_TYPE_LOWERBOUND } },
-                { Constants.SAMPLER_PARAM_TAG_KEY, new Field<double> { Value = _probabilisticSampler.SamplingRate } }
+                { SamplingConstants.SAMPLER_TYPE_TAG_KEY, new Field<string> { Value = SamplingConstants.SAMPLER_TYPE_LOWERBOUND } },
+                { SamplingConstants.SAMPLER_PARAM_TAG_KEY, new Field<double> { Value = _probabilisticSampler.SamplingRate } }
             };
         }
 
@@ -49,7 +49,7 @@ namespace LetsTrace.Samplers
             if (Math.Abs(samplingRate - _probabilisticSampler.SamplingRate) > double.Epsilon)
             {
                 _probabilisticSampler = new ProbabilisticSampler(samplingRate);
-                ((Field<double>)_tags[Constants.SAMPLER_PARAM_TAG_KEY]).Value = samplingRate;
+                ((Field<double>)_tags[SamplingConstants.SAMPLER_PARAM_TAG_KEY]).Value = samplingRate;
                 isUpdated = true;
             }
             if (Math.Abs(lowerBound - _rateLimitingSampler.MaxTracesPerSecond) > double.Epsilon)

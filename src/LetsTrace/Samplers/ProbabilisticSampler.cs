@@ -16,22 +16,21 @@ namespace LetsTrace.Samplers
     public class ProbabilisticSampler : IProbabilisticSampler
     {
         // TODO: Constants!
-        public const double DEFAULT_SAMPLING_PROBABILITY = 0.001;
 
         private readonly ulong _samplingBoundary;
         private readonly Dictionary<string, Field> _tags;
 
         public double SamplingRate { get; }
 
-        public ProbabilisticSampler(double samplingRate = DEFAULT_SAMPLING_PROBABILITY)
+        public ProbabilisticSampler(double samplingRate = SamplingConstants.DEFAULT_SAMPLING_PROBABILITY)
         {
             if (samplingRate < 0.0 || samplingRate > 1.0) throw new ArgumentOutOfRangeException(nameof(samplingRate), samplingRate, "sampling rate must be between 0.0 and 1.0");
             SamplingRate = samplingRate;
 
             _samplingBoundary = (ulong) (ulong.MaxValue * samplingRate);
             _tags = new Dictionary<string, Field> {
-                { Constants.SAMPLER_TYPE_TAG_KEY, new Field<string> { Value = Constants.SAMPLER_TYPE_PROBABILISTIC } },
-                { Constants.SAMPLER_PARAM_TAG_KEY, new Field<double> { Value = samplingRate } }
+                { SamplingConstants.SAMPLER_TYPE_TAG_KEY, new Field<string> { Value = SamplingConstants.SAMPLER_TYPE_PROBABILISTIC } },
+                { SamplingConstants.SAMPLER_PARAM_TAG_KEY, new Field<double> { Value = samplingRate } }
             };
         }
 
