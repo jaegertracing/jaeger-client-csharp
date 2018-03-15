@@ -44,7 +44,7 @@ namespace LetsTrace.Tests
                 .WithSampler(_mockSampler)
                 .WithScopeManager(_mockScopeManager)
                 .WithPropagationRegistry(_propagationRegistry)
-                .WithTag(Constants.TRACER_IP_TAG_KEY, _ip)
+                .WithTag(Constants.TracerIpTagKey, _ip)
                 .Build();
         }
 
@@ -91,10 +91,10 @@ namespace LetsTrace.Tests
             var format = new Builtin<string>("formatDoesNotExist");
 
             var ex = Assert.Throws<ArgumentException>(() => _builtTracer.Extract(format, carrier));
-            Assert.Equal($"{format} is not a supported extraction format\r\nParameter name: format", ex.Message);
+            Assert.Contains($"{format} is not a supported extraction format", ex.Message);
 
             ex = Assert.Throws<ArgumentException>(() => _builtTracer.Inject(spanContext, format, carrier));
-            Assert.Equal($"{format} is not a supported injection format\r\nParameter name: format", ex.Message);
+            Assert.Contains($"{format} is not a supported injection format", ex.Message);
         }
 
         [Fact]
@@ -137,7 +137,7 @@ namespace LetsTrace.Tests
             Assert.Equal(_ip, _builtTracer.HostIPv4);
             Assert.Equal(_mockScopeManager, _builtTracer.ScopeManager);
             Assert.Equal(_serviceName, _builtTracer.ServiceName);
-            Assert.Equal(_ip, _builtTracer.Tags[Constants.TRACER_IP_TAG_KEY].StringValue);
+            Assert.Equal(_ip, _builtTracer.Tags[Constants.TracerIpTagKey].StringValue);
         }
 
         [Fact]

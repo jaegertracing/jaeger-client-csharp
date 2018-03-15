@@ -41,8 +41,8 @@ namespace LetsTrace.Tests.Samplers
 
             var samplingRate = 0.5;
             var expectedTags = new Dictionary<string, Field> {
-                { SamplingConstants.SAMPLER_TYPE_TAG_KEY, new Field<string> { Value = SamplingConstants.SAMPLER_TYPE_PROBABILISTIC } },
-                { SamplingConstants.SAMPLER_PARAM_TAG_KEY, new Field<double> { Value = samplingRate } }
+                { SamplerConstants.SamplerTypeTagKey, new Field<string> { Value = SamplerConstants.SamplerTypeProbabilistic } },
+                { SamplerConstants.SamplerParamTagKey, new Field<double> { Value = samplingRate } }
             };
             var sampler = new ProbabilisticSampler(samplingRate);
             var isSampled = sampler.IsSampled(new TraceId((ulong)(middleId + 10)), "op");

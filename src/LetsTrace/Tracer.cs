@@ -49,7 +49,7 @@ namespace LetsTrace
 
             _logger = loggerFactory.CreateLogger<Tracer>();
 
-            if (tags.TryGetValue(Constants.TRACER_IP_TAG_KEY, out var field))
+            if (tags.TryGetValue(Constants.TracerIpTagKey, out var field))
             {
                 HostIPv4 = field.StringValue;
             } 
@@ -119,17 +119,17 @@ namespace LetsTrace
                 this._serviceName = CheckValidServiceName(serviceName);
 
                 var version = GetVersion();
-                this.WithTag(Constants.LETSTRACE_CLIENT_VERSION_TAG_KEY, version);
+                this.WithTag(Constants.LetsTraceClientVersionTagKey, version);
 
                 string hostname = System.Net.Dns.GetHostName();
                 if (hostname != null)
                 {
-                    this.WithTag(Constants.TRACER_HOSTNAME_TAG_KEY, hostname);
+                    this.WithTag(Constants.TracerHostnameTagKey, hostname);
 
                     try
                     {
                         var hostIPv4 = System.Net.Dns.GetHostAddresses(hostname).First(ip => ip.AddressFamily == AddressFamily.InterNetwork).ToString();
-                        this.WithTag(Constants.TRACER_IP_TAG_KEY, hostIPv4);
+                        this.WithTag(Constants.TracerIpTagKey, hostIPv4);
                     }
                     catch
                     {

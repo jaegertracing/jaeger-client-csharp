@@ -33,8 +33,8 @@ namespace LetsTrace.Samplers
 
             _rateLimiter = rateLimiter ?? throw new ArgumentNullException(nameof(rateLimiter));
             _tags = new Dictionary<string, Field> {
-                { SamplingConstants.SAMPLER_TYPE_TAG_KEY, new Field<string> { Value = SamplingConstants.SAMPLER_TYPE_RATE_LIMITING } },
-                { SamplingConstants.SAMPLER_PARAM_TAG_KEY, new Field<double> { Value = maxTracesPerSecond } }
+                { SamplerConstants.SamplerTypeTagKey, new Field<string> { Value = SamplerConstants.SamplerTypeRateLimiting } },
+                { SamplerConstants.SamplerParamTagKey, new Field<double> { Value = maxTracesPerSecond } }
             };
         }
 

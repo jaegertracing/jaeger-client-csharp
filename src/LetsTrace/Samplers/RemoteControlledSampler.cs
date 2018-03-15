@@ -200,7 +200,7 @@ namespace LetsTrace.Samplers
             private ILoggerFactory _loggerFactory;
             private ISampler _initialSampler;
             private IMetrics _metrics;
-            private int _pollingIntervalMs = SamplingConstants.DEFAULT_REMOTE_POLLING_INTERVAL_MS;
+            private int _pollingIntervalMs = SamplerConstants.DefaultRemotePollingIntervalMs;
 
             public Builder(string serviceName, ISamplingManager samplingManager)
             {

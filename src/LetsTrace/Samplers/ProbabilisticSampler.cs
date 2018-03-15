@@ -22,15 +22,15 @@ namespace LetsTrace.Samplers
 
         public double SamplingRate { get; }
 
-        public ProbabilisticSampler(double samplingRate = SamplingConstants.DEFAULT_SAMPLING_PROBABILITY)
+        public ProbabilisticSampler(double samplingRate = SamplerConstants.DefaultSamplingProbability)
         {
             if (samplingRate < 0.0 || samplingRate > 1.0) throw new ArgumentOutOfRangeException(nameof(samplingRate), samplingRate, "sampling rate must be between 0.0 and 1.0");
             SamplingRate = samplingRate;
 
             _samplingBoundary = (ulong) (ulong.MaxValue * samplingRate);
             _tags = new Dictionary<string, Field> {
-                { SamplingConstants.SAMPLER_TYPE_TAG_KEY, new Field<string> { Value = SamplingConstants.SAMPLER_TYPE_PROBABILISTIC } },
-                { SamplingConstants.SAMPLER_PARAM_TAG_KEY, new Field<double> { Value = samplingRate } }
+                { SamplerConstants.SamplerTypeTagKey, new Field<string> { Value = SamplerConstants.SamplerTypeProbabilistic } },
+                { SamplerConstants.SamplerParamTagKey, new Field<double> { Value = samplingRate } }
             };
         }
 

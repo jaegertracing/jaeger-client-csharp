@@ -39,7 +39,7 @@ namespace LetsTrace.Tests.Propagation
             var carrier = Substitute.For<ITextMap>();
 
             var ex = Assert.Throws<ArgumentException>(() => _propagationRegistry.Inject(_spanContext, _format, carrier));
-            Assert.Equal($"{_format.GetType().FullName} is not a supported injection format\r\nParameter name: format", ex.Message);
+            Assert.Contains($"{_format.GetType().FullName} is not a supported injection format", ex.Message);
         }
 
         [Fact]
@@ -51,9 +51,9 @@ namespace LetsTrace.Tests.Propagation
 
             var carrierDict = carrier.ToDictionary(c => c.Key, c => c.Value);
 
-            Assert.Equal(_spanContext.GetType().FullName, carrierDict[Constants.TRACE_CONTEXT_HEADER_NAME]); // cannot mock ToString
-            Assert.Equal(_baggage["key1"], carrierDict[$"{Constants.TRACE_BAGGAGE_HEADER_PREFIX}-key1"]);
-            Assert.Equal(_baggage["key2"], carrierDict[$"{Constants.TRACE_BAGGAGE_HEADER_PREFIX}-key2"]);
+            Assert.Equal(_spanContext.GetType().FullName, carrierDict[Constants.TraceContextHeaderName]); // cannot mock ToString
+            Assert.Equal(_baggage["key1"], carrierDict[$"{Constants.TraceBaggageHeaderPrefix}-key1"]);
+            Assert.Equal(_baggage["key2"], carrierDict[$"{Constants.TraceBaggageHeaderPrefix}-key2"]);
         }
 
         [Fact]
@@ -65,9 +65,9 @@ namespace LetsTrace.Tests.Propagation
 
             var carrierDict = carrier.ToDictionary(c => c.Key, c => c.Value);
 
-            Assert.Equal(_spanContext.GetType().FullName, carrierDict[Constants.TRACE_CONTEXT_HEADER_NAME]); // cannot mock ToString
-            Assert.Equal(HttpUtility.UrlEncode(_baggage["key1"]), carrierDict[$"{Constants.TRACE_BAGGAGE_HEADER_PREFIX}-key1"]);
-            Assert.Equal(HttpUtility.UrlEncode(_baggage["key2"]), carrierDict[$"{Constants.TRACE_BAGGAGE_HEADER_PREFIX}-key2"]);
+            Assert.Equal(_spanContext.GetType().FullName, carrierDict[Constants.TraceContextHeaderName]); // cannot mock ToString
+            Assert.Equal(HttpUtility.UrlEncode(_baggage["key1"]), carrierDict[$"{Constants.TraceBaggageHeaderPrefix}-key1"]);
+            Assert.Equal(HttpUtility.UrlEncode(_baggage["key2"]), carrierDict[$"{Constants.TraceBaggageHeaderPrefix}-key2"]);
         }
 
         [Fact]
@@ -76,15 +76,15 @@ namespace LetsTrace.Tests.Propagation
             var carrier = Substitute.For<ITextMap>();
 
             var ex = Assert.Throws<ArgumentException>(() => _propagationRegistry.Extract(_format, carrier));
-            Assert.Equal($"{_format.GetType().FullName} is not a supported extraction format\r\nParameter name: format", ex.Message);
+            Assert.Contains($"{_format.GetType().FullName} is not a supported extraction format", ex.Message);
         }
 
         [Fact]
         public void TextMapPropagationRegistry_Extract_TraceContextHeaderMissing()
         {
             var carrier = new DictionaryTextMap(new Dictionary<string, string> {
-                { $"{Constants.TRACE_BAGGAGE_HEADER_PREFIX}-Item1", "item1/val" },
-                { $"{Constants.TRACE_BAGGAGE_HEADER_PREFIX}-Item2", "item2/val" },
+                { $"{Constants.TraceBaggageHeaderPrefix}-Item1", "item1/val" },
+                { $"{Constants.TraceBaggageHeaderPrefix}-Item2", "item2/val" },
             });
 
             var sc = (SpanContext)_propagationRegistry.Extract(BuiltinFormats.TextMap, carrier);
@@ -98,9 +98,9 @@ namespace LetsTrace.Tests.Propagation
         public void TextMapPropagator_Extract_TextMap_SetsTheRightHeadersWithTheRightData()
         {
             var carrier = new DictionaryTextMap(new Dictionary<string, string> {
-                { Constants.TRACE_CONTEXT_HEADER_NAME, "1:2:3:4" },
-                { $"{Constants.TRACE_BAGGAGE_HEADER_PREFIX}-Item1", "item1/val" },
-                { $"{Constants.TRACE_BAGGAGE_HEADER_PREFIX}-Item2", "item2/val" },
+                { Constants.TraceContextHeaderName, "1:2:3:4" },
+                { $"{Constants.TraceBaggageHeaderPrefix}-Item1", "item1/val" },
+                { $"{Constants.TraceBaggageHeaderPrefix}-Item2", "item2/val" },
             });
 
             var sc = (SpanContext)_propagationRegistry.Extract(BuiltinFormats.TextMap, carrier);
@@ -118,9 +118,9 @@ namespace LetsTrace.Tests.Propagation
         public void TextMapPropagator_Extract_HttpHeaders_SetsTheRightHeadersWithTheRightData()
         {
             var carrier = new DictionaryTextMap(new Dictionary<string, string> {
-                { Constants.TRACE_CONTEXT_HEADER_NAME, "1:2:3:4" },
-                { $"{Constants.TRACE_BAGGAGE_HEADER_PREFIX}-Item1", "item1%2fval" },
-                { $"{Constants.TRACE_BAGGAGE_HEADER_PREFIX}-Item2", "item2%2fval" },
+                { Constants.TraceContextHeaderName, "1:2:3:4" },
+                { $"{Constants.TraceBaggageHeaderPrefix}-Item1", "item1%2fval" },
+                { $"{Constants.TraceBaggageHeaderPrefix}-Item2", "item2%2fval" },
             });
 
             var sc = (SpanContext)_propagationRegistry.Extract(BuiltinFormats.HttpHeaders, carrier);

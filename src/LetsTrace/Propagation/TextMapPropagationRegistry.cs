@@ -4,7 +4,7 @@ namespace LetsTrace.Propagation
 {
     public class TextMapPropagationRegistry : PropagationRegistry
     {
-        internal static readonly IHeadersConfig DefaultHeadersConfig = new HeadersConfig(Constants.TRACE_CONTEXT_HEADER_NAME, Constants.TRACE_BAGGAGE_HEADER_PREFIX);
+        internal static readonly IHeadersConfig DefaultHeadersConfig = new HeadersConfig(Constants.TraceContextHeaderName, Constants.TraceBaggageHeaderPrefix);
 
         public TextMapPropagationRegistry() : this(DefaultHeadersConfig)
         {
