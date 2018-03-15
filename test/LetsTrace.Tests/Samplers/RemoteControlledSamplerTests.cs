@@ -286,7 +286,7 @@ namespace LetsTrace.Tests.Samplers
             var updateFunc = Substitute.For<Action>();
             var pollingIntervalMs = 1000;
             var cts = new CancellationTokenSource();
-            cts.CancelAfter(2200);
+            cts.CancelAfter(2600);
 
             await RemoteControlledSampler.PollTimer(updateFunc, pollingIntervalMs, cts.Token);
 
