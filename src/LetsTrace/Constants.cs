@@ -19,14 +19,8 @@ namespace LetsTrace
         /// </summary>
         public const string TracerIpTagKey = "ip";
 
-        /// <summary>
-        /// TODO
-        /// </summary>
         public const string TraceContextHeaderName = "X-LetsTrace-Trace-Context";
 
-        /// <summary>
-        /// TODO
-        /// </summary>
         public const string TraceBaggageHeaderPrefix = "X-LetsTrace-Baggage";
     }
 }

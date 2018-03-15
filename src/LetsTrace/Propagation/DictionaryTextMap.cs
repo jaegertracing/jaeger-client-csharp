@@ -5,7 +5,6 @@ using OpenTracing.Propagation;
 
 namespace LetsTrace.Propagation
 {
-    // TODO: make an extension method to convert dictionaries to DictionaryTextMap
     public class DictionaryTextMap : ITextMap
     {
         private readonly IDictionary<string, string> _map;

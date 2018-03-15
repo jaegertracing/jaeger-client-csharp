@@ -34,7 +34,6 @@ namespace LetsTrace
         public IPropagationRegistry PropagationRegistry { get; }
         public IMetrics Metrics { get; }
 
-        // TODO: support trace options
         private Tracer(string serviceName, IDictionary<string, Field> tags, IScopeManager scopeManager, ILoggerFactory loggerFactory,
             IPropagationRegistry propagationRegistry, ISampler sampler, IReporter reporter, IMetrics metrics)
         {

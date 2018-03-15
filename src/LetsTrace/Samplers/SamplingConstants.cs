@@ -33,9 +33,6 @@ namespace LetsTrace.Samplers
         /// </summary>
         public const string SamplerTypeRateLimiting = "ratelimiting";
 
-        /// <summary>
-        /// TODO
-        /// </summary>
         public const string SamplerTypeLowerBound = "lowerbound";
 
         public const double DefaultSamplingProbability = 0.001;

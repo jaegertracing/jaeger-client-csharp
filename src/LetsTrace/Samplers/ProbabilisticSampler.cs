@@ -15,8 +15,6 @@ namespace LetsTrace.Samplers
     // samplingRate, in the range between 0.0 and 1.0.
     public class ProbabilisticSampler : IProbabilisticSampler
     {
-        // TODO: Constants!
-
         private readonly ulong _samplingBoundary;
         private readonly Dictionary<string, Field> _tags;
 
