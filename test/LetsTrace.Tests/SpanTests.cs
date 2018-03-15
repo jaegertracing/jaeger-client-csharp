@@ -15,9 +15,9 @@ namespace LetsTrace.Tests
         {
             var tracer = Substitute.For<ILetsTraceTracer>();
             var operationName = "testing";
-            var spanContext = Substitute.For<ISpanContext>();
+            var spanContext = Substitute.For<ILetsTraceSpanContext>();
             var startTimestamp = DateTimeOffset.Now;
-            var ref1Context = Substitute.For<ISpanContext>();
+            var ref1Context = Substitute.For<ILetsTraceSpanContext>();
             var tags = new Dictionary<string, Field> { { "key", new Field<string> { Value = "something" } } };
             var references = new List<Reference> {
                 new Reference("type1", ref1Context)
@@ -34,7 +34,7 @@ namespace LetsTrace.Tests
         [Fact]
         public void Span_Constructor_ShouldThrowIfTracerIsNull()
         {
-            var spanContext = Substitute.For<ISpanContext>();
+            var spanContext = Substitute.For<ILetsTraceSpanContext>();
             
             var ex = Assert.Throws<ArgumentNullException>(() => new Span(null, "", spanContext));
             Assert.Equal("tracer", ex.ParamName);
@@ -44,7 +44,7 @@ namespace LetsTrace.Tests
         public void Span_Constructor_ShouldThrowIfOperationNameIsNullOrEmpty()
         {
             var tracer = Substitute.For<ILetsTraceTracer>();
-            var spanContext = Substitute.For<ISpanContext>();
+            var spanContext = Substitute.For<ILetsTraceSpanContext>();
             
             var ex1 = Assert.Throws<ArgumentException>(() => new Span(tracer, "", spanContext));
             Assert.StartsWith("Argument is empty", ex1.Message);
@@ -68,7 +68,7 @@ namespace LetsTrace.Tests
             var tracer = Substitute.For<ILetsTraceTracer>();
             var operationName = "testing";
             var clock = Substitute.For<IClock>();
-            var spanContext = Substitute.For<ISpanContext>();
+            var spanContext = Substitute.For<ILetsTraceSpanContext>();
             var startTimestamp = DateTimeOffset.Now;
 
             tracer.Clock.Returns(clock);
@@ -89,7 +89,7 @@ namespace LetsTrace.Tests
         {
             var tracer = Substitute.For<ILetsTraceTracer>();
             var clock = Substitute.For<IClock>();
-            var spanContext = Substitute.For<ISpanContext>();
+            var spanContext = Substitute.For<ILetsTraceSpanContext>();
             var startTimestamp = DateTimeOffset.Now;
             var currentTime = DateTimeOffset.Now.AddSeconds(1);
 
@@ -111,7 +111,7 @@ namespace LetsTrace.Tests
         {
             var tracer = Substitute.For<ILetsTraceTracer>();
             var clock = Substitute.For<IClock>();
-            var spanContext = Substitute.For<ISpanContext>();
+            var spanContext = Substitute.For<ILetsTraceSpanContext>();
             var startTimestamp = DateTimeOffset.Now;
             var currentTime = DateTimeOffset.Now.AddSeconds(1);
 
@@ -132,7 +132,7 @@ namespace LetsTrace.Tests
         {
             var tracer = Substitute.For<ILetsTraceTracer>();
             var clock = Substitute.For<IClock>();
-            var spanContext = Substitute.For<ISpanContext>();
+            var spanContext = Substitute.For<ILetsTraceSpanContext>();
             var startTimestamp = DateTimeOffset.Now;
             var currentTime = DateTimeOffset.Now.AddSeconds(1);
 
@@ -153,7 +153,7 @@ namespace LetsTrace.Tests
         public void Span_GetBaggageItem_ShouldUseTheContextBaggage()
         {
             var tracer = Substitute.For<ILetsTraceTracer>();
-            var spanContext = Substitute.For<ISpanContext>();
+            var spanContext = Substitute.For<ILetsTraceSpanContext>();
             var startTimestamp = DateTimeOffset.Now;
             var baggage = new Dictionary<string, string> { { "key1", "value1" }, { "key2", "value2" } };
 
@@ -169,7 +169,7 @@ namespace LetsTrace.Tests
         public void Span_GetBaggageItem_ShouldReturnNull_WhenKeyDoesNotExist()
         {
             var tracer = Substitute.For<ILetsTraceTracer>();
-            var spanContext = Substitute.For<ISpanContext>();
+            var spanContext = Substitute.For<ILetsTraceSpanContext>();
             var startTimestamp = DateTimeOffset.Now;
             var baggage = new Dictionary<string, string> { { "key1", "value1" }, { "key2", "value2" } };
 
@@ -186,7 +186,7 @@ namespace LetsTrace.Tests
         {
             var tracer = Substitute.For<ILetsTraceTracer>();
             var operationName = "testing";
-            var spanContext = Substitute.For<ISpanContext>();
+            var spanContext = Substitute.For<ILetsTraceSpanContext>();
             var startTimestamp = DateTimeOffset.Now;
             var key = "key";
             var value = "value";
@@ -216,7 +216,7 @@ namespace LetsTrace.Tests
             var tracer = Substitute.For<ILetsTraceTracer>();
             var operationName = "testing";
             var clock = Substitute.For<IClock>();
-            var spanContext = Substitute.For<ISpanContext>();
+            var spanContext = Substitute.For<ILetsTraceSpanContext>();
             var startTimestamp = DateTimeOffset.Now;
             var currentTime = DateTimeOffset.Now.AddSeconds(1);
 
@@ -244,7 +244,7 @@ namespace LetsTrace.Tests
             
             var tracer = Substitute.For<ILetsTraceTracer>();
             var operationName = "testing";
-            var spanContext = Substitute.For<ISpanContext>();
+            var spanContext = Substitute.For<ILetsTraceSpanContext>();
             var startTimestamp = DateTimeOffset.Now;
             var logTimestamp = DateTimeOffset.Now.AddMilliseconds(150);
 
@@ -264,7 +264,7 @@ namespace LetsTrace.Tests
             var tracer = Substitute.For<ILetsTraceTracer>();
             var operationName = "testing";
             var clock = Substitute.For<IClock>();
-            var spanContext = Substitute.For<ISpanContext>();
+            var spanContext = Substitute.For<ILetsTraceSpanContext>();
             var startTimestamp = DateTimeOffset.Now;
             var currentTime = DateTimeOffset.Now.AddSeconds(1);
 
@@ -275,7 +275,7 @@ namespace LetsTrace.Tests
             span.Log(eventName);
 
             clock.Received(1).CurrentTime();
-            Assert.Equal("event", span.Logs[0].Fields[0].Key);
+            Assert.Equal(LogFields.Event, span.Logs[0].Fields[0].Key);
             Assert.True(span.Logs[0].Fields[0] is Field<string>);
             Assert.Equal(eventName, span.Logs[0].Fields[0].ValueAs<string>());
             Assert.Equal(currentTime, span.Logs[0].Timestamp);
@@ -288,14 +288,14 @@ namespace LetsTrace.Tests
             
             var tracer = Substitute.For<ILetsTraceTracer>();
             var operationName = "testing";
-            var spanContext = Substitute.For<ISpanContext>();
+            var spanContext = Substitute.For<ILetsTraceSpanContext>();
             var startTimestamp = DateTimeOffset.Now;
             var logTimestamp = DateTimeOffset.Now.AddMilliseconds(150);
 
             var span = new Span(tracer, operationName, spanContext, startTimestamp);
             span.Log(logTimestamp, eventName);
 
-            Assert.Equal("event", span.Logs[0].Fields[0].Key);
+            Assert.Equal(LogFields.Event, span.Logs[0].Fields[0].Key);
             Assert.True(span.Logs[0].Fields[0] is Field<string>);
             Assert.Equal(eventName, span.Logs[0].Fields[0].ValueAs<string>());
             Assert.Equal(logTimestamp, span.Logs[0].Timestamp);
@@ -306,7 +306,7 @@ namespace LetsTrace.Tests
         {
             var tracer = Substitute.For<ILetsTraceTracer>();
             var operationName = "testing";
-            var spanContext = Substitute.For<ISpanContext>();
+            var spanContext = Substitute.For<ILetsTraceSpanContext>();
             var startTimestamp = DateTimeOffset.Now;
             var logTimestamp = DateTimeOffset.Now.AddMilliseconds(150);
 
@@ -325,7 +325,7 @@ namespace LetsTrace.Tests
         {
             var tracer = Substitute.For<ILetsTraceTracer>();
             var operationName = "testing";
-            var spanContext = Substitute.For<ISpanContext>();
+            var spanContext = Substitute.For<ILetsTraceSpanContext>();
             var startTimestamp = DateTimeOffset.Now;
             var tagName = "testing.tag";
             var value = true;
@@ -342,7 +342,7 @@ namespace LetsTrace.Tests
         {
             var tracer = Substitute.For<ILetsTraceTracer>();
             var operationName = "testing";
-            var spanContext = Substitute.For<ISpanContext>();
+            var spanContext = Substitute.For<ILetsTraceSpanContext>();
             var startTimestamp = DateTimeOffset.Now;
             var tagName = "testing.tag";
             var value = 3D;
@@ -359,7 +359,7 @@ namespace LetsTrace.Tests
         {
             var tracer = Substitute.For<ILetsTraceTracer>();
             var operationName = "testing";
-            var spanContext = Substitute.For<ISpanContext>();
+            var spanContext = Substitute.For<ILetsTraceSpanContext>();
             var startTimestamp = DateTimeOffset.Now;
             var tagName = "testing.tag";
             var value = 55;
@@ -376,7 +376,7 @@ namespace LetsTrace.Tests
         {
             var tracer = Substitute.For<ILetsTraceTracer>();
             var operationName = "testing";
-            var spanContext = Substitute.For<ISpanContext>();
+            var spanContext = Substitute.For<ILetsTraceSpanContext>();
             var startTimestamp = DateTimeOffset.Now;
             var tagName = "testing.tag";
             var value = "testing, yo";
@@ -393,7 +393,7 @@ namespace LetsTrace.Tests
         {
             var tracer = Substitute.For<ILetsTraceTracer>();
             var operationName = "testing";
-            var spanContext = Substitute.For<ISpanContext>();
+            var spanContext = Substitute.For<ILetsTraceSpanContext>();
             var startTimestamp = DateTimeOffset.Now;
             var tagName = "testing.tag";
             var value = "testing, yo";

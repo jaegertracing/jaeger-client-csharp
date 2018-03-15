@@ -1,5 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using LetsTrace.Samplers.HTTP;
+using Microsoft.Extensions.Logging;
+using SamplerDictionary = System.Collections.Generic.Dictionary<string, LetsTrace.Samplers.IGuaranteedThroughputProbabilisticSampler>;
 
 namespace LetsTrace.Samplers
 {
@@ -8,24 +12,25 @@ namespace LetsTrace.Samplers
     // for each operation
     public class PerOperationSampler : ISampler
     {
-        private int _maxOperations;
-        private double _samplingRate;
+        private readonly int _maxOperations;
+        private readonly double _samplingRate;
         private double _lowerBound;
-        private Dictionary<string, ISampler> _samplers = new Dictionary<string, ISampler>();
+        private readonly ILogger<PerOperationSampler> _logger;
+        private readonly ISamplerFactory _factory;
+        private readonly SamplerDictionary _samplers = new SamplerDictionary();
         private ISampler _defaultSampler;
-        private ISamplerFactory _factory;
 
-        public PerOperationSampler(int maxOperations, double samplingRate, double lowerBound)
-            : this(maxOperations, samplingRate, lowerBound, new SamplerFactory())
+        public PerOperationSampler(int maxOperations, double samplingRate, double lowerBound, ILoggerFactory loggerFactory)
+            : this(maxOperations, samplingRate, lowerBound, loggerFactory, new SamplerFactory())
         {}
 
-        internal PerOperationSampler(int maxOperations, double samplingRate, double lowerBound, ISamplerFactory factory)
+        internal PerOperationSampler(int maxOperations, double samplingRate, double lowerBound, ILoggerFactory loggerFactory, ISamplerFactory samplerFactory)
         {
-            _factory = factory ?? throw new ArgumentNullException(nameof(factory));
             _maxOperations = maxOperations;
             _samplingRate = samplingRate;
             _lowerBound = lowerBound;
-
+            _logger = loggerFactory?.CreateLogger<PerOperationSampler>() ?? throw new ArgumentNullException(nameof(loggerFactory));
+            _factory = samplerFactory ?? throw new ArgumentNullException(nameof(samplerFactory));
             _defaultSampler = _factory.NewProbabilisticSampler(_samplingRate);
         }
 
@@ -35,21 +40,67 @@ namespace LetsTrace.Samplers
             {
                 samplerKV.Value.Dispose();
             }
+            _defaultSampler.Dispose();
+        }
+
+        /// <summary>
+        /// Updates the GuaranteedThroughputSampler for each operation.
+        /// </summary>
+        /// <param name="strategies">The parameters for operation sampling</param>
+        /// <returns>true, iff any samplers were updated</returns>
+        [MethodImpl(MethodImplOptions.Synchronized)]
+        public bool Update(PerOperationSamplingStrategies strategies)
+        {
+            var isUpdated = false;
+
+            _lowerBound = strategies.DefaultLowerBoundTracesPerSecond;
+
+            var defaultSampler = _factory.NewProbabilisticSampler(strategies.DefaultSamplingProbability);
+            if (!defaultSampler.Equals(_defaultSampler))
+            {
+                _defaultSampler = defaultSampler;
+                isUpdated = true;
+            }
+
+            foreach (var strategy in strategies.PerOperationStrategies)
+            {
+                var operation = strategy.Operation;
+                var samplingRate = strategy.ProbabilisticSampling.SamplingRate;
+                if (_samplers.TryGetValue(operation, out var sampler))
+                {
+                    isUpdated = sampler.Update(samplingRate, _lowerBound) || isUpdated;
+                }
+                else
+                {
+                    if (_samplers.Count < _maxOperations)
+                    {
+                        sampler = (IGuaranteedThroughputProbabilisticSampler)_factory.NewGuaranteedThroughputProbabilisticSampler(samplingRate, _lowerBound);
+                        _samplers.Add(operation, sampler);
+                        isUpdated = true;
+                    }
+                    else
+                    {
+                        _logger.LogInformation($"Exceeded the maximum number of operations ({_maxOperations}) for per operations sampling");
+                    }
+                }
+            }
+
+            return isUpdated;
         }
 
         public (bool Sampled, IDictionary<string, Field> Tags) IsSampled(TraceId id, string operation)
         {
             var operationKey = operation.ToLower();
 
-            if (_samplers.ContainsKey(operationKey)) {
-                return _samplers[operationKey].IsSampled(id, operation);
+            if (_samplers.TryGetValue(operationKey, out var sampler)) {
+                return sampler.IsSampled(id, operation);
             }
 
             if (_samplers.Count >= _maxOperations) {
                 return _defaultSampler.IsSampled(id, operation);
             }
 
-            var newSampler = _factory.NewGuaranteedThroughputProbabilisticSampler(_samplingRate, _lowerBound);
+            var newSampler = (IGuaranteedThroughputProbabilisticSampler)_factory.NewGuaranteedThroughputProbabilisticSampler(_samplingRate, _lowerBound);
             _samplers[operationKey] = newSampler;
             return newSampler.IsSampled(id, operation);
         }

@@ -1,13 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using OpenTracing.Propagation;
 
 namespace LetsTrace.Propagation
 {
-    // TODO: make an extension method to convert dictionaries to DictionaryTextMap
     public class DictionaryTextMap : ITextMap
-    {   
-        private IDictionary<string, string> _map { get; }
+    {
+        private readonly IDictionary<string, string> _map;
 
         public DictionaryTextMap(IDictionary<string, string> map = null)
         {
@@ -18,6 +18,7 @@ namespace LetsTrace.Propagation
 
         public IEnumerator<KeyValuePair<string, string>> GetEnumerator() => _map.GetEnumerator();
 
+        [ExcludeFromCodeCoverage]
         IEnumerator IEnumerable.GetEnumerator() => _map.GetEnumerator();
     }
 }

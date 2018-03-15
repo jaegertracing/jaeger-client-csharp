@@ -8,13 +8,13 @@ namespace LetsTrace.Propagation
 {
     public class TextMapPropagator : IInjector, IExtractor
     {
-        private IHeadersConfig _headersConfig { get; }
+        private readonly IHeadersConfig _headersConfig;
 
         // functions to encode and decode strings so that they are safe over
         // the wire
-        private Func<string, string> _encodeValue { get; }
-        private Func<string, string> _decodeValue { get; }
-
+        private readonly Func<string, string> _encodeValue;
+        private readonly Func<string, string> _decodeValue;
+        
         public TextMapPropagator(IHeadersConfig headersConfig, Func<string, string> encodeValue, Func<string, string> decodeValue)
         {
             _headersConfig = headersConfig ?? throw new ArgumentNullException(nameof(headersConfig));
@@ -56,21 +56,18 @@ namespace LetsTrace.Propagation
 
                 foreach(var item in map)
                 {
-                    if (item.Key == _headersConfig.TraceContextHeaderName) {
+                    // GRPC Metadata is case insensitive, so the case could get lost.
+                    if (item.Key.Equals(_headersConfig.TraceContextHeaderName, StringComparison.OrdinalIgnoreCase)) {
                         var safeValue = _decodeValue(item.Value);
                         context = SpanContext.FromString(safeValue);
-                    } else if (item.Key.StartsWith(_headersConfig.TraceBaggageHeaderPrefix)) {
+                    } else if (item.Key.StartsWith(_headersConfig.TraceBaggageHeaderPrefix, StringComparison.OrdinalIgnoreCase)) {
                         var safeKey = RemoveBaggageKeyPrefix(item.Key);
                         var safeValue = _decodeValue(item.Value);
                         baggage.Add(safeKey, safeValue);
                     }
                 }
 
-                if (context == null) {
-                    return null;
-                }
-
-                return context.SetBaggageItems(baggage);
+                return context?.SetBaggageItems(baggage);
             }
             throw new ArgumentException($"{nameof(carrier)} is not ITextMap");
         }

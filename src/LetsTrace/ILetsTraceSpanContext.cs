@@ -7,8 +7,7 @@ namespace LetsTrace
         TraceId TraceId { get; }
         SpanId SpanId { get; }
         SpanId ParentId { get; }
-        byte Flags { get; }
-
-        bool IsSampled();
+        ContextFlags Flags { get; }
+        bool IsSampled { get; }
     }
 }

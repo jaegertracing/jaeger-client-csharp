@@ -6,14 +6,15 @@ namespace LetsTrace.Samplers
     public class ConstSampler : ISampler
     {
         public bool Decision { get; }
-        private Dictionary<string, Field> _tags;
+
+        private readonly Dictionary<string, Field> _tags;
 
         public ConstSampler(bool sample)
         {
             Decision = sample;
             _tags = new Dictionary<string, Field> {
-                { Constants.SamplerTypeTagKey, new Field<string> { Value = Constants.SamplerTypeConst } },
-                { Constants.SamplerParamTagKey, new Field<bool> { Value = sample } }
+                { SamplerConstants.SamplerTypeTagKey, new Field<string> { Value = SamplerConstants.SamplerTypeConst } },
+                { SamplerConstants.SamplerParamTagKey, new Field<bool> { Value = sample } }
             };
         }
 

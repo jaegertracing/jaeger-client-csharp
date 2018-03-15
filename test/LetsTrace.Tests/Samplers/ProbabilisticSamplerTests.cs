@@ -31,6 +31,7 @@ namespace LetsTrace.Tests.Samplers
             var samplingRate = 0.5;
             var sampler = new ProbabilisticSampler(samplingRate);
             Assert.Equal(samplingRate, sampler.SamplingRate);
+            sampler.Dispose();
         }
 
         [Fact]
@@ -40,16 +41,16 @@ namespace LetsTrace.Tests.Samplers
 
             var samplingRate = 0.5;
             var expectedTags = new Dictionary<string, Field> {
-                { Constants.SamplerTypeTagKey, new Field<string> { Value = Constants.SamplerTypeConst } },
-                { Constants.SamplerParamTagKey, new Field<double> { Value = samplingRate } }
+                { SamplerConstants.SamplerTypeTagKey, new Field<string> { Value = SamplerConstants.SamplerTypeProbabilistic } },
+                { SamplerConstants.SamplerParamTagKey, new Field<double> { Value = samplingRate } }
             };
             var sampler = new ProbabilisticSampler(samplingRate);
-            var isSampled = sampler.IsSampled(new TraceId { Low = (UInt64) middleId + 10 }, "op");
+            var isSampled = sampler.IsSampled(new TraceId((ulong)(middleId + 10)), "op");
 
             Assert.Equal(expectedTags, isSampled.Tags);
             Assert.False(isSampled.Sampled);
 
-            isSampled = sampler.IsSampled(new TraceId { Low = (UInt64) middleId - 20 }, "op");
+            isSampled = sampler.IsSampled(new TraceId((ulong)(middleId - 20)), "op");
             Assert.Equal(expectedTags, isSampled.Tags);
             Assert.True(isSampled.Sampled);
         }

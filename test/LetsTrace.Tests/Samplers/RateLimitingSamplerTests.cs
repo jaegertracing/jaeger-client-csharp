@@ -20,9 +20,10 @@ namespace LetsTrace.Tests.Samplers
         public void RateLimitingSampler_UsesTheRateLimiter()
         {
             var maxTracesPerSecond = 3.6;
+            var traceId = new TraceId(1);
             var expectedTags = new Dictionary<string, Field> {
-                { Constants.SamplerTypeTagKey, new Field<string> { Value = Constants.SamplerTypeRateLimiting } },
-                { Constants.SamplerParamTagKey, new Field<double> { Value = maxTracesPerSecond } }
+                { SamplerConstants.SamplerTypeTagKey, new Field<string> { Value = SamplerConstants.SamplerTypeRateLimiting } },
+                { SamplerConstants.SamplerParamTagKey, new Field<double> { Value = maxTracesPerSecond } }
             };
             var rateLimiter = Substitute.For<IRateLimiter>();
             double calledWith = 0;
@@ -33,17 +34,28 @@ namespace LetsTrace.Tests.Samplers
             });
             
             var sampler = new RateLimitingSampler(maxTracesPerSecond, rateLimiter);
-            var isSampled = sampler.IsSampled(new TraceId(), "op");
+            var isSampled = sampler.IsSampled(traceId, "op");
 
             Assert.False(isSampled.Sampled);
             Assert.Equal(1.0, calledWith);
 
             shouldReturn = true;
-            isSampled = sampler.IsSampled(new TraceId(), "op");
+            isSampled = sampler.IsSampled(traceId, "op");
 
             Assert.True(isSampled.Sampled);
             Assert.Equal(1.0, calledWith);
             Assert.Equal(expectedTags, isSampled.Tags);
+        }
+
+        [Fact]
+        public void RateLimitingSampler_UsesDefaultRateLimiter()
+        {
+            var maxTracesPerSecond = 5.4;
+            var sampler = new RateLimitingSampler(maxTracesPerSecond);
+
+            Assert.Equal(maxTracesPerSecond, sampler.MaxTracesPerSecond);
+            Assert.IsType<RateLimiter>(sampler._rateLimiter);
+            sampler.Dispose();
         }
     }
 }

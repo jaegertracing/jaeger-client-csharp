@@ -11,16 +11,17 @@ namespace LetsTrace.Tests.Samplers
         {
             var sample = true;
             var expectedTags = new Dictionary<string, Field> {
-                { Constants.SamplerTypeTagKey, new Field<string> { Value = Constants.SamplerTypeConst } },
-                { Constants.SamplerParamTagKey, new Field<bool> { Value = sample } }
+                { SamplerConstants.SamplerTypeTagKey, new Field<string> { Value = SamplerConstants.SamplerTypeConst } },
+                { SamplerConstants.SamplerParamTagKey, new Field<bool> { Value = sample } }
             };
             var sampler = new ConstSampler(sample);
 
-            var isSampled = sampler.IsSampled(new TraceId(), "op");
+            var isSampled = sampler.IsSampled(new TraceId(1), "op");
 
             Assert.Equal(sample, sampler.Decision);
             Assert.Equal(sample, isSampled.Sampled);
             Assert.Equal(expectedTags, isSampled.Tags);
+            sampler.Dispose();
         }
     }
 }

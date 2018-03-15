@@ -6,9 +6,9 @@ namespace LetsTrace.Reporters
     {
         private readonly List<IReporter> _reporters;
 
-        public CompositeReporter(List<IReporter> reporters)
+        public CompositeReporter(params IReporter[] reporters)
         {
-            _reporters = reporters;
+            _reporters = new List<IReporter>(reporters);
         }
 
         public void Dispose()

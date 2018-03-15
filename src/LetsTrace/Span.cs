@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using OpenTracing;
-using OpenTracing.Tag;
 
 namespace LetsTrace
 {
@@ -10,9 +9,13 @@ namespace LetsTrace
     public class Span : ILetsTraceSpan
     {
         // OpenTracing API: Retrieve the Spans SpanContext
-        public ISpanContext Context { get; private set; }
+        // C# doesn't have "return type covariance" so we use the trick with the explicit interface implementation
+        // and this separate property.
+        public ILetsTraceSpanContext Context { get; }
+        ISpanContext ISpan.Context => Context;
+
         public DateTimeOffset? FinishTimestamp { get; private set; }
-        public List<LogRecord> Logs { get; private set; } = new List<LogRecord>();
+        public List<LogRecord> Logs { get; } = new List<LogRecord>();
         public string OperationName { get; private set; }
 
         // these references are only references - when the span is built the
@@ -20,11 +23,11 @@ namespace LetsTrace
         // parent is (if there is one). The span should not handle determining
         // who its parent is
         public List<Reference> References { get; }
-        public DateTimeOffset StartTimestamp { get; private set; }
-        public Dictionary<string, Field> Tags { get; private set; }
+        public DateTimeOffset StartTimestamp { get; }
+        public Dictionary<string, Field> Tags { get; }
         public ILetsTraceTracer Tracer { get; }
 
-        public Span(ILetsTraceTracer tracer, string operationName, ISpanContext context, DateTimeOffset? startTimestamp = null, Dictionary<string, Field> tags = null, List<Reference> references = null)
+        public Span(ILetsTraceTracer tracer, string operationName, ILetsTraceSpanContext context, DateTimeOffset? startTimestamp = null, Dictionary<string, Field> tags = null, List<Reference> references = null)
         {
             Tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
 
@@ -36,7 +39,6 @@ namespace LetsTrace
 
             OperationName = operationName;
             Context = context ?? throw new ArgumentNullException(nameof(context));
-
             StartTimestamp = startTimestamp ?? Tracer.Clock.CurrentTime();
             Tags = tags ?? new Dictionary<string, Field>();
             References = references ?? new List<Reference>();
@@ -74,7 +76,7 @@ namespace LetsTrace
         public ISpan Log(string eventName) => Log(Tracer.Clock.CurrentTime(), eventName);
 
         // OpenTracing API: Log structured data
-        public ISpan Log(DateTimeOffset timestamp, string eventName) => Log(timestamp, new List<Field> { new Field<string> { Key = "event", Value = eventName } });
+        public ISpan Log(DateTimeOffset timestamp, string eventName) => Log(timestamp, new List<Field> { new Field<string> { Key = LogFields.Event, Value = eventName } });
 
         private ISpan Log(DateTimeOffset timestamp, IEnumerable<Field> fields)
         {

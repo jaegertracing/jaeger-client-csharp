@@ -37,8 +37,9 @@ var sampler = new GuaranteedThroughputProbabilisticSampler(samplingRate, lowerBo
 A sampler that uses the name of the operation to maintain a specific GuaranteedThroughputProbabilisticSampler instance for each operation up to a max number of operations. Any operation over the max number of operations uses a shared probabilistic sampler.
 
 ```C#
+var loggerFactory = ; // get Microsoft.Extensions.Logging ILoggerFactory
 var maxOperations = 20; // number of specific operations to maintain a separate sampler instance for
 var samplingRate = 0.25;
 var lowerBound = 10;
-var sampler = new PerOperationSampler(maxOperations, samplingRate, lowerBound);
+var sampler = new PerOperationSampler(maxOperations, samplingRate, lowerBound, loggerFactory);
 ```

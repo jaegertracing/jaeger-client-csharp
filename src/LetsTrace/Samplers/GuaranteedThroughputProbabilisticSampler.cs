@@ -1,24 +1,63 @@
+using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace LetsTrace.Samplers
 {
+    /// <summary>
+    /// Only used for unit testing
+    /// </summary>
+    internal interface IGuaranteedThroughputProbabilisticSampler : ISampler
+    {
+        bool Update(double samplingRate, double lowerBound);
+    }
+
     // GuaranteedThroughputProbabilisticSampler is a sampler that leverages both ProbabilisticSampler and
     // RateLimitingSampler. The RateLimitingSampler is used as a guaranteed lower bound sampler such that
     // every operation is sampled at least once in a time interval defined by the lowerBound. ie a lowerBound
     // of 1.0 / (60 * 10) will sample an operation at least once every 10 minutes.
-    public class GuaranteedThroughputProbabilisticSampler : ISampler
+    public class GuaranteedThroughputProbabilisticSampler : IGuaranteedThroughputProbabilisticSampler
     {
-        private ISampler _probabilisticSampler;
-        private ISampler _rateLimitingSampler;
+        internal IProbabilisticSampler _probabilisticSampler;
+        internal IRateLimitingSampler _rateLimitingSampler;
+        private Dictionary<string, Field> _tags;
 
         public GuaranteedThroughputProbabilisticSampler(double samplingRate, double lowerBound)
             : this(new ProbabilisticSampler(samplingRate), new RateLimitingSampler(lowerBound))
         {}
 
-        internal GuaranteedThroughputProbabilisticSampler(ISampler probabilisticSampler, ISampler rateLimitingSampler)
+        internal GuaranteedThroughputProbabilisticSampler(IProbabilisticSampler probabilisticSampler, IRateLimitingSampler rateLimitingSampler)
         {
             _probabilisticSampler = probabilisticSampler;
             _rateLimitingSampler = rateLimitingSampler;
+            _tags = new Dictionary<string, Field> {
+                { SamplerConstants.SamplerTypeTagKey, new Field<string> { Value = SamplerConstants.SamplerTypeLowerBound } },
+                { SamplerConstants.SamplerParamTagKey, new Field<double> { Value = _probabilisticSampler.SamplingRate } }
+            };
+        }
+
+        /// <summary>
+        /// Updates the probabilistic and lowerBound samplers.
+        /// </summary>
+        /// <param name="samplingRate">The sampling rate for probabilistic sampling</param>
+        /// <param name="lowerBound">The lower bound limit for lower bound sampling</param>
+        /// <returns>true, iff any samplers were updated</returns>
+        [MethodImpl(MethodImplOptions.Synchronized)]
+        public bool Update(double samplingRate, double lowerBound)
+        {
+            var isUpdated = false;
+            if (Math.Abs(samplingRate - _probabilisticSampler.SamplingRate) > double.Epsilon)
+            {
+                _probabilisticSampler = new ProbabilisticSampler(samplingRate);
+                ((Field<double>)_tags[SamplerConstants.SamplerParamTagKey]).Value = samplingRate;
+                isUpdated = true;
+            }
+            if (Math.Abs(lowerBound - _rateLimitingSampler.MaxTracesPerSecond) > double.Epsilon)
+            {
+                _rateLimitingSampler = new RateLimitingSampler(lowerBound);
+                isUpdated = true;
+            }
+            return isUpdated;
         }
 
         public void Dispose()
