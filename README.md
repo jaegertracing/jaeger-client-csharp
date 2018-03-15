@@ -14,20 +14,23 @@ This library is still under construction and needs to be peer reviewed as well a
 This package contains everything you need to get up and running. If you want to report to a system such as Jaeger or Zipkin you will need to use their LetsTrace NuGet packages.
 
 ### The Tracer
-The following will give you a tracer that reports spans to `ILogger`.
+The following will give you a tracer that reports spans to the `ILogger` from `ILoggerFactory`.
 
 ```C#
 using LetsTrace;
 using LetsTrace.Reporters;
 using LetsTrace.Samplers;
 
-var logger = ; // get Microsoft.Extensions.Logging ILogger
+var loggerFactory = ; // get Microsoft.Extensions.Logging ILoggerFactory
 
 var serviceName = "initExampleService";
 var reporter = new LoggingReporter(logger);
-var hostIPAddress = "127.0.0.1";
 var sampler = new ConstSampler(true);
-var tracer = new Tracer(serviceName, reporter, hostIPAddress, sampler);
+var tracer = new Tracer.Builder(serviceName)
+    .WithLoggerFactory(loggerFactory)
+    .WithReporter(reporter)
+    .WithSampler(sampler)
+    .Build();
 ```
 
 #### Sampling
