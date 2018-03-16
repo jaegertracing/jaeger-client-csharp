@@ -19,7 +19,7 @@
 
   <ItemGroup>
     <DotNetCliToolReference Include="ILRepack" Version="2.0.15" />
-    <PackageReference Include="LetsTrace" Version="0.0.1" />
+    <PackageReference Include="LetsTrace" Version="0.0.4" />
     <PackageReference Include="OpenTracing" Version="0.11.0" />
   </ItemGroup>
 

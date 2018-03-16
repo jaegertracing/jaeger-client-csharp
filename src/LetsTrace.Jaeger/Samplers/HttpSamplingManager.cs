@@ -11,30 +11,31 @@ namespace LetsTrace.Jaeger.Samplers
 {
     public class HttpSamplingManager : ISamplingManager
     {
-        public const string DEFAULT_HOST_PORT = "localhost:5778";
-        private readonly string hostPort;
-        private readonly TBinaryProtocol.Factory protocolFactory;
+        public const string DefaultHostPort = "localhost:5778";
+
+        private readonly string _hostPort;
+        private readonly TBinaryProtocol.Factory _protocolFactory;
 
         /// <summary>
-        /// This constructor expects running sampling manager on <value>DEFAULT_HOST_PORT</value>
+        /// This constructor expects running sampling manager on <value>DefaultHostPort</value>
         /// </summary>
-        public HttpSamplingManager() : this(DEFAULT_HOST_PORT)
+        public HttpSamplingManager() : this(DefaultHostPort)
         {
         }
 
-        public HttpSamplingManager(String hostPort)
+        public HttpSamplingManager(string hostPort)
         {
-            this.hostPort = hostPort ?? DEFAULT_HOST_PORT;
-            this.protocolFactory = new TBinaryProtocol.Factory();
+            _hostPort = hostPort ?? DefaultHostPort;
+            _protocolFactory = new TBinaryProtocol.Factory();
         }
 
         public SamplingStrategyResponse GetSamplingStrategy(string serviceName)
         {
             try
             {
-                var samplerUri = new UriBuilder("http", this.hostPort) {Query = $"service={serviceName}"}.Uri;
+                var samplerUri = new UriBuilder("http", _hostPort) {Query = $"service={serviceName}"}.Uri;
                 var httpTransport = new THttpClientTransport(samplerUri, null);
-                var protocol = protocolFactory.GetProtocol(httpTransport);
+                var protocol = _protocolFactory.GetProtocol(httpTransport);
                 var samplingManagerClient = new SamplingManager.Client(protocol);
                 return samplingManagerClient.getSamplingStrategyAsync(serviceName, CancellationToken.None).Result.FromThrift();
             }

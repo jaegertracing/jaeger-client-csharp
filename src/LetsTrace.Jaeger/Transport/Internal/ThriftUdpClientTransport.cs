@@ -39,7 +39,7 @@ namespace LetsTrace.Jaeger.Transport.Internal
         public override async Task<int> ReadAsync(byte[] buffer, int offset, int length,
             CancellationToken cancellationToken)
         {
-            int curDataSize = await _byteStream.ReadAsync(buffer, offset, length, cancellationToken);
+            var curDataSize = await _byteStream.ReadAsync(buffer, offset, length, cancellationToken);
             if (curDataSize == 0)
             {
                 UdpReceiveResult result;
@@ -72,7 +72,7 @@ namespace LetsTrace.Jaeger.Transport.Internal
 
         public override Task FlushAsync(CancellationToken cancellationToken)
         {
-            byte[] bytes = _byteStream.ToArray();
+            var bytes = _byteStream.ToArray();
 
             if (bytes.Length == 0)
                 return Task.CompletedTask;
@@ -89,7 +89,6 @@ namespace LetsTrace.Jaeger.Transport.Internal
             }
         }
 
-        // IDisposable
         protected override void Dispose(bool disposing)
         {
             if (!_isDisposed)

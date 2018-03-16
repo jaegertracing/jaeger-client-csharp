@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using LetsTrace.Jaeger.Serialization;
 using LetsTrace.Jaeger.Transport;
 using NSubstitute;
 using OpenTracing;
@@ -9,14 +10,14 @@ using JaegerTagType = Jaeger.Thrift.TagType;
 
 namespace LetsTrace.Jaeger.Tests
 {
-    public class JaegerThriftTransportTests
+    public class JaegerThriftSerializationTests
     {
         [Fact]
         public void JaegerHTTPTransport_BuildJaegerReference_BuildsChildOfCorrectly()
         {
             var refType = References.ChildOf;
             var context = Substitute.For<ILetsTraceSpanContext>();
-            var traceId = new TraceId { Low = 152387, High = 4587234 };
+            var traceId = new TraceId(152387, 4587234);
             var spanId = new SpanId(3087);
 
             context.TraceId.Returns(traceId);
@@ -24,7 +25,7 @@ namespace LetsTrace.Jaeger.Tests
             
             var reference = new Reference(refType, context);
 
-            var converted = JaegerThriftTransport.BuildJaegerReference(reference);
+            var converted = JaegerThriftSerialization.BuildJaegerReference(reference);
 
             Assert.Equal(JaegerReferenceType.CHILD_OF, converted.RefType);
             Assert.Equal((long)traceId.Low, converted.TraceIdLow);
@@ -37,7 +38,7 @@ namespace LetsTrace.Jaeger.Tests
         {
             var refType = References.FollowsFrom;
             var context = Substitute.For<ILetsTraceSpanContext>();
-            var traceId = new TraceId { Low = 98246, High = 477924576 };
+            var traceId = new TraceId(98246, 477924576);
             var spanId = new SpanId(846);
 
             context.TraceId.Returns(traceId);
@@ -45,7 +46,7 @@ namespace LetsTrace.Jaeger.Tests
             
             var reference = new Reference(refType, context);
 
-            var converted = JaegerThriftTransport.BuildJaegerReference(reference);
+            var converted = JaegerThriftSerialization.BuildJaegerReference(reference);
 
             Assert.Equal(JaegerReferenceType.FOLLOWS_FROM, converted.RefType);
             Assert.Equal((long)traceId.Low, converted.TraceIdLow);
@@ -58,7 +59,7 @@ namespace LetsTrace.Jaeger.Tests
         {
             var refType = "sibling";
             var context = Substitute.For<ILetsTraceSpanContext>();
-            var traceId = new TraceId { Low = 98246, High = 477924576 };
+            var traceId = new TraceId(98246, 477924576);
             var spanId = new SpanId(846);
 
             context.TraceId.Returns(traceId);
@@ -66,7 +67,7 @@ namespace LetsTrace.Jaeger.Tests
             
             var reference = new Reference(refType, context);
 
-            var converted = JaegerThriftTransport.BuildJaegerReference(reference);
+            var converted = JaegerThriftSerialization.BuildJaegerReference(reference);
 
             Assert.Null(converted);
         }
@@ -103,7 +104,7 @@ namespace LetsTrace.Jaeger.Tests
             };
             var log = new LogRecord(timestamp, fields);
 
-            var converted = JaegerThriftTransport.BuildJaegerLog(log);
+            var converted = JaegerThriftSerialization.BuildJaegerLog(log);
 
             Assert.Equal(1518780809000000, converted.Timestamp);
             
