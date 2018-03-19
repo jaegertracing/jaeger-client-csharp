@@ -35,7 +35,6 @@ namespace LetsTrace.Jaeger.Transport.Sender
         protected override async Task<int> SendAsync(List<JaegerSpan> spans, CancellationToken cancellationToken)
         {
             var batch = new JaegerBatch(_process, spans);
-
             await _agentClient.emitBatchAsync(batch, cancellationToken);
 
             return spans.Count;

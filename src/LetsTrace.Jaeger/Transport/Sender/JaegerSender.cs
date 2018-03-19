@@ -33,13 +33,13 @@ namespace LetsTrace.Jaeger.Transport.Sender
             }
         }
 
-        public async Task<int> FlushAsync(JaegerProcess process, CancellationToken cancellationToken)
+        public Task<int> FlushAsync(JaegerProcess process, CancellationToken cancellationToken)
         {
             _process = process ?? throw new ArgumentNullException(nameof(process));
-            return await FlushAsync(cancellationToken);
+            return FlushAsync(cancellationToken);
         }
 
-        internal async Task<int> FlushAsync(CancellationToken cancellationToken)
+        private async Task<int> FlushAsync(CancellationToken cancellationToken)
         {
             List<JaegerSpan> sendBuffer;
 
@@ -48,7 +48,7 @@ namespace LetsTrace.Jaeger.Transport.Sender
                 sendBuffer = new List<JaegerSpan>(_buffer);
                 _buffer.Clear();
             }
-
+            
             if (sendBuffer.Count <= 0)
             {
                 return 0;
