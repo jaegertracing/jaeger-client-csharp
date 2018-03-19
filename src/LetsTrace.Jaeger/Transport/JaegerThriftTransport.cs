@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using LetsTrace.Exceptions;
 using LetsTrace.Jaeger.Serialization;
 using LetsTrace.Jaeger.Transport.Sender;
-
 using LetsTrace.Transport;
 
 using Thrift.Protocols;
@@ -14,12 +13,12 @@ namespace LetsTrace.Jaeger.Transport
 {
     public abstract class JaegerThriftTransport : ITransport
     {
-        private const int DefaultBufferSize = 10;
-        private readonly ISerialization _jaegerThriftSerialization;
+        internal const int DefaultBufferSize = 10;
+        internal readonly int BufferSize;
 
+        private readonly ISerialization _jaegerThriftSerialization;
         protected readonly ITProtocolFactory _protocolFactory;
         protected readonly ISender _sender;
-        private readonly int _bufferSize;
         protected JaegerProcess _process;
 
         protected internal JaegerThriftTransport(ITProtocolFactory protocolFactory, ISender sender, ISerialization serialization = null, int bufferSize = 0)
@@ -31,7 +30,7 @@ namespace LetsTrace.Jaeger.Transport
 
             _protocolFactory = protocolFactory;
             _sender = sender;
-            _bufferSize = bufferSize;
+            BufferSize = bufferSize;
             _jaegerThriftSerialization = serialization ?? new JaegerThriftSerialization();
         }
 
@@ -49,7 +48,7 @@ namespace LetsTrace.Jaeger.Transport
 
             var curBuffCount = _sender.BufferItem(jaegerSpan);
 
-            if (curBuffCount > _bufferSize) {
+            if (curBuffCount > BufferSize) {
                 return await _sender.FlushAsync(_process, canellationToken);
             }
 
@@ -72,7 +71,7 @@ namespace LetsTrace.Jaeger.Transport
             return sentCount;
         }
 
-        public virtual Task<int> CloseAsync(CancellationToken cancellationToken)
+        public Task<int> CloseAsync(CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
             {
