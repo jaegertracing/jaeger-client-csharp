@@ -1,19 +1,18 @@
 using System;
 using System.Collections.Generic;
 using LetsTrace.Jaeger.Serialization;
-using LetsTrace.Jaeger.Transport;
 using NSubstitute;
 using OpenTracing;
 using Xunit;
 using JaegerReferenceType = Jaeger.Thrift.SpanRefType;
 using JaegerTagType = Jaeger.Thrift.TagType;
 
-namespace LetsTrace.Jaeger.Tests
+namespace LetsTrace.Jaeger.Tests.Serialization
 {
     public class JaegerThriftSerializationTests
     {
         [Fact]
-        public void JaegerHTTPTransport_BuildJaegerReference_BuildsChildOfCorrectly()
+        public void BuildJaegerReference_BuildsChildOfCorrectly()
         {
             var refType = References.ChildOf;
             var context = Substitute.For<ILetsTraceSpanContext>();
@@ -34,7 +33,7 @@ namespace LetsTrace.Jaeger.Tests
         }
 
         [Fact]
-        public void JaegerHTTPTransport_BuildJaegerReference_BuildsFollowsFromCorrectly()
+        public void BuildJaegerReference_BuildsFollowsFromCorrectly()
         {
             var refType = References.FollowsFrom;
             var context = Substitute.For<ILetsTraceSpanContext>();
@@ -55,7 +54,7 @@ namespace LetsTrace.Jaeger.Tests
         }
 
         [Fact]
-        public void JaegerHTTPTransport_BuildJaegerReference_ShouldReturnNullIfNoJaegerReferenceTypeMatches()
+        public void BuildJaegerReference_ShouldReturnNullIfNoJaegerReferenceTypeMatches()
         {
             var refType = "sibling";
             var context = Substitute.For<ILetsTraceSpanContext>();
@@ -73,7 +72,7 @@ namespace LetsTrace.Jaeger.Tests
         }
 
         [Fact]
-        public void JaegerHTTPTransport_BuildJaegerLog()
+        public void BuildJaegerLog()
         {
             var timestamp = DateTimeOffset.Parse("2/16/18 11:33:29 AM +00:00");
             var doubleField = new Field<double> { Key = "doubleField", Value = 1.1 };
@@ -122,11 +121,11 @@ namespace LetsTrace.Jaeger.Tests
 
             Assert.Equal(JaegerTagType.LONG, converted.Fields[3].VType);
             Assert.Equal(uint16Field.Key, converted.Fields[3].Key);
-            Assert.Equal((long)uint16Field.Value, converted.Fields[3].VLong);
+            Assert.Equal(uint16Field.Value, converted.Fields[3].VLong);
 
             Assert.Equal(JaegerTagType.LONG, converted.Fields[4].VType);
             Assert.Equal(uint32Field.Key, converted.Fields[4].Key);
-            Assert.Equal((long)uint32Field.Value, converted.Fields[4].VLong);
+            Assert.Equal(uint32Field.Value, converted.Fields[4].VLong);
 
             Assert.Equal(JaegerTagType.LONG, converted.Fields[5].VType);
             Assert.Equal(uint64Field.Key, converted.Fields[5].Key);
@@ -134,15 +133,15 @@ namespace LetsTrace.Jaeger.Tests
 
             Assert.Equal(JaegerTagType.LONG, converted.Fields[6].VType);
             Assert.Equal(int16Field.Key, converted.Fields[6].Key);
-            Assert.Equal((long)int16Field.Value, converted.Fields[6].VLong);
+            Assert.Equal(int16Field.Value, converted.Fields[6].VLong);
 
             Assert.Equal(JaegerTagType.LONG, converted.Fields[7].VType);
             Assert.Equal(int32Field.Key, converted.Fields[7].Key);
-            Assert.Equal((long)int32Field.Value, converted.Fields[7].VLong);
+            Assert.Equal(int32Field.Value, converted.Fields[7].VLong);
 
             Assert.Equal(JaegerTagType.LONG, converted.Fields[8].VType);
             Assert.Equal(int64Field.Key, converted.Fields[8].Key);
-            Assert.Equal((long)int64Field.Value, converted.Fields[8].VLong);
+            Assert.Equal(int64Field.Value, converted.Fields[8].VLong);
 
             Assert.Equal(JaegerTagType.STRING, converted.Fields[9].VType);
             Assert.Equal(stringField.Key, converted.Fields[9].Key);
@@ -151,6 +150,122 @@ namespace LetsTrace.Jaeger.Tests
             Assert.Equal(JaegerTagType.BINARY, converted.Fields[10].VType);
             Assert.Equal(binaryField.Key, converted.Fields[10].Key);
             Assert.Equal(binaryField.Value, converted.Fields[10].VBinary);
+        }
+
+        [Fact]
+        public void BuildJeagerProcessThrift()
+        {
+            var doubleField = new Field<double> { Key = "doubleField", Value = 1.1 };
+            var int64Field = new Field<Int64> { Key = "int64Field", Value = 1942 };
+            var stringField = new Field<string> { Key = "stringField", Value = "stringValue" };
+
+            var serialization = new JaegerThriftSerialization();
+            var tracer = Substitute.For<ILetsTraceTracer>();
+            tracer.ServiceName.Returns("testingService");
+            var tracerTags = new Dictionary<string, Field>
+            {
+                { "doubleTag", doubleField },
+                { "int64Tag", int64Field },
+                { "stringTag", stringField }
+            };
+            tracer.Tags.Returns(tracerTags);
+
+            var process = serialization.BuildJaegerProcessThrift(tracer);
+
+            Assert.Equal(tracer.ServiceName, process.ServiceName);
+            Assert.Equal(3, process.Tags.Count);
+            Assert.Equal("doubleTag", process.Tags[0].Key);
+            Assert.Equal(doubleField.Value, process.Tags[0].VDouble);
+            Assert.Equal("int64Tag", process.Tags[1].Key);
+            Assert.Equal(int64Field.Value, process.Tags[1].VLong);
+            Assert.Equal("stringTag", process.Tags[2].Key);
+            Assert.Equal(stringField.Value, process.Tags[2].VStr);
+        }
+
+        [Fact]
+        public void BuildJeagerThriftSpan() 
+        {
+            var doubleField = new Field<double> { Key = "doubleField", Value = 1.1 };
+            var decimalField = new Field<decimal> { Key = "decimalField", Value = 5.5m };
+            var int64Field = new Field<Int64> { Key = "int64Field", Value = 1942 };
+            var stringField = new Field<string> { Key = "stringField", Value = "stringValue" };
+            var tracerTags = new Dictionary<string, Field>
+            {
+                { "doubleTag", doubleField },
+                { "int64Tag", int64Field },
+                { "stringTag", stringField }
+            };
+            var logTimestamp = DateTimeOffset.Parse("2/16/18 11:33:29 AM +00:00");
+            var logFields1 = new List<Field> {
+                doubleField
+            };
+            var logFields2 = new List<Field> {
+                decimalField
+            };
+            var logs = new List<LogRecord>
+            {
+                new LogRecord(logTimestamp, logFields1),
+                new LogRecord(logTimestamp, logFields2)
+            };
+
+            var serialization = new JaegerThriftSerialization();
+            var span = Substitute.For<ILetsTraceSpan>();
+            var traceId = new TraceId(10, 2);
+            var spanId = new SpanId(15);
+            var parentId = new SpanId(82);
+            var context = new SpanContext(traceId, spanId, parentId);
+            span.Context.Returns(context);
+            var op = "op, yo";
+            span.OperationName.Returns(op);
+            span.Tags.Returns(tracerTags);
+            span.Logs.Returns(logs);
+            var startTimestamp = DateTimeOffset.Parse("2/16/18 11:33:28 AM +00:00");
+            var finishTimestamp = DateTimeOffset.Parse("2/16/18 11:33:30 AM +00:00");
+            span.StartTimestamp.Returns(startTimestamp);
+            span.FinishTimestamp.Returns(finishTimestamp);
+
+            var parentRefType = References.ChildOf;
+            var parentContext = Substitute.For<ILetsTraceSpanContext>();
+            parentContext.TraceId.Returns(traceId);
+            parentContext.SpanId.Returns(parentId);
+            var reference = new Reference(parentRefType, context);
+            span.References.Returns(new List<Reference> { reference });
+
+            var jSpan = serialization.BuildJaegerThriftSpan(span);
+
+            Assert.Equal((long)traceId.Low, jSpan.TraceIdLow);
+            Assert.Equal((long)traceId.High, jSpan.TraceIdHigh);
+            Assert.Equal(spanId, jSpan.SpanId);
+            Assert.Equal(parentId, jSpan.ParentSpanId);
+            Assert.Equal(op, jSpan.OperationName);
+            Assert.Equal(0, jSpan.Flags);
+            Assert.Equal(1518780808000000, jSpan.StartTime);
+            Assert.Equal(2000000, jSpan.Duration);
+
+            // tags
+            Assert.Equal(3, jSpan.Tags.Count);
+            Assert.Equal("doubleTag", jSpan.Tags[0].Key);
+            Assert.Equal(doubleField.Value, jSpan.Tags[0].VDouble);
+            Assert.Equal("int64Tag", jSpan.Tags[1].Key);
+            Assert.Equal(int64Field.Value, jSpan.Tags[1].VLong);
+            Assert.Equal("stringTag", jSpan.Tags[2].Key);
+            Assert.Equal(stringField.Value, jSpan.Tags[2].VStr);
+
+            // logs
+            Assert.Equal(JaegerTagType.DOUBLE, jSpan.Logs[0].Fields[0].VType);
+            Assert.Equal(doubleField.Key, jSpan.Logs[0].Fields[0].Key);
+            Assert.Equal(doubleField.Value, jSpan.Logs[0].Fields[0].VDouble);
+
+            Assert.Equal(JaegerTagType.DOUBLE, jSpan.Logs[1].Fields[0].VType);
+            Assert.Equal(decimalField.Key, jSpan.Logs[1].Fields[0].Key);
+            Assert.Equal((double)decimalField.Value, jSpan.Logs[1].Fields[0].VDouble);
+
+            // references
+            Assert.Single(jSpan.References);
+            Assert.Equal(JaegerReferenceType.CHILD_OF, jSpan.References[0].RefType);
+            Assert.Equal((long)traceId.Low, jSpan.References[0].TraceIdLow);
+            Assert.Equal((long)traceId.High, jSpan.References[0].TraceIdHigh);
+            Assert.Equal(spanId, jSpan.References[0].SpanId);
         }
     }
 }
