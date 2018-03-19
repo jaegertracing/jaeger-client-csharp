@@ -106,8 +106,6 @@ namespace LetsTrace.Jaeger.Tests.Transport.Sender
             sender.BufferItem(item);
             sender.BufferItem(item);
 
-            //sender.SendAsyncDelegate(Arg.Is<List<JaegerSpan>>(js => js.Count == 3), Arg.Any<CancellationToken>()).Returns(3);
-
             sender.Dispose();
 
             Assert.Empty(sender.Buffer);
