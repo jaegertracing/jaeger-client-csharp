@@ -1,5 +1,3 @@
-using Jaeger.Thrift.Agent;
-using LetsTrace.Jaeger.Transport.Internal;
 using LetsTrace.Jaeger.Transport.Sender;
 using Thrift.Protocols;
 
@@ -7,9 +5,6 @@ namespace LetsTrace.Jaeger.Transport
 {
     public class JaegerUDPTransport : JaegerThriftTransport
     {
-        private readonly Agent.Client _agentClient;
-        private readonly ThriftUdpClientTransport _udpThriftTransport;
-
         /// <inheritdoc />
         /// <summary>
         /// This constructor expects Jaeger running running on <value>DEFAULT_AGENT_UDP_HOST</value>
