@@ -101,7 +101,6 @@ namespace LetsTrace.Jaeger.Tests.Transport.Sender
                 SendAsyncDelegate = Substitute.For<Func<List<JaegerSpan>, CancellationToken, Task<int>>>()
             };
             var item = new JaegerSpan();
-            var cts = new CancellationTokenSource();
 
             sender.BufferItem(item);
             sender.BufferItem(item);

@@ -10,14 +10,17 @@ namespace LetsTrace.Jaeger.Transport.Internal
     // TODO: TMemoryBufferClientTransport is missing a Reset method or having _byteStream protected
     internal class ThriftUdpClientTransport : TClientTransport
     {
-        private readonly UdpClient _client;
+        private readonly IUdpClient _client;
         private readonly MemoryStream _byteStream;
         private bool _isDisposed;
 
-        public ThriftUdpClientTransport(string host, int port)
+        public ThriftUdpClientTransport(string host, int port) : this(host, port, new MemoryStream(), new UdpClientAdapter())
+        {}
+
+        internal ThriftUdpClientTransport(string host, int port, MemoryStream byteStream, IUdpClient udpClient)
         {
-            _byteStream = new MemoryStream();
-            _client = new UdpClient();
+            _byteStream = byteStream;
+            _client = udpClient;
             _client.Connect(host, port);
         }
 
