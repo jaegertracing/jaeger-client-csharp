@@ -1,13 +1,15 @@
 using System.Linq;
-using LetsTrace.Samplers.HTTP;
+using LetsTracePerOperationSamplingStrategies = LetsTrace.Samplers.HTTP.PerOperationSamplingStrategies;
+using JaegerThriftPerOperationSamplingStrategies = Jaeger.Thrift.Agent.PerOperationSamplingStrategies;
+
 
 namespace LetsTrace.Jaeger.Samplers.Http
 {
     public static class PerOperationSamplingStrategiesMarshaller
     {
-        public static PerOperationSamplingStrategies FromThrift(this global::Jaeger.Thrift.Agent.PerOperationSamplingStrategies thriftInstance)
+        public static LetsTracePerOperationSamplingStrategies FromThrift(this JaegerThriftPerOperationSamplingStrategies thriftInstance)
         {
-            return new PerOperationSamplingStrategies
+            return new LetsTracePerOperationSamplingStrategies
             {
                 DefaultSamplingProbability = thriftInstance.DefaultSamplingProbability,
                 DefaultLowerBoundTracesPerSecond = thriftInstance.DefaultLowerBoundTracesPerSecond,

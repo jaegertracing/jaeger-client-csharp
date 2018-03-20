@@ -1,12 +1,13 @@
-using LetsTrace.Samplers.HTTP;
+using LetsTraceSamplingStrategyResponse = LetsTrace.Samplers.HTTP.SamplingStrategyResponse;
+using JaegerThriftSamplingStrategyResponse = Jaeger.Thrift.Agent.SamplingStrategyResponse;
 
 namespace LetsTrace.Jaeger.Samplers.Http
 {
     public static class SamplingStrategyResponseMarshaller
     {
-        public static SamplingStrategyResponse FromThrift(this global::Jaeger.Thrift.Agent.SamplingStrategyResponse thriftInstance)
+        public static LetsTraceSamplingStrategyResponse FromThrift(this JaegerThriftSamplingStrategyResponse thriftInstance)
         {
-            return new SamplingStrategyResponse
+            return new LetsTraceSamplingStrategyResponse
             {
                 ProbabilisticSampling = thriftInstance.ProbabilisticSampling.FromThrift(),
                 RateLimitingSampling = thriftInstance.RateLimitingSampling.FromThrift(),

@@ -1,12 +1,13 @@
-using LetsTrace.Samplers.HTTP;
+using LetsTraceRateLimitingSamplingStrategy = LetsTrace.Samplers.HTTP.RateLimitingSamplingStrategy;
+using JaegerThriftRateLimitingSamplingStrategy = Jaeger.Thrift.Agent.RateLimitingSamplingStrategy;
 
 namespace LetsTrace.Jaeger.Samplers.Http
 {
     public static class RateLimitingSamplingStrategyMarshaller
     {
-        public static RateLimitingSamplingStrategy FromThrift(this global::Jaeger.Thrift.Agent.RateLimitingSamplingStrategy thriftInstance)
+        public static LetsTraceRateLimitingSamplingStrategy FromThrift(this JaegerThriftRateLimitingSamplingStrategy thriftInstance)
         {
-            return new RateLimitingSamplingStrategy
+            return new LetsTraceRateLimitingSamplingStrategy
             {
                 MaxTracesPerSecond = thriftInstance.MaxTracesPerSecond
             };
