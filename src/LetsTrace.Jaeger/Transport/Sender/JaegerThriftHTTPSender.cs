@@ -9,12 +9,12 @@ using JaegerSpan = Jaeger.Thrift.Span;
 
 namespace LetsTrace.Jaeger.Transport.Sender
 {
-    class JaegerThriftHTTPSender : JaegerSender
+    public class JaegerThriftHttpSender : JaegerSender
     {
         private readonly THttpClientTransport _httpTransport;
         private readonly TProtocol _protocol;
 
-        internal JaegerThriftHTTPSender(Uri uri) : base(new TBinaryProtocol.Factory())
+        internal JaegerThriftHttpSender(Uri uri) : base(new TBinaryProtocol.Factory())
         {
             var collectorUri = new UriBuilder(uri)
             {

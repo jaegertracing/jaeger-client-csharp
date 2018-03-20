@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading;
 using Jaeger.Thrift.Agent;
-using LetsTrace.Jaeger.Samplers.HTTP;
+using LetsTrace.Jaeger.Samplers.Http;
 using LetsTrace.Samplers;
 using Thrift.Protocols;
 using Thrift.Transports.Client;

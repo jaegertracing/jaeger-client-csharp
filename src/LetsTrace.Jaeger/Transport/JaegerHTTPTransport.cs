@@ -4,16 +4,16 @@ using LetsTrace.Jaeger.Transport.Sender;
 
 namespace LetsTrace.Jaeger.Transport
 {
-    public class JaegerHTTPTransport : JaegerThriftTransport
+    public class JaegerHttpTransport : JaegerThriftTransport
     {
         public Uri Uri { get; }
 
-        public JaegerHTTPTransport(string hostname = TransportConstants.DefaultAgentHost, int port = TransportConstants.DefaultCollectorHTTPJaegerThriftPort, int bufferSize = 0) 
+        public JaegerHttpTransport(string hostname = TransportConstants.DefaultAgentHost, int port = TransportConstants.DefaultCollectorHTTPJaegerThriftPort, int bufferSize = 0) 
             : this(new Uri($"http://{hostname}:{port}/api/traces"), bufferSize)
         {
         }
 
-        protected JaegerHTTPTransport(Uri uri, int bufferSize = 0) : base(new TBinaryProtocol.Factory(), new JaegerThriftHTTPSender(uri), null, bufferSize)
+        protected JaegerHttpTransport(Uri uri, int bufferSize = 0) : base(new TBinaryProtocol.Factory(), new JaegerThriftHttpSender(uri), null, bufferSize)
         {
             Uri = uri;
         }

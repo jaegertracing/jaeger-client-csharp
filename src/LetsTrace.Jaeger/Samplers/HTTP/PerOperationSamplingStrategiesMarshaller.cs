@@ -1,7 +1,7 @@
 using System.Linq;
 using LetsTrace.Samplers.HTTP;
 
-namespace LetsTrace.Jaeger.Samplers.HTTP
+namespace LetsTrace.Jaeger.Samplers.Http
 {
     public static class PerOperationSamplingStrategiesMarshaller
     {

@@ -9,14 +9,14 @@ using JaegerSpan = Jaeger.Thrift.Span;
 
 namespace LetsTrace.Jaeger.Transport.Sender
 {
-    public class JaegerThriftUDPSender : JaegerSender
+    public class JaegerThriftUdpSender : JaegerSender
     {
         private readonly Agent.Client _agentClient;
         private readonly ThriftUdpClientTransport _udpThriftTransport;
 
         /// <param name="host">Host</param>
         /// <param name="port">Port</param>
-        public JaegerThriftUDPSender(string host, int port) : base(new TCompactProtocol.Factory())
+        public JaegerThriftUdpSender(string host, int port) : base(new TCompactProtocol.Factory())
         {
             if (string.IsNullOrEmpty(host))
             {
