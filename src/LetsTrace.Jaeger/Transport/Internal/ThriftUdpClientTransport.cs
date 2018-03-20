@@ -39,8 +39,7 @@ namespace LetsTrace.Jaeger.Transport.Internal
             _client.Close();
         }
 
-        public override async Task<int> ReadAsync(byte[] buffer, int offset, int length,
-            CancellationToken cancellationToken)
+        public override async Task<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
         {
             var curDataSize = await _byteStream.ReadAsync(buffer, offset, length, cancellationToken);
             if (curDataSize != 0)
@@ -64,10 +63,7 @@ namespace LetsTrace.Jaeger.Transport.Internal
 
         }
 
-        public override async Task WriteAsync(byte[] buffer, CancellationToken cancellationToken)
-        {
-            await _byteStream.WriteAsync(buffer, 0, buffer.Length, cancellationToken);
-        }
+        public override async Task WriteAsync(byte[] buffer, CancellationToken cancellationToken) => await WriteAsync(buffer, 0, buffer.Length, cancellationToken);
 
         public override async Task WriteAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
         {
@@ -95,13 +91,10 @@ namespace LetsTrace.Jaeger.Transport.Internal
 
         protected override void Dispose(bool disposing)
         {
-            if (!_isDisposed)
+            if (!_isDisposed && disposing)
             {
-                if (disposing)
-                {
-                    _byteStream?.Dispose();
-                    _client?.Dispose();
-                }
+                _byteStream?.Dispose();
+                _client?.Dispose();
             }
             _isDisposed = true;
         }
