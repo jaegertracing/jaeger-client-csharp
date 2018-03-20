@@ -43,24 +43,25 @@ namespace LetsTrace.Jaeger.Transport.Internal
             CancellationToken cancellationToken)
         {
             var curDataSize = await _byteStream.ReadAsync(buffer, offset, length, cancellationToken);
-            if (curDataSize == 0)
-            {
-                UdpReceiveResult result;
-                try
-                {
-                    result = await _client.ReceiveAsync();
-                }
-                catch (IOException e)
-                {
-                    throw new TTransportException(TTransportException.ExceptionType.Unknown, $"ERROR from underlying socket. {e.Message}");
-                }
+            if (curDataSize != 0)
+                return curDataSize;
 
-                _byteStream.SetLength(0);
-                await _byteStream.WriteAsync(result.Buffer, 0, result.Buffer.Length, cancellationToken);
-                _byteStream.SetLength(0);
+            UdpReceiveResult result;
+            try
+            {
+                result = await _client.ReceiveAsync();
+            }
+            catch (IOException e)
+            {
+                throw new TTransportException(TTransportException.ExceptionType.Unknown, $"ERROR from underlying socket. {e.Message}");
             }
 
+            _byteStream.SetLength(0);
+            await _byteStream.WriteAsync(result.Buffer, 0, result.Buffer.Length, cancellationToken);
+            _byteStream.Seek(0, SeekOrigin.Begin);
+
             return await _byteStream.ReadAsync(buffer, offset, length, cancellationToken);
+
         }
 
         public override async Task WriteAsync(byte[] buffer, CancellationToken cancellationToken)
