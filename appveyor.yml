@@ -1,4 +1,4 @@
-version: 0.0.4-{build}-{branch}
+version: 0.0.5-{build}-{branch}
 configuration: Release
 pull_requests:
   do_not_increment_build_number: true
@@ -7,7 +7,7 @@ nuget:
   project_feed: true
   disable_publish_on_pr: true
 environment:
-  PACKAGE_VERSION: 0.0.4
+  PACKAGE_VERSION: 0.0.5
 
 cache:
 - C:\ProgramData\chocolatey\bin -> appveyor.yml
@@ -21,11 +21,21 @@ before_build:
 - appveyor-retry dotnet restore
 build_script:
 - dotnet build .\src\LetsTrace -c %CONFIGURATION% --no-dependencies --version-suffix %LABEL%
+- dotnet build .\src\LetsTrace.Jaeger -c %CONFIGURATION% --version-suffix %LABEL%
+- cmd: |-
+    move "%APPVEYOR_BUILD_FOLDER%\src\LetsTrace.Jaeger\bin\Release\netstandard2.0" "%APPVEYOR_BUILD_FOLDER%\src\LetsTrace.Jaeger\bin\Release\netstandard2.0unmerged"
+    cd "%APPVEYOR_BUILD_FOLDER%\src\LetsTrace.Jaeger\bin\Release\netstandard2.0unmerged"
+    %USERPROFILE%\.nuget\packages\ILRepack\2.0.15\tools\ILRepack.exe /parallel /internalize /out:"%APPVEYOR_BUILD_FOLDER%\src\LetsTrace.Jaeger\bin\Release\netstandard2.0\LetsTrace.Jaeger.dll" LetsTrace.Jaeger.dll Thrift.dll Jaeger.Thrift.dll
+    cd %APPVEYOR_BUILD_FOLDER%
+    copy "%APPVEYOR_BUILD_FOLDER%\src\LetsTrace.Jaeger\bin\Release\netstandard2.0unmerged\LetsTrace.Jaeger.pdb" "%APPVEYOR_BUILD_FOLDER%\src\LetsTrace.Jaeger\bin\Release\netstandard2.0\"
+    del /s /q "%APPVEYOR_BUILD_FOLDER%\src\LetsTrace.Jaeger\bin\Release\netstandard2.0unmerged"
 after_build:
 - dotnet pack .\src\LetsTrace -c %CONFIGURATION% --no-build --version-suffix %LABEL% -o artifacts
+- dotnet pack .\src\LetsTrace.Jaeger -c %CONFIGURATION% --no-build --version-suffix %LABEL% -o artifacts
 
 test_script:
 - dotnet test .\test\LetsTrace.Tests --configuration %CONFIGURATION%
+- dotnet test .\test\LetsTrace.Jaeger.Tests --configuration %CONFIGURATION%
 
 artifacts:
 - path: .\**\artifacts\*.*
