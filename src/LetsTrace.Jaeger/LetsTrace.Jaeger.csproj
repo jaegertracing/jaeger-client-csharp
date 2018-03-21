@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+
+    <PackageId>LetsTrace.Jaeger</PackageId>
+    <PackageProjectUrl>https://github.com/Chatham/LetsTrace.Jaeger/</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/Chatham/LetsTrace.Jaeger/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageVersion>0.0.3</PackageVersion>
+    <PackageTags>letstrace;tracing;opentracing;jaeger</PackageTags>
+    <Authors>Chatham Financial Corp.</Authors>
+    <Description>Jaeger support for LetsTrace</Description>
+    <Copyright>Copyright 2018 (c) Chatham Financial Corp. All rights reserved.</Copyright>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Jaeger.Thrift\Jaeger.Thrift.csproj" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <DotNetCliToolReference Include="ILRepack" Version="2.0.15" />
+    <PackageReference Include="LetsTrace" Version="0.0.4" />
+    <PackageReference Include="OpenTracing" Version="0.11.0" />
+  </ItemGroup>
+
+  <!-- This is included for Thrift that we pack into the LetsTrace.Jaeger.dll -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore" Version="[2.0,)" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="[2.0,)" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="[2.0,)" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="[2.0,)" />
+    <PackageReference Include="System.IO.Pipes" Version="[4.3,)" />
+    <PackageReference Include="System.Net.Http.WinHttpHandler" Version="4.4.0" />
+    <PackageReference Include="System.Net.NameResolution" Version="[4.3,)" />
+    <PackageReference Include="System.Net.Requests" Version="[4.3,)" />
+    <PackageReference Include="System.Net.Security" Version="[4.3,)" />
+  </ItemGroup>
+
+</Project>
