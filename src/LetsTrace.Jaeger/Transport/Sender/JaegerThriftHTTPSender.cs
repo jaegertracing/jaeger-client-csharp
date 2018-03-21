@@ -11,17 +11,16 @@ namespace LetsTrace.Jaeger.Transport.Sender
 {
     public class JaegerThriftHttpSender : JaegerSender
     {
-        private readonly THttpClientTransport _httpTransport;
         private readonly TProtocol _protocol;
 
         internal JaegerThriftHttpSender(Uri uri) : base(new TBinaryProtocol.Factory())
         {
             var collectorUri = new UriBuilder(uri)
             {
-                Query = TransportConstants.CollectorHTTPJaegerThriftFormatParam
+                Query = TransportConstants.CollectorHttpJaegerThriftFormatParam
             }.Uri;
-            _httpTransport = new THttpClientTransport(collectorUri, null);
-            _protocol = _protocolFactory.GetProtocol(_httpTransport);
+            var httpTransport = new THttpClientTransport(collectorUri, null);
+            _protocol = _protocolFactory.GetProtocol(httpTransport);
         }
 
         protected override async Task<int> SendAsync(List<JaegerSpan> spans, CancellationToken cancellationToken)

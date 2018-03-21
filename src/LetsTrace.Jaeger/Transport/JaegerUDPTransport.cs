@@ -10,7 +10,7 @@ namespace LetsTrace.Jaeger.Transport
         /// This constructor expects Jaeger running running on <value>DEFAULT_AGENT_UDP_HOST</value>
         /// and port <value>DEFAULT_AGENT_UDP_COMPACT_PORT</value>
         /// </summary>
-        public JaegerUdpTransport(int bufferSize = 0) : this(TransportConstants.DefaultAgentHost, TransportConstants.DefaultAgentUDPJaegerCompactThriftPort, bufferSize)
+        public JaegerUdpTransport(int bufferSize = 0) : this(TransportConstants.DefaultAgentHost, TransportConstants.DefaultAgentUdpJaegerCompactThriftPort, bufferSize)
         {
         }
 

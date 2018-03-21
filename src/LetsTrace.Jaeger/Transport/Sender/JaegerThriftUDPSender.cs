@@ -12,7 +12,6 @@ namespace LetsTrace.Jaeger.Transport.Sender
     public class JaegerThriftUdpSender : JaegerSender
     {
         private readonly Agent.Client _agentClient;
-        private readonly ThriftUdpClientTransport _udpThriftTransport;
 
         /// <param name="host">Host</param>
         /// <param name="port">Port</param>
@@ -25,11 +24,11 @@ namespace LetsTrace.Jaeger.Transport.Sender
 
             if (port == 0)
             {
-                port = TransportConstants.DefaultAgentUDPJaegerCompactThriftPort;
+                port = TransportConstants.DefaultAgentUdpJaegerCompactThriftPort;
             }
 
-            _udpThriftTransport = new ThriftUdpClientTransport(host, port);
-            _agentClient = new Agent.Client(_protocolFactory.GetProtocol(_udpThriftTransport));
+            var udpThriftTransport = new ThriftUdpClientTransport(host, port);
+            _agentClient = new Agent.Client(_protocolFactory.GetProtocol(udpThriftTransport));
         }
 
         protected override async Task<int> SendAsync(List<JaegerSpan> spans, CancellationToken cancellationToken)

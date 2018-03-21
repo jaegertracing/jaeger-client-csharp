@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -8,7 +7,8 @@ using JaegerSpan = Jaeger.Thrift.Span;
 
 namespace LetsTrace.Jaeger.Transport.Sender
 {
-    // ISender allows for the testing of a transport in it's queuing and sending
+    // ISender handles the buffer for the Jaeger Transports as well as flusing
+    // the buffer to send all spans along to the Jaeger system
     public interface ISender : IDisposable
     {
         int BufferItem(JaegerSpan item);

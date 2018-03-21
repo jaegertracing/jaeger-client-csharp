@@ -8,7 +8,7 @@ namespace LetsTrace.Jaeger.Transport
     {
         public Uri Uri { get; }
 
-        public JaegerHttpTransport(string hostname = TransportConstants.DefaultAgentHost, int port = TransportConstants.DefaultCollectorHTTPJaegerThriftPort, int bufferSize = 0) 
+        public JaegerHttpTransport(string hostname = TransportConstants.DefaultAgentHost, int port = TransportConstants.DefaultCollectorHttpJaegerThriftPort, int bufferSize = 0) 
             : this(new Uri($"http://{hostname}:{port}/api/traces"), bufferSize)
         {
         }
