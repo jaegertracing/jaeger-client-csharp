@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 
 using JaegerTag = Jaeger.Thrift.Tag;
 using JaegerTagType = Jaeger.Thrift.TagType;
@@ -47,8 +46,6 @@ namespace LetsTrace.Jaeger.Transport
                     break;
                 case TypeCode.Int64:
                     tags.Add(new JaegerTag{ Key = field.Key, VType = JaegerTagType.LONG, VLong = field.ValueAs<long, Int64>() });
-                    break;
-                default:
                     break;
             }
         }

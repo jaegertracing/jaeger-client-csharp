@@ -7,8 +7,7 @@ LetsTrace support for [Jaeger](https://github.com/Chatham/LetsTrace.Jaeger).
 This library is still under construction and needs to be peer reviewed as well as have features added.
 
 ## License
-
-[MIT License](LICENSE).
+All files are released with the [Apache 2.0 license](LICENSE).
 
 [ci-img]: https://ci.appveyor.com/api/projects/status/0bpxf9q708xp1aas?svg=true
 [ci]: https://ci.appveyor.com/project/chatham/letstrace-jaeger
