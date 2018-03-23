@@ -51,33 +51,38 @@ namespace LetsTrace
             if (kv.Value is byte[]) {
                 return kv.Value.ToField<byte[]>(kv.Key);
             }
-
-            var typeCode = Type.GetTypeCode(kv.Value.GetType());
-            
-            switch(typeCode)
+            if (kv.Value == null) {
+                return new Field<string> { Key = kv.Key, Value = "" };
+            }
+            else
             {
-                case TypeCode.String:
-                    return kv.Value.ToField<string>(kv.Key);
-                case TypeCode.Double:
-                    return kv.Value.ToField<double>(kv.Key);
-                case TypeCode.Decimal:
-                    return kv.Value.ToField<decimal>(kv.Key);
-                case TypeCode.Boolean:
-                    return kv.Value.ToField<bool>(kv.Key);
-                case TypeCode.UInt16:
-                    return kv.Value.ToField<ushort>(kv.Key);
-                case TypeCode.UInt32:
-                    return kv.Value.ToField<uint>(kv.Key);
-                case TypeCode.UInt64:
-                    return kv.Value.ToField<ulong>(kv.Key);
-                case TypeCode.Int16:
-                    return kv.Value.ToField<short>(kv.Key);
-                case TypeCode.Int32:
-                    return kv.Value.ToField<int>(kv.Key);
-                case TypeCode.Int64:
-                    return kv.Value.ToField<long>(kv.Key);
-                default:
-                    return new Field<string> { Key = kv.Key, Value = kv.Value.ToString() };
+                var typeCode = Type.GetTypeCode(kv.Value.GetType());
+
+                switch (typeCode)
+                {
+                    case TypeCode.String:
+                        return kv.Value.ToField<string>(kv.Key);
+                    case TypeCode.Double:
+                        return kv.Value.ToField<double>(kv.Key);
+                    case TypeCode.Decimal:
+                        return kv.Value.ToField<decimal>(kv.Key);
+                    case TypeCode.Boolean:
+                        return kv.Value.ToField<bool>(kv.Key);
+                    case TypeCode.UInt16:
+                        return kv.Value.ToField<ushort>(kv.Key);
+                    case TypeCode.UInt32:
+                        return kv.Value.ToField<uint>(kv.Key);
+                    case TypeCode.UInt64:
+                        return kv.Value.ToField<ulong>(kv.Key);
+                    case TypeCode.Int16:
+                        return kv.Value.ToField<short>(kv.Key);
+                    case TypeCode.Int32:
+                        return kv.Value.ToField<int>(kv.Key);
+                    case TypeCode.Int64:
+                        return kv.Value.ToField<long>(kv.Key);
+                    default:
+                        return new Field<string> { Key = kv.Key, Value = kv.Value.ToString() };
+                }
             }
         }
     }

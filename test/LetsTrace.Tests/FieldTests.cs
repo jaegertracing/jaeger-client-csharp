@@ -31,6 +31,13 @@ namespace LetsTrace.Tests
         }
 
         [Fact]
+        public void Field_Null()
+        {
+            var field2 = new KeyValuePair<string, object>(_key, null).ToField();
+            Assert.Equal(field2.StringValue, "");
+        }
+
+        [Fact]
         public void Field_String()
         {
             var value = "HelloWorld";
