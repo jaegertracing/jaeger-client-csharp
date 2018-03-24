@@ -17,7 +17,6 @@ namespace LetsTrace.Tests
     {
         private readonly Tracer.Builder _baseBuilder;
         private readonly IReporter _mockReporter;
-        private readonly string _operationName;
         private readonly string _serviceName;
         private readonly ISampler _mockSampler;
         private readonly IScopeManager _mockScopeManager;
@@ -28,7 +27,6 @@ namespace LetsTrace.Tests
         public TracerBuilderTests()
         {
             _mockReporter = Substitute.For<IReporter>();
-            _operationName = "GET::api/values/";
             _serviceName = "testingService";
             _mockSampler = Substitute.For<ISampler>();
             _mockScopeManager = Substitute.For<IScopeManager>();
@@ -129,7 +127,7 @@ namespace LetsTrace.Tests
 
             Assert.Equal(samplingManager, ((RemoteControlledSampler)tracer.Sampler)._samplingManager);
         }
-        
+
         [Fact]
         public void Builder_WithMetricsFactory_ShouldCallCreateMetrics()
         {

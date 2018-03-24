@@ -40,12 +40,12 @@ namespace LetsTrace.Tests.Samplers
             _mockLoggerFactory.CreateLogger<RemoteControlledSampler>().Returns(_mockLogger);
 
             _testingSampler = new RemoteControlledSampler(
-                _serivceName, 
-                _mockSamplingManager, 
-                _mockLoggerFactory, 
-                _mockMetrics, 
-                _mockSampler, 
-                _mockSamplerFactory, 
+                _serivceName,
+                _mockSamplingManager,
+                _mockLoggerFactory,
+                _mockMetrics,
+                _mockSampler,
+                _mockSamplerFactory,
                 _pollingIntervalMs,
                 _mockPollTimer
             );
@@ -189,7 +189,7 @@ namespace LetsTrace.Tests.Samplers
         [Fact]
         public void UpdateSampler_ShouldHandleNoMatchingStrategy()
         {
-            var expectedLogMessage = "No strategy present in response. Not updating sampler.";
+            //var expectedLogMessage = "No strategy present in response. Not updating sampler.";
             var ssResponse = new SamplingStrategyResponse();
             _mockSamplingManager.GetSamplingStrategy(Arg.Is<string>(sn => sn == _serivceName)).Returns(ssResponse);
 
