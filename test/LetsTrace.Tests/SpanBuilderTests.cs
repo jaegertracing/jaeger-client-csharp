@@ -53,7 +53,7 @@ namespace LetsTrace.Tests
             var sampler = Substitute.For<ISampler>();
             var metrics = Substitute.For<IMetrics>();
             sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, Field>()));
-            
+
             var refContext = Substitute.For<ILetsTraceSpanContext>();
             var expectedReferences = new List<Reference> {
                 new Reference(References.FollowsFrom, refContext)
@@ -121,7 +121,7 @@ namespace LetsTrace.Tests
             var sampler = Substitute.For<ISampler>();
             var metrics = Substitute.For<IMetrics>();
             sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, Field>()));
-            
+
             var expectedTags = new Dictionary<string, object> {
                 { "boolkey", true },
                 { "doublekey", 3D },
@@ -154,7 +154,7 @@ namespace LetsTrace.Tests
             var sampler = Substitute.For<ISampler>();
             var metrics = Substitute.For<IMetrics>();
             sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, Field>()));
-            
+
             var refContext = Substitute.For<ILetsTraceSpanContext>();
             var expectedReferences = new List<Reference> {
                 new Reference(References.ChildOf, refContext)
@@ -176,7 +176,7 @@ namespace LetsTrace.Tests
             var sampler = Substitute.For<ISampler>();
             var metrics = Substitute.For<IMetrics>();
             sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, Field>()));
-            
+
             var refContext = Substitute.For<ILetsTraceSpanContext>();
             var expectedReferences = new List<Reference> {
                 new Reference(References.ChildOf, refContext)
@@ -184,49 +184,6 @@ namespace LetsTrace.Tests
 
             var sb = new SpanBuilder(tracer, operationName, sampler, metrics);
             sb.AsChildOf(refContext);
-            var builtSpan = (ILetsTraceSpan)sb.Start();
-
-            Assert.Equal(expectedReferences, builtSpan.References);
-        }
-
-        [Fact]
-        public void SpanBuilder_FollowsFrom_UsingSpan_ShouldAddReference()
-        {
-            var tracer = Substitute.For<ILetsTraceTracer>();
-            var operationName = "testing";
-            var sampler = Substitute.For<ISampler>();
-            var metrics = Substitute.For<IMetrics>();
-            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, Field>()));
-            
-            var refContext = Substitute.For<ILetsTraceSpanContext>();
-            var expectedReferences = new List<Reference> {
-                new Reference(References.FollowsFrom, refContext)
-            };
-            var parentSpan = new Span(tracer, operationName, refContext);
-
-            var sb = new SpanBuilder(tracer, operationName, sampler, metrics);
-            sb.FollowsFrom(parentSpan);
-            var builtSpan = (ILetsTraceSpan)sb.Start();
-
-            Assert.Equal(expectedReferences, builtSpan.References);
-        }
-
-        [Fact]
-        public void SpanBuilder_FollowsFrom_UsingSpanContext_ShouldAddReference()
-        {
-            var tracer = Substitute.For<ILetsTraceTracer>();
-            var operationName = "testing";
-            var sampler = Substitute.For<ISampler>();
-            var metrics = Substitute.For<IMetrics>();
-            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, Field>()));
-            
-            var refContext = Substitute.For<ILetsTraceSpanContext>();
-            var expectedReferences = new List<Reference> {
-                new Reference(References.FollowsFrom, refContext)
-            };
-
-            var sb = new SpanBuilder(tracer, operationName, sampler, metrics);
-            sb.FollowsFrom(refContext);
             var builtSpan = (ILetsTraceSpan)sb.Start();
 
             Assert.Equal(expectedReferences, builtSpan.References);
@@ -442,7 +399,7 @@ namespace LetsTrace.Tests
 
             var refContext = Substitute.For<ILetsTraceSpanContext>();
             var sb = new SpanBuilder(tracer, operationName, sampler, metrics);
-            sb.FollowsFrom(refContext);
+            sb.AddReference(References.FollowsFrom, refContext);
             var scope = sb.StartActive(true);
 
             scopeManager.Received(1).Activate(
