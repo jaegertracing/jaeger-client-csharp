@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using LetsTrace.Jaeger.Serialization;
 using NSubstitute;
 using OpenTracing;
@@ -11,6 +12,11 @@ namespace LetsTrace.Jaeger.Tests.Serialization
 {
     public class JaegerThriftSerializationTests
     {
+        public JaegerThriftSerializationTests()
+        {
+            CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
+        }
+
         [Fact]
         public void BuildJaegerReference_BuildsChildOfCorrectly()
         {
