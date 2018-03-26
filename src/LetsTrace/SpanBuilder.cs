@@ -32,7 +32,10 @@ namespace LetsTrace
 
         public ISpanBuilder AddReference(string referenceType, ISpanContext referencedContext)
         {
-            _references.Add(new Reference(referenceType, referencedContext));
+            if (referencedContext != null)
+            {
+                _references.Add(new Reference(referenceType, referencedContext));
+            }
             return this;
         }
 
@@ -42,13 +45,9 @@ namespace LetsTrace
             return this;
         }
 
-        public ISpanBuilder AsChildOf(ISpan parent) => AsChildOf(parent.Context);
+        public ISpanBuilder AsChildOf(ISpan parent) => AsChildOf(parent?.Context);
 
         public ISpanBuilder AsChildOf(ISpanContext parent) => AddReference(References.ChildOf, parent);
-
-        public ISpanBuilder FollowsFrom(ISpan parent) => FollowsFrom(parent.Context);
-
-        public ISpanBuilder FollowsFrom(ISpanContext parent) => AddReference(References.FollowsFrom, parent);
 
         public IScope StartActive(bool finishSpanOnDispose)
         {
