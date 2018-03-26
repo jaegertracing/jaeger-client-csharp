@@ -21,9 +21,9 @@ namespace LetsTrace.Tests.Samplers
         {
             var maxTracesPerSecond = 3.6;
             var traceId = new TraceId(1);
-            var expectedTags = new Dictionary<string, Field> {
-                { SamplerConstants.SamplerTypeTagKey, new Field<string> { Value = SamplerConstants.SamplerTypeRateLimiting } },
-                { SamplerConstants.SamplerParamTagKey, new Field<double> { Value = maxTracesPerSecond } }
+            var expectedTags = new Dictionary<string, object> {
+                { SamplerConstants.SamplerTypeTagKey, SamplerConstants.SamplerTypeRateLimiting },
+                { SamplerConstants.SamplerParamTagKey, maxTracesPerSecond }
             };
             var rateLimiter = Substitute.For<IRateLimiter>();
             double calledWith = 0;
@@ -32,7 +32,7 @@ namespace LetsTrace.Tests.Samplers
                 calledWith = (double)x[0];
                 return shouldReturn;
             });
-            
+
             var sampler = new RateLimitingSampler(maxTracesPerSecond, rateLimiter);
             var isSampled = sampler.IsSampled(traceId, "op");
 

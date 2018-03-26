@@ -19,7 +19,7 @@ namespace LetsTrace.Samplers
     public class RateLimitingSampler : IRateLimitingSampler
     {
         internal readonly IRateLimiter _rateLimiter;
-        private readonly Dictionary<string, Field> _tags;
+        private readonly Dictionary<string, object> _tags;
 
         public double MaxTracesPerSecond { get; }
 
@@ -32,9 +32,9 @@ namespace LetsTrace.Samplers
             MaxTracesPerSecond = maxTracesPerSecond;
 
             _rateLimiter = rateLimiter ?? throw new ArgumentNullException(nameof(rateLimiter));
-            _tags = new Dictionary<string, Field> {
-                { SamplerConstants.SamplerTypeTagKey, new Field<string> { Value = SamplerConstants.SamplerTypeRateLimiting } },
-                { SamplerConstants.SamplerParamTagKey, new Field<double> { Value = maxTracesPerSecond } }
+            _tags = new Dictionary<string, object> {
+                { SamplerConstants.SamplerTypeTagKey, SamplerConstants.SamplerTypeRateLimiting },
+                { SamplerConstants.SamplerParamTagKey, maxTracesPerSecond }
             };
         }
 
@@ -43,7 +43,7 @@ namespace LetsTrace.Samplers
             // nothing to do
         }
 
-        public (bool Sampled, IDictionary<string, Field> Tags) IsSampled(TraceId id, string operation)
+        public (bool Sampled, Dictionary<string, object> Tags) IsSampled(TraceId id, string operation)
         {
             return (_rateLimiter.CheckCredit(1.0), _tags);
         }

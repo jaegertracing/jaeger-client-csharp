@@ -107,7 +107,7 @@ namespace LetsTrace.Tests.Samplers
             var traceId = new TraceId(452);
 
             _mockSampler.IsSampled(Arg.Is<TraceId>(tid => tid == traceId), Arg.Is<string>(on => on == op))
-                .Returns((true, new Dictionary<string, Field>()));
+                .Returns((true, new Dictionary<string, object>()));
 
             var isSampled = _testingSampler.IsSampled(traceId, op);
 

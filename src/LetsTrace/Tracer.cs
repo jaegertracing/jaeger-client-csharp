@@ -28,13 +28,13 @@ namespace LetsTrace
         public ISpan ActiveSpan => ScopeManager.Active?.Span;
         public string HostIPv4 { get; }
         public string ServiceName { get; }
-        public IDictionary<string, Field> Tags { get; }
+        public Dictionary<string, object> Tags { get; }
         public IReporter Reporter { get; }
         public ISampler Sampler { get; }
         public IPropagationRegistry PropagationRegistry { get; }
         public IMetrics Metrics { get; }
 
-        private Tracer(string serviceName, IDictionary<string, Field> tags, IScopeManager scopeManager, ILoggerFactory loggerFactory,
+        private Tracer(string serviceName, Dictionary<string, object> tags, IScopeManager scopeManager, ILoggerFactory loggerFactory,
             IPropagationRegistry propagationRegistry, ISampler sampler, IReporter reporter, IMetrics metrics)
         {
             ServiceName = serviceName;
@@ -48,10 +48,10 @@ namespace LetsTrace
 
             _logger = loggerFactory.CreateLogger<Tracer>();
 
-            if (tags.TryGetValue(Constants.TracerIpTagKey, out var field))
+            if (tags.TryGetValue(Constants.TracerIpTagKey, out object field))
             {
-                HostIPv4 = field.StringValue;
-            } 
+                HostIPv4 = field.ToString();
+            }
         }
 
         private static string GetVersion()
@@ -102,7 +102,7 @@ namespace LetsTrace
         public sealed class Builder
         {
             private readonly string _serviceName;
-            private readonly Dictionary<string, Field> _initialTags = new Dictionary<string, Field>();
+            private readonly Dictionary<string, object> _initialTags = new Dictionary<string, object>();
             private ILoggerFactory _loggerFactory;
             private IScopeManager _scopeManager;
             private IPropagationRegistry _propagationRegistry;
@@ -190,15 +190,15 @@ namespace LetsTrace
                 return this;
             }
 
-            public Builder WithTag(string key, bool value) => WithTag(key, new Field<bool> { Key = key, Value = value });
+            public Builder WithTag(string key, bool value) => WithTagInternal(key, value);
 
-            public Builder WithTag(string key, double value) => WithTag(key, new Field<double> { Key = key, Value = value });
+            public Builder WithTag(string key, double value) => WithTagInternal(key, value);
 
-            public Builder WithTag(string key, int value) => WithTag(key, new Field<int> { Key = key, Value = value });
+            public Builder WithTag(string key, int value) => WithTagInternal(key, value);
 
-            public Builder WithTag(string key, string value) => WithTag(key, new Field<string> { Key = key, Value = value });
+            public Builder WithTag(string key, string value) => WithTagInternal(key, value);
 
-            private Builder WithTag(string key, Field value)
+            private Builder WithTagInternal(string key, object value)
             {
                 this._initialTags[key] = value;
                 return this;

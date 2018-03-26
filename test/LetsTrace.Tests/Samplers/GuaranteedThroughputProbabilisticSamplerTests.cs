@@ -31,7 +31,7 @@ namespace LetsTrace.Tests.Samplers
             var operationName = "op";
             var sampler = new GuaranteedThroughputProbabilisticSampler(probabilisticSampler, rateLimitingSampler);
 
-            probabilisticSampler.IsSampled(Arg.Is<TraceId>(t => t == traceId), Arg.Is<string>(o => o == operationName)).Returns((true, new Dictionary<string, Field>()));
+            probabilisticSampler.IsSampled(Arg.Is<TraceId>(t => t == traceId), Arg.Is<string>(o => o == operationName)).Returns((true, new Dictionary<string, object>()));
 
             sampler.IsSampled(traceId, operationName);
             sampler.Dispose();
@@ -51,7 +51,7 @@ namespace LetsTrace.Tests.Samplers
             var operationName = "op";
             var sampler = new GuaranteedThroughputProbabilisticSampler(probabilisticSampler, rateLimitingSampler);
 
-            probabilisticSampler.IsSampled(Arg.Is<TraceId>(t => t == traceId), Arg.Is<string>(o => o == operationName)).Returns((false, new Dictionary<string, Field>()));
+            probabilisticSampler.IsSampled(Arg.Is<TraceId>(t => t == traceId), Arg.Is<string>(o => o == operationName)).Returns((false, new Dictionary<string, object>()));
             rateLimitingSampler.IsSampled(Arg.Is<TraceId>(t => t == traceId), Arg.Is<string>(o => o == operationName));
 
             sampler.IsSampled(traceId, operationName);

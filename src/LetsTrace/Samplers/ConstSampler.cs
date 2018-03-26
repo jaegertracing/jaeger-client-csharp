@@ -7,14 +7,14 @@ namespace LetsTrace.Samplers
     {
         public bool Decision { get; }
 
-        private readonly Dictionary<string, Field> _tags;
+        private readonly Dictionary<string, object> _tags;
 
         public ConstSampler(bool sample)
         {
             Decision = sample;
-            _tags = new Dictionary<string, Field> {
-                { SamplerConstants.SamplerTypeTagKey, new Field<string> { Value = SamplerConstants.SamplerTypeConst } },
-                { SamplerConstants.SamplerParamTagKey, new Field<bool> { Value = sample } }
+            _tags = new Dictionary<string, object> {
+                { SamplerConstants.SamplerTypeTagKey, SamplerConstants.SamplerTypeConst },
+                { SamplerConstants.SamplerParamTagKey, sample }
             };
         }
 
@@ -23,7 +23,7 @@ namespace LetsTrace.Samplers
             // nothing to do
         }
 
-        public (bool Sampled, IDictionary<string, Field> Tags) IsSampled(TraceId id, string operation)
+        public (bool Sampled, Dictionary<string, object> Tags) IsSampled(TraceId id, string operation)
         {
             return (Decision, _tags);
         }

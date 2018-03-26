@@ -6,9 +6,9 @@ namespace LetsTrace
     public class LogRecord
     {
         public DateTime TimestampUtc { get; }
-        public List<Field> Fields { get; }
+        public IDictionary<string, object> Fields { get; }
 
-        public LogRecord(DateTime timestampUtc, List<Field> fields)
+        public LogRecord(DateTime timestampUtc, IDictionary<string, object> fields)
         {
             TimestampUtc = timestampUtc;
             Fields = fields;

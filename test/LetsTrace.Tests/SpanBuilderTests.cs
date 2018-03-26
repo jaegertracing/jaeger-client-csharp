@@ -53,7 +53,7 @@ namespace LetsTrace.Tests
             var sampler = Substitute.For<ISampler>();
             var metrics = Substitute.For<IMetrics>();
             tracer.ActiveSpan.Returns((ISpan)null);
-            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, Field>()));
+            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, object>()));
 
             var sb = new SpanBuilder(tracer, operationName, sampler, metrics);
             sb.AddReference(References.ChildOf, null);
@@ -69,7 +69,7 @@ namespace LetsTrace.Tests
             var operationName = "testing";
             var sampler = Substitute.For<ISampler>();
             var metrics = Substitute.For<IMetrics>();
-            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, Field>()));
+            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, object>()));
 
             var refContext = Substitute.For<ILetsTraceSpanContext>();
             var expectedReferences = new List<Reference> {
@@ -120,7 +120,7 @@ namespace LetsTrace.Tests
             var operationName = "testing";
             var sampler = Substitute.For<ISampler>();
             var metrics = Substitute.For<IMetrics>();
-            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, Field>()));
+            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, object>()));
             var timestamp = new DateTimeOffset(2018, 2, 12, 17, 49, 19, TimeSpan.Zero);
 
             var sb = new SpanBuilder(tracer, operationName, sampler, metrics);
@@ -137,7 +137,7 @@ namespace LetsTrace.Tests
             var operationName = "testing";
             var sampler = Substitute.For<ISampler>();
             var metrics = Substitute.For<IMetrics>();
-            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, Field>()));
+            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, object>()));
 
             var expectedTags = new Dictionary<string, object> {
                 { "boolkey", true },
@@ -153,14 +153,10 @@ namespace LetsTrace.Tests
             sb.WithTag("stringkey", (string)expectedTags["stringkey"]);
             var builtSpan = (ILetsTraceSpan)sb.Start();
 
-            Assert.True(builtSpan.Tags["boolkey"] is Field<bool>);
-            Assert.Equal(expectedTags["boolkey"], builtSpan.Tags["boolkey"].ValueAs<bool>());
-            Assert.True(builtSpan.Tags["doublekey"] is Field<double>);
-            Assert.Equal(expectedTags["doublekey"], builtSpan.Tags["doublekey"].ValueAs<double>());
-            Assert.True(builtSpan.Tags["intkey"] is Field<int>);
-            Assert.Equal(expectedTags["intkey"], builtSpan.Tags["intkey"].ValueAs<int>());
-            Assert.True(builtSpan.Tags["stringkey"] is Field<string>);
-            Assert.Equal(expectedTags["stringkey"], builtSpan.Tags["stringkey"].ValueAs<string>());
+            Assert.Equal(expectedTags["boolkey"], builtSpan.Tags["boolkey"]);
+            Assert.Equal(expectedTags["doublekey"], builtSpan.Tags["doublekey"]);
+            Assert.Equal(expectedTags["intkey"], builtSpan.Tags["intkey"]);
+            Assert.Equal(expectedTags["stringkey"], builtSpan.Tags["stringkey"]);
         }
 
         [Fact]
@@ -171,7 +167,7 @@ namespace LetsTrace.Tests
             var sampler = Substitute.For<ISampler>();
             var metrics = Substitute.For<IMetrics>();
             tracer.ActiveSpan.Returns((ISpan)null);
-            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, Field>()));
+            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, object>()));
 
             var sb = new SpanBuilder(tracer, operationName, sampler, metrics);
             sb.AsChildOf((ISpan)null);
@@ -188,7 +184,7 @@ namespace LetsTrace.Tests
             var sampler = Substitute.For<ISampler>();
             var metrics = Substitute.For<IMetrics>();
             tracer.ActiveSpan.Returns((ISpan)null);
-            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, Field>()));
+            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, object>()));
 
             var sb = new SpanBuilder(tracer, operationName, sampler, metrics);
             sb.AsChildOf((ISpanContext)null);
@@ -204,7 +200,7 @@ namespace LetsTrace.Tests
             var operationName = "testing";
             var sampler = Substitute.For<ISampler>();
             var metrics = Substitute.For<IMetrics>();
-            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, Field>()));
+            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, object>()));
 
             var refContext = Substitute.For<ILetsTraceSpanContext>();
             var expectedReferences = new List<Reference> {
@@ -226,7 +222,7 @@ namespace LetsTrace.Tests
             var operationName = "testing";
             var sampler = Substitute.For<ISampler>();
             var metrics = Substitute.For<IMetrics>();
-            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, Field>()));
+            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, object>()));
 
             var refContext = Substitute.For<ILetsTraceSpanContext>();
             var expectedReferences = new List<Reference> {
@@ -270,9 +266,9 @@ namespace LetsTrace.Tests
             var operationName = "testing";
             var sampler = Substitute.For<ISampler>();
             var metrics = Substitute.For<IMetrics>();
-            var samplerTags = new Dictionary<string, Field> {
-                { "tag.1", new Field<string> { Value = "value1" } },
-                { "tag.2", new Field<string> { Value = "value2" } }
+            var samplerTags = new Dictionary<string, object> {
+                { "tag.1", "value1" },
+                { "tag.2", "value2" }
             };
             sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>())
                 .Returns((true, samplerTags));
@@ -294,7 +290,7 @@ namespace LetsTrace.Tests
             var operationName = "testing";
             var sampler = Substitute.For<ISampler>();
             var metrics = Substitute.For<IMetrics>();
-            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, Field>()));
+            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, object>()));
 
             var refContext = Substitute.For<ILetsTraceSpanContext>();
 
@@ -316,7 +312,7 @@ namespace LetsTrace.Tests
             IScope nullScope = null;
             tracer.ScopeManager.Returns(scopeManager);
 
-            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, Field>()));
+            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, object>()));
 
             scopeManager.Active.Returns(nullScope);
             scopeManager.Activate(
@@ -376,7 +372,7 @@ namespace LetsTrace.Tests
             var activeTraceId = new TraceId(34967, 31298);
             var activeSpanId = new SpanId(3829);
 
-            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, Field>()));
+            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, object>()));
 
             activeContext.TraceId.Returns(activeTraceId);
             activeContext.SpanId.Returns(activeSpanId);
@@ -410,7 +406,7 @@ namespace LetsTrace.Tests
             var activeTraceId = new TraceId(34967, 31298);
             var activeSpanId = new SpanId(3829);
 
-            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, Field>()));
+            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, object>()));
 
             activeContext.TraceId.Returns(activeTraceId);
             activeContext.SpanId.Returns(activeSpanId);

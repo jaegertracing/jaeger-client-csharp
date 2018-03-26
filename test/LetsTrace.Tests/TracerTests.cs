@@ -51,7 +51,7 @@ namespace LetsTrace.Tests
         [Fact]
         public void Tracer_BuildSpan_ShouldPassItselfAndOperationNameToSpanBuilder()
         {
-            _mockSampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, Field>()));
+            _mockSampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, object>()));
 
             var span = (ILetsTraceSpan)_builtTracer.BuildSpan(_operationName).Start();
 
@@ -137,7 +137,7 @@ namespace LetsTrace.Tests
             Assert.Equal(_ip, _builtTracer.HostIPv4);
             Assert.Equal(_mockScopeManager, _builtTracer.ScopeManager);
             Assert.Equal(_serviceName, _builtTracer.ServiceName);
-            Assert.Equal(_ip, _builtTracer.Tags[Constants.TracerIpTagKey].StringValue);
+            Assert.Equal(_ip, _builtTracer.Tags[Constants.TracerIpTagKey]);
         }
 
         [Fact]
