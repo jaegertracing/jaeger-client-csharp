@@ -10,9 +10,9 @@ namespace LetsTrace.Tests.Samplers
         public void ConstSampler_Constructor()
         {
             var sample = true;
-            var expectedTags = new Dictionary<string, Field> {
-                { SamplerConstants.SamplerTypeTagKey, new Field<string> { Value = SamplerConstants.SamplerTypeConst } },
-                { SamplerConstants.SamplerParamTagKey, new Field<bool> { Value = sample } }
+            var expectedTags = new Dictionary<string, object> {
+                { SamplerConstants.SamplerTypeTagKey, SamplerConstants.SamplerTypeConst },
+                { SamplerConstants.SamplerParamTagKey, sample }
             };
             var sampler = new ConstSampler(sample);
 

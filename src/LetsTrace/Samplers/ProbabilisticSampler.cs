@@ -16,7 +16,7 @@ namespace LetsTrace.Samplers
     public class ProbabilisticSampler : IProbabilisticSampler
     {
         private readonly ulong _samplingBoundary;
-        private readonly Dictionary<string, Field> _tags;
+        private readonly Dictionary<string, object> _tags;
 
         public double SamplingRate { get; }
 
@@ -26,9 +26,9 @@ namespace LetsTrace.Samplers
             SamplingRate = samplingRate;
 
             _samplingBoundary = (ulong) (ulong.MaxValue * samplingRate);
-            _tags = new Dictionary<string, Field> {
-                { SamplerConstants.SamplerTypeTagKey, new Field<string> { Value = SamplerConstants.SamplerTypeProbabilistic } },
-                { SamplerConstants.SamplerParamTagKey, new Field<double> { Value = samplingRate } }
+            _tags = new Dictionary<string, object> {
+                { SamplerConstants.SamplerTypeTagKey, SamplerConstants.SamplerTypeProbabilistic },
+                { SamplerConstants.SamplerParamTagKey, samplingRate }
             };
         }
 
@@ -37,7 +37,7 @@ namespace LetsTrace.Samplers
             // nothing to do
         }
 
-        public (bool Sampled, IDictionary<string, Field> Tags) IsSampled(TraceId id, string operation)
+        public (bool Sampled, Dictionary<string, object> Tags) IsSampled(TraceId id, string operation)
         {
             return (_samplingBoundary >= id.Low , _tags);
         }

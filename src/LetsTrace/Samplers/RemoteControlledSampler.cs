@@ -167,7 +167,7 @@ namespace LetsTrace.Samplers
             }
         }
 
-        public (bool Sampled, IDictionary<string, Field> Tags) IsSampled(TraceId id, string operation)
+        public (bool Sampled, Dictionary<string, object> Tags) IsSampled(TraceId id, string operation)
         {
             lock (this)
             {

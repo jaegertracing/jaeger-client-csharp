@@ -13,7 +13,7 @@ namespace LetsTrace
         string OperationName { get; }
         IEnumerable<Reference> References { get; }
         DateTime StartTimestampUtc { get; }
-        Dictionary<string, Field> Tags { get; }
+        Dictionary<string, object> Tags { get; }
         [JsonIgnore] ILetsTraceTracer Tracer { get; }
     }
 }

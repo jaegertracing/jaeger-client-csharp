@@ -24,10 +24,10 @@ namespace LetsTrace
         // who its parent is
         public IEnumerable<Reference> References { get; }
         public DateTime StartTimestampUtc { get; }
-        public Dictionary<string, Field> Tags { get; }
+        public Dictionary<string, object> Tags { get; }
         public ILetsTraceTracer Tracer { get; }
 
-        public Span(ILetsTraceTracer tracer, string operationName, ILetsTraceSpanContext context, DateTime? startTimestampUtc = null, Dictionary<string, Field> tags = null, List<Reference> references = null)
+        public Span(ILetsTraceTracer tracer, string operationName, ILetsTraceSpanContext context, DateTime? startTimestampUtc = null, Dictionary<string, object> tags = null, List<Reference> references = null)
         {
             Tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
 
@@ -40,7 +40,7 @@ namespace LetsTrace
             OperationName = operationName;
             Context = context ?? throw new ArgumentNullException(nameof(context));
             StartTimestampUtc = startTimestampUtc ?? Tracer.Clock.UtcNow();
-            Tags = tags ?? new Dictionary<string, Field>();
+            Tags = tags ?? new Dictionary<string, object>();
             References = references ?? Enumerable.Empty<Reference>();
         }
 
@@ -71,28 +71,28 @@ namespace LetsTrace
         // OpenTracing API: Log structured data
         public ISpan Log(IDictionary<string, object> fields)
         {
-            return LogInternal(Tracer.Clock.UtcNow(), fields.ToFieldList());
+            return LogInternal(Tracer.Clock.UtcNow(), fields);
         }
 
         // OpenTracing API: Log structured data
         public ISpan Log(DateTimeOffset timestamp, IDictionary<string, object> fields)
         {
-            return LogInternal(timestamp.UtcDateTime, fields.ToFieldList());
+            return LogInternal(timestamp.UtcDateTime, fields);
         }
 
         // OpenTracing API: Log structured data
         public ISpan Log(string eventName)
         {
-            return LogInternal(Tracer.Clock.UtcNow(), new List<Field> { new Field<string> { Key = LogFields.Event, Value = eventName } });
+            return LogInternal(Tracer.Clock.UtcNow(), new Dictionary<string, object> { { LogFields.Event, eventName } });
         }
 
         // OpenTracing API: Log structured data
         public ISpan Log(DateTimeOffset timestamp, string eventName)
         {
-            return LogInternal(timestamp.UtcDateTime, new List<Field> { new Field<string> { Key = LogFields.Event, Value = eventName } });
+            return LogInternal(timestamp.UtcDateTime, new Dictionary<string, object> { { LogFields.Event, eventName } });
         }
 
-        private ISpan LogInternal(DateTime timestampUtc, List<Field> fields)
+        private ISpan LogInternal(DateTime timestampUtc, IDictionary<string, object> fields)
         {
             Logs.Add(new LogRecord(timestampUtc, fields));
             return this;
@@ -106,18 +106,18 @@ namespace LetsTrace
         }
 
         // OpenTracing API: Set a Span tag
-        public ISpan SetTag(string key, bool value) => SetTag(key, new Field<bool> { Key = key, Value = value });
+        public ISpan SetTag(string key, bool value) => SetTagAsObject(key, value);
 
         // OpenTracing API: Set a Span tag
-        public ISpan SetTag(string key, double value) => SetTag(key, new Field<double> { Key = key, Value = value });
+        public ISpan SetTag(string key, double value) => SetTagAsObject(key, value);
 
         // OpenTracing API: Set a Span tag
-        public ISpan SetTag(string key, int value) => SetTag(key, new Field<int> { Key = key, Value = value });
+        public ISpan SetTag(string key, int value) => SetTagAsObject(key, value);
 
         // OpenTracing API: Set a Span tag
-        public ISpan SetTag(string key, string value) => SetTag(key, new Field<string> { Key = key, Value = value });
+        public ISpan SetTag(string key, string value) => SetTagAsObject(key, value);
 
-        private ISpan SetTag(string key, Field value)
+        private ISpan SetTagAsObject(string key, object value)
         {
             Tags[key] = value;
             return this;

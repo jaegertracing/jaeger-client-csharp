@@ -14,7 +14,7 @@ namespace LetsTrace
         private readonly string _operationName;
         private readonly ISampler _sampler;
         private readonly IMetrics _metrics;
-        private readonly Dictionary<string, Field> _tags;
+        private readonly Dictionary<string, object> _tags;
 
         private List<Reference> _references;
         private bool _ignoreActiveSpan;
@@ -28,7 +28,7 @@ namespace LetsTrace
             _metrics = metrics ?? throw new ArgumentNullException(nameof(metrics));
 
             // There will be tags in most cases so it should be fine to always initiate this variable.
-            _tags = new Dictionary<string, Field>();
+            _tags = new Dictionary<string, object>();
         }
 
         public ISpanBuilder AddReference(string referenceType, ISpanContext referencedContext)
@@ -154,15 +154,25 @@ namespace LetsTrace
             return this;
         }
 
-        public ISpanBuilder WithTag(string key, bool value) => WithTag(key, new Field<bool> { Key = key, Value = value });
+        public ISpanBuilder WithTag(string key, bool value)
+        {
+            _tags[key] = value;
+            return this;
+        }
 
-        public ISpanBuilder WithTag(string key, double value) => WithTag(key, new Field<double> { Key = key, Value = value });
+        public ISpanBuilder WithTag(string key, double value)
+        {
+            _tags[key] = value;
+            return this;
+        }
 
-        public ISpanBuilder WithTag(string key, int value) => WithTag(key, new Field<int> { Key = key, Value = value });
+        public ISpanBuilder WithTag(string key, int value)
+        {
+            _tags[key] = value;
+            return this;
+        }
 
-        public ISpanBuilder WithTag(string key, string value) => WithTag(key, new Field<string> { Key = key, Value = value });
-
-        private ISpanBuilder WithTag(string key, Field value)
+        public ISpanBuilder WithTag(string key, string value)
         {
             _tags[key] = value;
             return this;

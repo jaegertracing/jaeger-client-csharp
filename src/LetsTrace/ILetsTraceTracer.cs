@@ -7,7 +7,7 @@ namespace LetsTrace
 {
     public interface ILetsTraceTracer : ITracer, IDisposable
     {
-        IDictionary<string, Field> Tags { get; }
+        Dictionary<string, object> Tags { get; }
         IClock Clock { get; }
         string HostIPv4 { get; }
         string ServiceName { get; }

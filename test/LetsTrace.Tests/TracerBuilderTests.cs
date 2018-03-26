@@ -69,10 +69,10 @@ namespace LetsTrace.Tests
                 .Build();
 
             Assert.Equal(_serviceName, tracer.ServiceName);
-            Assert.Equal(stringTagValue, tracer.Tags[stringTagName].StringValue);
-            Assert.Equal(boolTagValue, tracer.Tags[boolTagName].ValueAs<bool>());
-            Assert.Equal(doubleTagValue, tracer.Tags[doubleTagName].ValueAs<double>());
-            Assert.Equal(intTagValue, tracer.Tags[intTagName].ValueAs<int>());
+            Assert.Equal(stringTagValue, tracer.Tags[stringTagName]);
+            Assert.Equal(boolTagValue, tracer.Tags[boolTagName]);
+            Assert.Equal(doubleTagValue, tracer.Tags[doubleTagName]);
+            Assert.Equal(intTagValue, tracer.Tags[intTagName]);
             Assert.Equal(_mockScopeManager, tracer.ScopeManager);
             Assert.Equal(_mockPropagationRegistry, tracer.PropagationRegistry);
             Assert.Equal(_mockSampler, tracer.Sampler);

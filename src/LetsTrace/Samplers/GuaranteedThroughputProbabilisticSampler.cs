@@ -20,7 +20,7 @@ namespace LetsTrace.Samplers
     {
         internal IProbabilisticSampler _probabilisticSampler;
         internal IRateLimitingSampler _rateLimitingSampler;
-        private Dictionary<string, Field> _tags;
+        private Dictionary<string, object> _tags;
 
         public GuaranteedThroughputProbabilisticSampler(double samplingRate, double lowerBound)
             : this(new ProbabilisticSampler(samplingRate), new RateLimitingSampler(lowerBound))
@@ -30,9 +30,9 @@ namespace LetsTrace.Samplers
         {
             _probabilisticSampler = probabilisticSampler;
             _rateLimitingSampler = rateLimitingSampler;
-            _tags = new Dictionary<string, Field> {
-                { SamplerConstants.SamplerTypeTagKey, new Field<string> { Value = SamplerConstants.SamplerTypeLowerBound } },
-                { SamplerConstants.SamplerParamTagKey, new Field<double> { Value = _probabilisticSampler.SamplingRate } }
+            _tags = new Dictionary<string, object> {
+                { SamplerConstants.SamplerTypeTagKey, SamplerConstants.SamplerTypeLowerBound },
+                { SamplerConstants.SamplerParamTagKey, _probabilisticSampler.SamplingRate }
             };
         }
 
@@ -49,7 +49,7 @@ namespace LetsTrace.Samplers
             if (Math.Abs(samplingRate - _probabilisticSampler.SamplingRate) > double.Epsilon)
             {
                 _probabilisticSampler = new ProbabilisticSampler(samplingRate);
-                ((Field<double>)_tags[SamplerConstants.SamplerParamTagKey]).Value = samplingRate;
+                _tags[SamplerConstants.SamplerParamTagKey] = samplingRate;
                 isUpdated = true;
             }
             if (Math.Abs(lowerBound - _rateLimitingSampler.MaxTracesPerSecond) > double.Epsilon)
@@ -66,7 +66,7 @@ namespace LetsTrace.Samplers
             _rateLimitingSampler.Dispose();
         }
 
-        public (bool Sampled, IDictionary<string, Field> Tags) IsSampled(TraceId id, string operation)
+        public (bool Sampled, Dictionary<string, object> Tags) IsSampled(TraceId id, string operation)
         {
             var probabilisticSampling = _probabilisticSampler.IsSampled(id, operation);
             var rateLimitingSampling = _rateLimitingSampler.IsSampled(id, operation);

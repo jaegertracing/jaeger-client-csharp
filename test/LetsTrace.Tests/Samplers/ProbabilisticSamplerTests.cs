@@ -40,9 +40,9 @@ namespace LetsTrace.Tests.Samplers
             var middleId = 9223372036854775807;
 
             var samplingRate = 0.5;
-            var expectedTags = new Dictionary<string, Field> {
-                { SamplerConstants.SamplerTypeTagKey, new Field<string> { Value = SamplerConstants.SamplerTypeProbabilistic } },
-                { SamplerConstants.SamplerParamTagKey, new Field<double> { Value = samplingRate } }
+            var expectedTags = new Dictionary<string, object> {
+                { SamplerConstants.SamplerTypeTagKey, SamplerConstants.SamplerTypeProbabilistic },
+                { SamplerConstants.SamplerParamTagKey, samplingRate }
             };
             var sampler = new ProbabilisticSampler(samplingRate);
             var isSampled = sampler.IsSampled(new TraceId((ulong)(middleId + 10)), "op");
