@@ -271,3 +271,6 @@ config.ps1
 
 # VS generated files
 launchSettings.json
+
+# BenchmarkDotNet
+BenchmarkDotNet.Artifacts/

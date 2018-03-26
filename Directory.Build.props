@@ -1,0 +1,20 @@
+<Project>
+  <PropertyGroup>
+    <VersionPrefix>0.0.4</VersionPrefix>
+
+    <Authors>Chatham Financial Corp.</Authors>
+    <Copyright>Copyright 2018 (c) Chatham Financial Corp. All rights reserved.</Copyright>
+    <PackageProjectUrl>https://github.com/Chatham/LetsTrace</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/Chatham/LetsTrace/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageReleaseNotes>https://github.com/Chatham/LetsTrace/releases</PackageReleaseNotes>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>git://github.com/Chatham/LetsTrace</RepositoryUrl>
+
+    <!-- Projects that should generate nupkg files override this -->
+    <IsPackable>false</IsPackable>
+
+    <LangVersion>latest</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+</Project>

@@ -4,6 +4,6 @@ namespace LetsTrace.Util
 {
     public interface IClock
     {
-        DateTimeOffset CurrentTime();
+        DateTime UtcNow();
     }
 }
