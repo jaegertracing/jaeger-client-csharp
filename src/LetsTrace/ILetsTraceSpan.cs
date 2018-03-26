@@ -8,11 +8,11 @@ namespace LetsTrace
     public interface ILetsTraceSpan : ISpan, IDisposable
     {
         new ILetsTraceSpanContext Context { get; }
-        DateTimeOffset? FinishTimestamp { get; }
+        DateTime? FinishTimestampUtc { get; }
         List<LogRecord> Logs { get; }
         string OperationName { get; }
         IEnumerable<Reference> References { get; }
-        DateTimeOffset StartTimestamp { get; }
+        DateTime StartTimestampUtc { get; }
         Dictionary<string, Field> Tags { get; }
         [JsonIgnore] ILetsTraceTracer Tracer { get; }
     }

@@ -18,7 +18,7 @@ namespace LetsTrace
 
         private List<Reference> _references;
         private bool _ignoreActiveSpan;
-        private DateTimeOffset? _startTimestamp;
+        private DateTime? _startTimestampUtc;
 
         public SpanBuilder(ILetsTraceTracer tracer, string operationName, ISampler sampler, IMetrics metrics)
         {
@@ -87,7 +87,7 @@ namespace LetsTrace
                 ? CreateRootSpanContext(parent)
                 : CreateChildSpanContext();
 
-            var span = new Span(_tracer, _operationName, spanContext, _startTimestamp, _tags, _references);
+            var span = new Span(_tracer, _operationName, spanContext, _startTimestampUtc, _tags, _references);
             if (spanContext.IsSampled)
             {
                 _metrics.SpansStartedSampled.Inc(1);
@@ -150,7 +150,7 @@ namespace LetsTrace
 
         public ISpanBuilder WithStartTimestamp(DateTimeOffset startTimestamp)
         {
-            _startTimestamp = startTimestamp;
+            _startTimestampUtc = startTimestamp.UtcDateTime;
             return this;
         }
 
