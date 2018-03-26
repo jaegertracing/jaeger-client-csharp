@@ -29,4 +29,15 @@
     <PackageReference Include="System.Net.Security" Version="[4.3,)" />
   </ItemGroup>
 
+  <Target Name="ILRepack" AfterTargets="Build">
+    <Message Importance="High" Text="ILRepack - $(OutputPath)" />
+    <Exec Command="$(USERPROFILE)\.nuget\packages\ILRepack\2.0.15\tools\ilrepack.exe /parallel /internalize /out:LetsTrace.Jaeger.dll LetsTrace.Jaeger.dll Thrift.dll Jaeger.Thrift.dll"
+      WorkingDirectory="$(OutputPath)" />
+    <Delete Files="$(OutputPath)\Thrift.dll" />
+    <Delete Files="$(OutputPath)\Thrift.dll.config" />
+    <Delete Files="$(OutputPath)\Thrift.pdb" />
+    <Delete Files="$(OutputPath)\Jaeger.Thrift.dll" />
+    <Delete Files="$(OutputPath)\Jaeger.Thrift.pdb" />
+  </Target>
+
 </Project>

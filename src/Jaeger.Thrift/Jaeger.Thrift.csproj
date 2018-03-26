@@ -3,6 +3,9 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
+
+    <!-- This assembly is currently ILMerged into LetsTrace.Jaeger -->
+    <IsPackable>false</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
