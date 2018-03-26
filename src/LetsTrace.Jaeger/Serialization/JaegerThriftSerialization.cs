@@ -20,8 +20,8 @@ namespace LetsTrace.Jaeger.Serialization
         public JaegerSpan BuildJaegerThriftSpan(ILetsTraceSpan span)
         {
             var context = span.Context;
-            var startTime = span.StartTimestamp.ToUnixTimeMicroseconds();
-            var duration = (span.FinishTimestamp?.ToUnixTimeMicroseconds() - startTime) ?? 0;
+            var startTime = span.StartTimestampUtc.ToUnixTimeMicroseconds();
+            var duration = (span.FinishTimestampUtc?.ToUnixTimeMicroseconds() - startTime) ?? 0;
 
             var jaegerSpan = new JaegerSpan(
                 (long)context.TraceId.Low,
@@ -75,7 +75,7 @@ namespace LetsTrace.Jaeger.Serialization
 
         public static JaegerLog BuildJaegerLog(LogRecord log)
         {
-            return new JaegerLog(log.Timestamp.ToUnixTimeMicroseconds(), ConvertLogToJaegerTags(log));
+            return new JaegerLog(log.TimestampUtc.ToUnixTimeMicroseconds(), ConvertLogToJaegerTags(log));
         }
 
         public static List<JaegerTag> ConvertLogToJaegerTags(LogRecord log)

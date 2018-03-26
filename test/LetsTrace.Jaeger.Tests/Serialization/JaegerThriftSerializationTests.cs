@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using LetsTrace.Jaeger.Serialization;
 using NSubstitute;
 using OpenTracing;
@@ -12,11 +11,6 @@ namespace LetsTrace.Jaeger.Tests.Serialization
 {
     public class JaegerThriftSerializationTests
     {
-        public JaegerThriftSerializationTests()
-        {
-            CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
-        }
-
         [Fact]
         public void BuildJaegerReference_BuildsChildOfCorrectly()
         {
@@ -27,7 +21,7 @@ namespace LetsTrace.Jaeger.Tests.Serialization
 
             context.TraceId.Returns(traceId);
             context.SpanId.Returns(spanId);
-            
+
             var reference = new Reference(refType, context);
 
             var converted = JaegerThriftSerialization.BuildJaegerReference(reference);
@@ -48,7 +42,7 @@ namespace LetsTrace.Jaeger.Tests.Serialization
 
             context.TraceId.Returns(traceId);
             context.SpanId.Returns(spanId);
-            
+
             var reference = new Reference(refType, context);
 
             var converted = JaegerThriftSerialization.BuildJaegerReference(reference);
@@ -69,7 +63,7 @@ namespace LetsTrace.Jaeger.Tests.Serialization
 
             context.TraceId.Returns(traceId);
             context.SpanId.Returns(spanId);
-            
+
             var reference = new Reference(refType, context);
 
             var converted = JaegerThriftSerialization.BuildJaegerReference(reference);
@@ -80,7 +74,7 @@ namespace LetsTrace.Jaeger.Tests.Serialization
         [Fact]
         public void BuildJaegerLog()
         {
-            var timestamp = DateTimeOffset.Parse("2/16/18 11:33:29 AM +00:00");
+            var timestamp = new DateTime(2018, 2, 16, 11, 33, 29, DateTimeKind.Utc);
             var doubleField = new Field<double> { Key = "doubleField", Value = 1.1 };
             var decimalField = new Field<decimal> { Key = "decimalField", Value = 5.5m };
             var boolField = new Field<bool> { Key = "boolField", Value = true };
@@ -90,7 +84,7 @@ namespace LetsTrace.Jaeger.Tests.Serialization
             var int16Field = new Field<Int16> { Key = "int16Field", Value = 95 };
             var int32Field = new Field<Int32> { Key = "int32Field", Value = 346 };
             var int64Field = new Field<Int64> { Key = "int64Field", Value = 1942 };
-            
+
             var stringField = new Field<string> { Key = "stringField", Value = "stringValue" };
             var binaryField = new Field<byte[]> { Key = "binaryField", Value = new byte[7] { 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20 } };
 
@@ -112,7 +106,7 @@ namespace LetsTrace.Jaeger.Tests.Serialization
             var converted = JaegerThriftSerialization.BuildJaegerLog(log);
 
             Assert.Equal(1518780809000000, converted.Timestamp);
-            
+
             Assert.Equal(JaegerTagType.DOUBLE, converted.Fields[0].VType);
             Assert.Equal(doubleField.Key, converted.Fields[0].Key);
             Assert.Equal(doubleField.Value, converted.Fields[0].VDouble);
@@ -189,7 +183,7 @@ namespace LetsTrace.Jaeger.Tests.Serialization
         }
 
         [Fact]
-        public void BuildJeagerThriftSpan() 
+        public void BuildJeagerThriftSpan()
         {
             var doubleField = new Field<double> { Key = "doubleField", Value = 1.1 };
             var decimalField = new Field<decimal> { Key = "decimalField", Value = 5.5m };
@@ -201,7 +195,7 @@ namespace LetsTrace.Jaeger.Tests.Serialization
                 { "int64Tag", int64Field },
                 { "stringTag", stringField }
             };
-            var logTimestamp = DateTimeOffset.Parse("2/16/18 11:33:29 AM +00:00");
+            var logTimestamp = new DateTime(2018, 2, 16, 11, 33, 29, DateTimeKind.Utc);
             var logFields1 = new List<Field> {
                 doubleField
             };
@@ -225,10 +219,10 @@ namespace LetsTrace.Jaeger.Tests.Serialization
             span.OperationName.Returns(op);
             span.Tags.Returns(tracerTags);
             span.Logs.Returns(logs);
-            var startTimestamp = DateTimeOffset.Parse("2/16/18 11:33:28 AM +00:00");
-            var finishTimestamp = DateTimeOffset.Parse("2/16/18 11:33:30 AM +00:00");
-            span.StartTimestamp.Returns(startTimestamp);
-            span.FinishTimestamp.Returns(finishTimestamp);
+            var startTimestamp = new DateTime(2018, 2, 16, 11, 33, 28, DateTimeKind.Utc);
+            var finishTimestamp = new DateTime(2018, 2, 16, 11, 33, 30, DateTimeKind.Utc);
+            span.StartTimestampUtc.Returns(startTimestamp);
+            span.FinishTimestampUtc.Returns(finishTimestamp);
 
             var parentRefType = References.ChildOf;
             var parentContext = Substitute.For<ILetsTraceSpanContext>();
