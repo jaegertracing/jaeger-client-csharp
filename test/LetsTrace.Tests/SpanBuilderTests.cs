@@ -46,6 +46,23 @@ namespace LetsTrace.Tests
         }
 
         [Fact]
+        public void SpanBuilder_AddReference_IgnoresNullContext()
+        {
+            var tracer = Substitute.For<ILetsTraceTracer>();
+            var operationName = "testing";
+            var sampler = Substitute.For<ISampler>();
+            var metrics = Substitute.For<IMetrics>();
+            tracer.ActiveSpan.Returns((ISpan)null);
+            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, Field>()));
+
+            var sb = new SpanBuilder(tracer, operationName, sampler, metrics);
+            sb.AddReference(References.ChildOf, null);
+            var builtSpan = (ILetsTraceSpan)sb.Start();
+
+            Assert.Empty(builtSpan.References);
+        }
+
+        [Fact]
         public void SpanBuilder_AddReference_ShouldAddReference()
         {
             var tracer = Substitute.For<ILetsTraceTracer>();
@@ -144,6 +161,40 @@ namespace LetsTrace.Tests
             Assert.Equal(expectedTags["intkey"], builtSpan.Tags["intkey"].ValueAs<int>());
             Assert.True(builtSpan.Tags["stringkey"] is Field<string>);
             Assert.Equal(expectedTags["stringkey"], builtSpan.Tags["stringkey"].ValueAs<string>());
+        }
+
+        [Fact]
+        public void SpanBuilder_AsChildOf_IgnoresNullSpan()
+        {
+            var tracer = Substitute.For<ILetsTraceTracer>();
+            var operationName = "testing";
+            var sampler = Substitute.For<ISampler>();
+            var metrics = Substitute.For<IMetrics>();
+            tracer.ActiveSpan.Returns((ISpan)null);
+            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, Field>()));
+
+            var sb = new SpanBuilder(tracer, operationName, sampler, metrics);
+            sb.AsChildOf((ISpan)null);
+            var builtSpan = (ILetsTraceSpan)sb.Start();
+
+            Assert.Empty(builtSpan.References);
+        }
+
+        [Fact]
+        public void SpanBuilder_AsChildOf_IgnoresNullContext()
+        {
+            var tracer = Substitute.For<ILetsTraceTracer>();
+            var operationName = "testing";
+            var sampler = Substitute.For<ISampler>();
+            var metrics = Substitute.For<IMetrics>();
+            tracer.ActiveSpan.Returns((ISpan)null);
+            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, Field>()));
+
+            var sb = new SpanBuilder(tracer, operationName, sampler, metrics);
+            sb.AsChildOf((ISpanContext)null);
+            var builtSpan = (ILetsTraceSpan)sb.Start();
+
+            Assert.Empty(builtSpan.References);
         }
 
         [Fact]
