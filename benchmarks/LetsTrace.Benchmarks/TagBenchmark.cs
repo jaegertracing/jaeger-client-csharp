@@ -2,6 +2,7 @@ using BenchmarkDotNet.Attributes;
 
 namespace LetsTrace.Benchmarks
 {
+    [MemoryDiagnoser]
     public class TagBenchmark
     {
         private readonly Tracer _tracer;
