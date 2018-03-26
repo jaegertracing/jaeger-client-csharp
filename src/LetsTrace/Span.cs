@@ -22,7 +22,7 @@ namespace LetsTrace
         // context that is given to it needs to already have determined who the
         // parent is (if there is one). The span should not handle determining
         // who its parent is
-        public List<Reference> References { get; }
+        public IEnumerable<Reference> References { get; }
         public DateTimeOffset StartTimestamp { get; }
         public Dictionary<string, Field> Tags { get; }
         public ILetsTraceTracer Tracer { get; }
@@ -41,7 +41,7 @@ namespace LetsTrace
             Context = context ?? throw new ArgumentNullException(nameof(context));
             StartTimestamp = startTimestamp ?? Tracer.Clock.CurrentTime();
             Tags = tags ?? new Dictionary<string, Field>();
-            References = references ?? new List<Reference>();
+            References = references ?? Enumerable.Empty<Reference>();
         }
 
         public void Dispose() => Finish();

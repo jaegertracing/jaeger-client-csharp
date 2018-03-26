@@ -11,7 +11,7 @@ namespace LetsTrace
         DateTimeOffset? FinishTimestamp { get; }
         List<LogRecord> Logs { get; }
         string OperationName { get; }
-        List<Reference> References { get; }
+        IEnumerable<Reference> References { get; }
         DateTimeOffset StartTimestamp { get; }
         Dictionary<string, Field> Tags { get; }
         [JsonIgnore] ILetsTraceTracer Tracer { get; }
