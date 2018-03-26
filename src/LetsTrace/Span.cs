@@ -14,7 +14,7 @@ namespace LetsTrace
         public ILetsTraceSpanContext Context { get; }
         ISpanContext ISpan.Context => Context;
 
-        public DateTimeOffset? FinishTimestamp { get; private set; }
+        public DateTime? FinishTimestampUtc { get; private set; }
         public List<LogRecord> Logs { get; } = new List<LogRecord>();
         public string OperationName { get; private set; }
 
@@ -23,11 +23,11 @@ namespace LetsTrace
         // parent is (if there is one). The span should not handle determining
         // who its parent is
         public IEnumerable<Reference> References { get; }
-        public DateTimeOffset StartTimestamp { get; }
+        public DateTime StartTimestampUtc { get; }
         public Dictionary<string, Field> Tags { get; }
         public ILetsTraceTracer Tracer { get; }
 
-        public Span(ILetsTraceTracer tracer, string operationName, ILetsTraceSpanContext context, DateTimeOffset? startTimestamp = null, Dictionary<string, Field> tags = null, List<Reference> references = null)
+        public Span(ILetsTraceTracer tracer, string operationName, ILetsTraceSpanContext context, DateTime? startTimestampUtc = null, Dictionary<string, Field> tags = null, List<Reference> references = null)
         {
             Tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
 
@@ -39,23 +39,25 @@ namespace LetsTrace
 
             OperationName = operationName;
             Context = context ?? throw new ArgumentNullException(nameof(context));
-            StartTimestamp = startTimestamp ?? Tracer.Clock.CurrentTime();
+            StartTimestampUtc = startTimestampUtc ?? Tracer.Clock.UtcNow();
             Tags = tags ?? new Dictionary<string, Field>();
             References = references ?? Enumerable.Empty<Reference>();
         }
 
-        public void Dispose() => Finish();
+        public void Dispose() => FinishInternal(Tracer.Clock.UtcNow());
 
         // OpenTracing API: Finish the Span
-        public void Finish() => Finish(Tracer.Clock.CurrentTime());
+        public void Finish() => FinishInternal(Tracer.Clock.UtcNow());
 
         // OpenTracing API: Finish the Span
         // An explicit finish timestamp for the Span
-        public void Finish(DateTimeOffset finishTimestamp)
+        public void Finish(DateTimeOffset finishTimestamp) => FinishInternal(finishTimestamp.UtcDateTime);
+
+        private void FinishInternal(DateTime finishTimestampUtc)
         {
-            if (FinishTimestamp == null) // only report if it's not finished yet
+            if (FinishTimestampUtc == null) // only report if it's not finished yet
             {
-                FinishTimestamp = finishTimestamp;
+                FinishTimestampUtc = finishTimestampUtc;
                 Tracer.ReportSpan(this);
             }
         }
@@ -67,20 +69,32 @@ namespace LetsTrace
         public ISpan SetBaggageItem(string key, string value) => Tracer.SetBaggageItem(this, key, value);
 
         // OpenTracing API: Log structured data
-        public ISpan Log(IDictionary<string, object> fields) => Log(Tracer.Clock.CurrentTime(), fields);
-
-        // OpenTracing API: Log structured data
-        public ISpan Log(DateTimeOffset timestamp, IDictionary<string, object> fields) => Log(timestamp, fields.ToFieldList());
-
-        // OpenTracing API: Log structured data
-        public ISpan Log(string eventName) => Log(Tracer.Clock.CurrentTime(), eventName);
-
-        // OpenTracing API: Log structured data
-        public ISpan Log(DateTimeOffset timestamp, string eventName) => Log(timestamp, new List<Field> { new Field<string> { Key = LogFields.Event, Value = eventName } });
-
-        private ISpan Log(DateTimeOffset timestamp, IEnumerable<Field> fields)
+        public ISpan Log(IDictionary<string, object> fields)
         {
-            Logs.Add(new LogRecord(timestamp, fields.ToList()));
+            return LogInternal(Tracer.Clock.UtcNow(), fields.ToFieldList());
+        }
+
+        // OpenTracing API: Log structured data
+        public ISpan Log(DateTimeOffset timestamp, IDictionary<string, object> fields)
+        {
+            return LogInternal(timestamp.UtcDateTime, fields.ToFieldList());
+        }
+
+        // OpenTracing API: Log structured data
+        public ISpan Log(string eventName)
+        {
+            return LogInternal(Tracer.Clock.UtcNow(), new List<Field> { new Field<string> { Key = LogFields.Event, Value = eventName } });
+        }
+
+        // OpenTracing API: Log structured data
+        public ISpan Log(DateTimeOffset timestamp, string eventName)
+        {
+            return LogInternal(timestamp.UtcDateTime, new List<Field> { new Field<string> { Key = LogFields.Event, Value = eventName } });
+        }
+
+        private ISpan LogInternal(DateTime timestampUtc, List<Field> fields)
+        {
+            Logs.Add(new LogRecord(timestampUtc, fields));
             return this;
         }
 

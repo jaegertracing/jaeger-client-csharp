@@ -121,13 +121,13 @@ namespace LetsTrace.Tests
             var sampler = Substitute.For<ISampler>();
             var metrics = Substitute.For<IMetrics>();
             sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, Field>()));
-            var timestamp = DateTimeOffset.Parse("2/12/2018 5:49:19 PM +00:00");
+            var timestamp = new DateTimeOffset(2018, 2, 12, 17, 49, 19, TimeSpan.Zero);
 
             var sb = new SpanBuilder(tracer, operationName, sampler, metrics);
             sb.WithStartTimestamp(timestamp);
             var builtSpan = (ILetsTraceSpan)sb.Start();
 
-            Assert.Equal(timestamp, builtSpan.StartTimestamp);
+            Assert.Equal(timestamp.UtcDateTime, builtSpan.StartTimestampUtc);
         }
 
         [Fact]

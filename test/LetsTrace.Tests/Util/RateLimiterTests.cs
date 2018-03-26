@@ -11,10 +11,10 @@ namespace LetsTrace.Tests.Util
         public void RateLimiter()
         {
             var clock = Substitute.For<IClock>();
-            var time = DateTimeOffset.Now;
+            var time = DateTime.UtcNow;
 
-            clock.CurrentTime().Returns(x => time);
-            
+            clock.UtcNow().Returns(x => time);
+
             var rateLimiter = new RateLimiter(2.0, 2.0, clock);
 
             Assert.True(rateLimiter.CheckCredit(1.0));
