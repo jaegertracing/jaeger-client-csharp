@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <PackageVersion>0.0.4</PackageVersion>
+    <VersionPrefix>0.0.4</VersionPrefix>
 
     <Authors>Chatham Financial Corp.</Authors>
     <Copyright>Copyright 2018 (c) Chatham Financial Corp. All rights reserved.</Copyright>
