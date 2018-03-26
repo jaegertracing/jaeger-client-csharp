@@ -51,16 +51,21 @@ namespace LetsTrace
 
         public IScope StartActive(bool finishSpanOnDispose)
         {
-            if (_tracer.ScopeManager.Active != null && _references.Count == 0 && !_ignoreActiveSpan)
-            {
-                AsChildOf(_tracer.ScopeManager.Active.Span.Context);
-            }
-
             return _tracer.ScopeManager.Activate(Start(), finishSpanOnDispose);
         }
 
         public ISpan Start()
         {
+            if (!_ignoreActiveSpan && _references.Count == 0)
+            {
+                // Note: Stores the variable to ensure the underlying AsyncLocal is accessed only once!
+                ISpan activeSpan = _tracer.ActiveSpan;
+                if (activeSpan != null)
+                {
+                    AsChildOf(activeSpan);
+                }
+            }
+
             SpanContext parent = null;
             foreach(var reference in _references)
             {

@@ -283,7 +283,7 @@ namespace LetsTrace.Tests
         }
 
         [Fact]
-        public void SpanBuilder_StartActive_ShouldAddActiveAsParent()
+        public void SpanBuilder_Start_ShouldAddActiveAsParent()
         {
             var tracer = Substitute.For<ILetsTraceTracer>();
             var sampler = Substitute.For<ISampler>();
@@ -296,25 +296,14 @@ namespace LetsTrace.Tests
             var activeSpanId = new SpanId(3829);
             var activeContext = new SpanContext(activeTraceId, activeSpanId);
 
-            ILetsTraceSpan newSpan = null;
-
             activeSpan.Context.Returns(activeContext);
             activeScope.Span.Returns(activeSpan);
             scopeManager.Active.Returns(activeScope);
             tracer.ScopeManager.Returns(scopeManager);
-
-            scopeManager.Activate(
-                Arg.Do<ISpan>(s => newSpan = (ILetsTraceSpan)s),
-                Arg.Is<bool>(fsod => fsod == true)
-            );
+            tracer.ActiveSpan.Returns(activeSpan);
 
             var sb = new SpanBuilder(tracer, operationName, sampler, metrics);
-            var scope = sb.StartActive(true);
-
-            scopeManager.Received(1).Activate(
-                Arg.Any<ISpan>(),
-                Arg.Any<bool>()
-            );
+            var newSpan = sb.Start();
 
             var newContext = (ILetsTraceSpanContext)newSpan.Context;
             Assert.Equal(activeSpanId, newContext.ParentId);
@@ -323,7 +312,7 @@ namespace LetsTrace.Tests
         }
 
         [Fact]
-        public void SpanBuilder_StartActive_ShouldNotAddActiveAsParent_WhenIgnoreActiveSpanIsSet()
+        public void SpanBuilder_Start_ShouldNotAddActiveAsParent_WhenIgnoreActiveSpanIsSet()
         {
             var tracer = Substitute.For<ILetsTraceTracer>();
             var sampler = Substitute.For<ISampler>();
@@ -338,28 +327,17 @@ namespace LetsTrace.Tests
 
             sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, Field>()));
 
-            ILetsTraceSpan newSpan = null;
-
             activeContext.TraceId.Returns(activeTraceId);
             activeContext.SpanId.Returns(activeSpanId);
             activeSpan.Context.Returns(activeContext);
             activeScope.Span.Returns(activeSpan);
             scopeManager.Active.Returns(activeScope);
             tracer.ScopeManager.Returns(scopeManager);
-
-            scopeManager.Activate(
-                Arg.Do<ISpan>(s => newSpan = (ILetsTraceSpan)s),
-                Arg.Is<bool>(fsod => fsod == true)
-            );
+            tracer.ActiveSpan.Returns(activeSpan);
 
             var sb = new SpanBuilder(tracer, operationName, sampler, metrics);
             sb.IgnoreActiveSpan();
-            var scope = sb.StartActive(true);
-
-            scopeManager.Received(1).Activate(
-                Arg.Any<ISpan>(),
-                Arg.Any<bool>()
-            );
+            var newSpan = sb.Start();
 
             var newContext = (ILetsTraceSpanContext)newSpan.Context;
             Assert.Equal(0.ToString(), newContext.ParentId.ToString());
@@ -368,7 +346,7 @@ namespace LetsTrace.Tests
         }
 
         [Fact]
-        public void SpanBuilder_StartActive_ShouldNotAddActiveAsParent_WhenOtherReferencesExist()
+        public void SpanBuilder_Start_ShouldNotAddActiveAsParent_WhenOtherReferencesExist()
         {
             var tracer = Substitute.For<ILetsTraceTracer>();
             var sampler = Substitute.For<ISampler>();
@@ -383,35 +361,23 @@ namespace LetsTrace.Tests
 
             sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, Field>()));
 
-            ILetsTraceSpan newSpan = null;
-
             activeContext.TraceId.Returns(activeTraceId);
             activeContext.SpanId.Returns(activeSpanId);
             activeSpan.Context.Returns(activeContext);
             activeScope.Span.Returns(activeSpan);
             scopeManager.Active.Returns(activeScope);
             tracer.ScopeManager.Returns(scopeManager);
-
-            scopeManager.Activate(
-                Arg.Do<ISpan>(s => newSpan = (ILetsTraceSpan)s),
-                Arg.Is<bool>(fsod => fsod == true)
-            );
+            tracer.ActiveSpan.Returns(activeSpan);
 
             var refContext = Substitute.For<ILetsTraceSpanContext>();
             var sb = new SpanBuilder(tracer, operationName, sampler, metrics);
             sb.AddReference(References.FollowsFrom, refContext);
-            var scope = sb.StartActive(true);
-
-            scopeManager.Received(1).Activate(
-                Arg.Any<ISpan>(),
-                Arg.Any<bool>()
-            );
+            var newSpan = sb.Start();
 
             var newContext = (ILetsTraceSpanContext)newSpan.Context;
             Assert.Equal(0.ToString(), newContext.ParentId.ToString());
             Assert.NotEqual(activeTraceId.Low, newContext.TraceId.Low);
             Assert.NotEqual(activeTraceId.High, newContext.TraceId.High);
         }
-
     }
 }

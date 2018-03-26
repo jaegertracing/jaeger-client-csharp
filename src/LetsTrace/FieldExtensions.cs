@@ -51,10 +51,12 @@ namespace LetsTrace
             if (kv.Value is byte[]) {
                 return kv.Value.ToField<byte[]>(kv.Key);
             }
-
-            var typeCode = Type.GetTypeCode(kv.Value.GetType());
+            if (kv.Value == null) {
+                return new Field<string> { Key = kv.Key, Value = "" };
+            }
             
-            switch(typeCode)
+            var typeCode = Type.GetTypeCode(kv.Value.GetType());
+            switch (typeCode)
             {
                 case TypeCode.String:
                     return kv.Value.ToField<string>(kv.Key);
