@@ -3,7 +3,7 @@
 # LetsTrace
 C# OpenTracing
 
-- Support for [Zipkin](https://github.com/Chatham/LetsTrace.Zipkin) and [Jaeger](https://github.com/Chatham/LetsTrace.Jaeger) via NuGet packages.
+- Support for Zipkin and Jaeger via NuGet packages.
 - Implements C# [OpenTracing API](https://github.com/opentracing/opentracing-csharp) v. 0.11
 - Supports netstandard 2.0
 
