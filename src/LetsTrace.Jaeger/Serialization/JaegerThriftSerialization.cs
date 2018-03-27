@@ -94,38 +94,38 @@ namespace LetsTrace.Jaeger.Serialization
         {
             switch(value)
             {
-                case byte[] b:
-                    tags.Add(new JaegerTag{ Key = key, VType = JaegerTagType.BINARY, VBinary = b });
+                case byte[] val:
+                    tags.Add(new JaegerTag{ Key = key, VType = JaegerTagType.BINARY, VBinary = val });
                     break;
-                case string s:
-                    tags.Add(new JaegerTag{ Key = key, VType = JaegerTagType.STRING, VStr = s });
+                case string val:
+                    tags.Add(new JaegerTag{ Key = key, VType = JaegerTagType.STRING, VStr = val });
                     break;
-                case double d:
-                    tags.Add(new JaegerTag{ Key = key, VType = JaegerTagType.DOUBLE, VDouble = d });
+                case double val:
+                    tags.Add(new JaegerTag{ Key = key, VType = JaegerTagType.DOUBLE, VDouble = val });
                     break;
-                case decimal d:
-                    tags.Add(new JaegerTag{ Key = key, VType = JaegerTagType.DOUBLE, VDouble = (double)d });
+                case decimal val:
+                    tags.Add(new JaegerTag{ Key = key, VType = JaegerTagType.DOUBLE, VDouble = (double)val });
                     break;
-                case bool b:
-                    tags.Add(new JaegerTag{ Key = key, VType = JaegerTagType.BOOL, VBool = b });
+                case bool val:
+                    tags.Add(new JaegerTag{ Key = key, VType = JaegerTagType.BOOL, VBool = val });
                     break;
-                case UInt16 u16:
-                    tags.Add(new JaegerTag { Key = key, VType = JaegerTagType.LONG, VLong = u16 });
+                case ushort val:
+                    tags.Add(new JaegerTag { Key = key, VType = JaegerTagType.LONG, VLong = val });
                     break;
-                case UInt32 u32:
-                    tags.Add(new JaegerTag { Key = key, VType = JaegerTagType.LONG, VLong = u32 });
+                case uint val:
+                    tags.Add(new JaegerTag { Key = key, VType = JaegerTagType.LONG, VLong = val });
                     break;
-                case UInt64 u64:
-                    tags.Add(new JaegerTag{ Key = key, VType = JaegerTagType.LONG, VLong = (long)u64 });
+                case ulong val:
+                    tags.Add(new JaegerTag{ Key = key, VType = JaegerTagType.LONG, VLong = (long)val });
                     break;
-                case Int16 i16:
-                    tags.Add(new JaegerTag { Key = key, VType = JaegerTagType.LONG, VLong = i16 });
+                case short val:
+                    tags.Add(new JaegerTag { Key = key, VType = JaegerTagType.LONG, VLong = val });
                     break;
-                case Int32 i32:
-                    tags.Add(new JaegerTag { Key = key, VType = JaegerTagType.LONG, VLong = i32 });
+                case int val:
+                    tags.Add(new JaegerTag { Key = key, VType = JaegerTagType.LONG, VLong = val });
                     break;
-                case Int64 i64:
-                    tags.Add(new JaegerTag { Key = key, VType = JaegerTagType.LONG, VLong = i64 });
+                case long val:
+                    tags.Add(new JaegerTag { Key = key, VType = JaegerTagType.LONG, VLong = val });
                     break;
             }
         }
