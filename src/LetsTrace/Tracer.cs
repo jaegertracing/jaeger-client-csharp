@@ -19,6 +19,7 @@ using OpenTracing.Util;
 namespace LetsTrace
 {
     // Tracer is the main object that consumers use to start spans
+    [Obsolete("LetsTrace is moving to the Jaeger org and will be changing names! Please checkout https://github.com/Chatham/LetsTrace which should redirect to the new location once the move occurs.")]
     public class Tracer : ILetsTraceTracer
     {
         private readonly ILogger _logger;
