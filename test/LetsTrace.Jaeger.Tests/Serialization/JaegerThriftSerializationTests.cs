@@ -78,12 +78,12 @@ namespace LetsTrace.Jaeger.Tests.Serialization
             var doubleFieldKey = "doubleField";
             var decimalFieldKey = "decimalField";
             var boolFieldKey = "boolField";
-            var uint16FieldKey = "uint16Field";
-            var uint32FieldKey = "uint32Field";
-            var uint64FieldKey = "uint64Field";
-            var int16FieldKey = "int16Field";
-            var int32FieldKey = "int32Field";
-            var int64FieldKey = "int64Field";
+            var ushortFieldKey = "uint16Field";
+            var uintFieldKey = "uint32Field";
+            var ulongFieldKey = "uint64Field";
+            var shortFieldKey = "int16Field";
+            var intFieldKey = "int32Field";
+            var longFieldKey = "int64Field";
             var stringFieldKey = "stringField";
             var binaryFieldKey = "binaryField";
 
@@ -91,12 +91,12 @@ namespace LetsTrace.Jaeger.Tests.Serialization
                 { doubleFieldKey, 1.1 },
                 { decimalFieldKey, 5.5m },
                 { boolFieldKey, true },
-                { uint16FieldKey, (UInt16)5 },
-                { uint32FieldKey, (UInt32)12 },
-                { uint64FieldKey, (UInt64)549 },
-                { int16FieldKey, (Int16)95 },
-                { int32FieldKey, 346 },
-                { int64FieldKey, (Int64)1942 },
+                { ushortFieldKey, (ushort)5 },
+                { uintFieldKey, (uint)12 },
+                { ulongFieldKey, (ulong)549 },
+                { shortFieldKey, (short)95 },
+                { intFieldKey, 346 },
+                { longFieldKey, (long)1942 },
                 { stringFieldKey, "stringValue" },
                 { binaryFieldKey, new byte[7] { 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20 } }
             };
@@ -119,28 +119,28 @@ namespace LetsTrace.Jaeger.Tests.Serialization
             Assert.Equal(fields[boolFieldKey], converted.Fields[2].VBool);
 
             Assert.Equal(JaegerTagType.LONG, converted.Fields[3].VType);
-            Assert.Equal(uint16FieldKey, converted.Fields[3].Key);
-            Assert.Equal(Convert.ToInt64(fields[uint16FieldKey]), converted.Fields[3].VLong);
+            Assert.Equal(ushortFieldKey, converted.Fields[3].Key);
+            Assert.Equal(Convert.ToInt64(fields[ushortFieldKey]), converted.Fields[3].VLong);
 
             Assert.Equal(JaegerTagType.LONG, converted.Fields[4].VType);
-            Assert.Equal(uint32FieldKey, converted.Fields[4].Key);
-            Assert.Equal(Convert.ToInt64(fields[uint32FieldKey]), converted.Fields[4].VLong);
+            Assert.Equal(uintFieldKey, converted.Fields[4].Key);
+            Assert.Equal(Convert.ToInt64(fields[uintFieldKey]), converted.Fields[4].VLong);
 
             Assert.Equal(JaegerTagType.LONG, converted.Fields[5].VType);
-            Assert.Equal(uint64FieldKey, converted.Fields[5].Key);
-            Assert.Equal(Convert.ToInt64(fields[uint64FieldKey]), converted.Fields[5].VLong);
+            Assert.Equal(ulongFieldKey, converted.Fields[5].Key);
+            Assert.Equal(Convert.ToInt64(fields[ulongFieldKey]), converted.Fields[5].VLong);
 
             Assert.Equal(JaegerTagType.LONG, converted.Fields[6].VType);
-            Assert.Equal(int16FieldKey, converted.Fields[6].Key);
-            Assert.Equal(Convert.ToInt64(fields[int16FieldKey]), converted.Fields[6].VLong);
+            Assert.Equal(shortFieldKey, converted.Fields[6].Key);
+            Assert.Equal(Convert.ToInt64(fields[shortFieldKey]), converted.Fields[6].VLong);
 
             Assert.Equal(JaegerTagType.LONG, converted.Fields[7].VType);
-            Assert.Equal(int32FieldKey, converted.Fields[7].Key);
-            Assert.Equal(Convert.ToInt64(fields[int32FieldKey]), converted.Fields[7].VLong);
+            Assert.Equal(intFieldKey, converted.Fields[7].Key);
+            Assert.Equal(Convert.ToInt64(fields[intFieldKey]), converted.Fields[7].VLong);
 
             Assert.Equal(JaegerTagType.LONG, converted.Fields[8].VType);
-            Assert.Equal(int64FieldKey, converted.Fields[8].Key);
-            Assert.Equal(Convert.ToInt64(fields[int64FieldKey]), converted.Fields[8].VLong);
+            Assert.Equal(longFieldKey, converted.Fields[8].Key);
+            Assert.Equal(fields[longFieldKey], converted.Fields[8].VLong);
 
             Assert.Equal(JaegerTagType.STRING, converted.Fields[9].VType);
             Assert.Equal(stringFieldKey, converted.Fields[9].Key);
