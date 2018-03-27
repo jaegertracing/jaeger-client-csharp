@@ -10,6 +10,11 @@ namespace LetsTrace.Tests
 {
     public class SpanBuilderTests
     {
+        private Tracer GetTracer()
+        {
+            return new Tracer.Builder("service").Build();
+        }
+
         [Fact]
         public void SpanBuilder_Constructor_ShouldThrowIfTracerIsNull()
         {
@@ -20,7 +25,7 @@ namespace LetsTrace.Tests
         [Fact]
         public void SpanBuilder_Constructor_ShouldThrowIfOperationNameIsNull()
         {
-            var tracer = Substitute.For<ILetsTraceTracer>();
+            var tracer = GetTracer();
 
             var ex = Assert.Throws<ArgumentNullException>(() => new SpanBuilder(tracer, null, null, null));
             Assert.Equal("operationName", ex.ParamName);
@@ -29,7 +34,7 @@ namespace LetsTrace.Tests
         [Fact]
         public void SpanBuilder_Constructor_ShouldThrowIfSamplerIsNull()
         {
-            var tracer = Substitute.For<ILetsTraceTracer>();
+            var tracer = GetTracer();
 
             var ex = Assert.Throws<ArgumentNullException>(() => new SpanBuilder(tracer, "op", null, null));
             Assert.Equal("sampler", ex.ParamName);
@@ -48,130 +53,104 @@ namespace LetsTrace.Tests
         [Fact]
         public void SpanBuilder_AddReference_IgnoresNullContext()
         {
-            var tracer = Substitute.For<ILetsTraceTracer>();
-            var operationName = "testing";
-            var sampler = Substitute.For<ISampler>();
-            var metrics = Substitute.For<IMetrics>();
-            tracer.ActiveSpan.Returns((ISpan)null);
-            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, object>()));
+            var tracer = GetTracer();
 
-            var sb = new SpanBuilder(tracer, operationName, sampler, metrics);
-            sb.AddReference(References.ChildOf, null);
-            var builtSpan = (ILetsTraceSpan)sb.Start();
+            var span = (ILetsTraceSpan)tracer.BuildSpan("testing")
+                .AddReference(References.ChildOf, null)
+                .Start();
 
-            Assert.Empty(builtSpan.References);
+            Assert.Empty(span.References);
         }
 
         [Fact]
         public void SpanBuilder_AddReference_ShouldAddReference()
         {
-            var tracer = Substitute.For<ILetsTraceTracer>();
-            var operationName = "testing";
-            var sampler = Substitute.For<ISampler>();
-            var metrics = Substitute.For<IMetrics>();
-            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, object>()));
+            var tracer = GetTracer();
 
-            var refContext = Substitute.For<ILetsTraceSpanContext>();
-            var expectedReferences = new List<Reference> {
-                new Reference(References.FollowsFrom, refContext)
-            };
+            // Reference
+            var referencedSpan = (ILetsTraceSpan)tracer.BuildSpan("parent").Start();
+            Assert.Empty(referencedSpan.References);
 
-            var sb = new SpanBuilder(tracer, operationName, sampler, metrics);
-            sb.AddReference(expectedReferences[0].Type, expectedReferences[0].Context);
-            var builtSpan = (ILetsTraceSpan)sb.Start();
+            // Child
+            var span = (ILetsTraceSpan)tracer.BuildSpan("child")
+                .AddReference(References.FollowsFrom, referencedSpan.Context)
+                .Start();
 
-            Assert.Equal(expectedReferences, builtSpan.References);
+            Assert.Collection(span.References, item =>
+            {
+                Assert.Equal(References.FollowsFrom, item.Type);
+                Assert.Same(referencedSpan.Context, item.Context);
+            });
         }
 
         [Fact]
         public void SpanBuilder_AddReference_ShouldAddReference_AndProperlyCalculateParent()
         {
-            var tracer = Substitute.For<ILetsTraceTracer>();
-            var operationName = "testing";
-            var sampler = Substitute.For<ISampler>();
-            var metrics = Substitute.For<IMetrics>();
+            var tracer = GetTracer();
 
-            var traceId = new TraceId(4867928, 543789);
-            var parentSpanId = new SpanId(139546);
-            var baggage = new Dictionary<string, string> { { "key", "value" } };
+            // Reference
+            var referencedSpan = (ILetsTraceSpan)tracer.BuildSpan("parent")
+                .Start()
+                .SetBaggageItem("key", "value");
 
-            var refContext = new SpanContext(traceId, parentSpanId, null, baggage);
+            Assert.Empty(referencedSpan.References);
 
-            var expectedReferences = new List<Reference> {
-                new Reference(References.ChildOf, refContext)
-            };
+            // Child
+            var span = (ILetsTraceSpan)tracer.BuildSpan("child")
+                .AddReference(References.ChildOf, referencedSpan.Context)
+                .Start();
 
-            var sb = new SpanBuilder(tracer, operationName, sampler, metrics);
-            sb.AddReference(expectedReferences[0].Type, expectedReferences[0].Context);
-            var builtSpan = (ILetsTraceSpan)sb.Start();
+            var builtContext = (ILetsTraceSpanContext)span.Context;
 
-            var builtContext = (ILetsTraceSpanContext)builtSpan.Context;
-
-            Assert.Equal(expectedReferences, builtSpan.References);
-            Assert.Equal(traceId.ToString(), builtContext.TraceId.ToString());
-            Assert.Equal(parentSpanId.ToString(), builtContext.ParentId.ToString());
-            Assert.Equal(baggage, builtContext.GetBaggageItems());
+            Assert.Single(span.References);
+            Assert.Equal(referencedSpan.Context.TraceId, span.Context.TraceId);
+            Assert.Equal(referencedSpan.Context.SpanId, span.Context.ParentId);
+            Assert.Collection(builtContext.GetBaggageItems(), kvp =>
+            {
+                Assert.Equal("key", kvp.Key);
+                Assert.Equal("value", kvp.Value);
+            });
         }
 
         [Fact]
         public void SpanBuilder_WithStartTimestamp_ShouldSetASpecificTimestamp()
         {
-            var tracer = Substitute.For<ILetsTraceTracer>();
-            var operationName = "testing";
-            var sampler = Substitute.For<ISampler>();
-            var metrics = Substitute.For<IMetrics>();
-            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, object>()));
+            var tracer = GetTracer();
+
             var timestamp = new DateTimeOffset(2018, 2, 12, 17, 49, 19, TimeSpan.Zero);
+            var span = (ILetsTraceSpan)tracer.BuildSpan("foo")
+                .WithStartTimestamp(timestamp)
+                .Start();
 
-            var sb = new SpanBuilder(tracer, operationName, sampler, metrics);
-            sb.WithStartTimestamp(timestamp);
-            var builtSpan = (ILetsTraceSpan)sb.Start();
-
-            Assert.Equal(timestamp.UtcDateTime, builtSpan.StartTimestampUtc);
+            Assert.Equal(timestamp.UtcDateTime, span.StartTimestampUtc);
         }
 
         [Fact]
         public void SpanBuilder_WithTag_ShouldSetTags()
         {
-            var tracer = Substitute.For<ILetsTraceTracer>();
-            var operationName = "testing";
-            var sampler = Substitute.For<ISampler>();
-            var metrics = Substitute.For<IMetrics>();
-            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, object>()));
+            var tracer = GetTracer();
 
-            var expectedTags = new Dictionary<string, object> {
-                { "boolkey", true },
-                { "doublekey", 3D },
-                { "intkey", 2 },
-                { "stringkey", "string, yo" }
-            };
+            var builtSpan = (ILetsTraceSpan)tracer.BuildSpan("foo")
+                .WithTag("boolkey", true)
+                .WithTag("doublekey", 3d)
+                .WithTag("intkey", 2)
+                .WithTag("stringkey", "string, yo")
+                .Start();
 
-            var sb = new SpanBuilder(tracer, operationName, sampler, metrics);
-            sb.WithTag("boolkey", (bool)expectedTags["boolkey"]);
-            sb.WithTag("doublekey", (double)expectedTags["doublekey"]);
-            sb.WithTag("intkey", (int)expectedTags["intkey"]);
-            sb.WithTag("stringkey", (string)expectedTags["stringkey"]);
-            var builtSpan = (ILetsTraceSpan)sb.Start();
-
-            Assert.Equal(expectedTags["boolkey"], builtSpan.Tags["boolkey"]);
-            Assert.Equal(expectedTags["doublekey"], builtSpan.Tags["doublekey"]);
-            Assert.Equal(expectedTags["intkey"], builtSpan.Tags["intkey"]);
-            Assert.Equal(expectedTags["stringkey"], builtSpan.Tags["stringkey"]);
+            Assert.True((bool)builtSpan.Tags["boolkey"]);
+            Assert.Equal(3d, builtSpan.Tags["doublekey"]);
+            Assert.Equal(2, builtSpan.Tags["intkey"]);
+            Assert.Equal("string, yo", builtSpan.Tags["stringkey"]);
         }
 
         [Fact]
         public void SpanBuilder_AsChildOf_IgnoresNullSpan()
         {
-            var tracer = Substitute.For<ILetsTraceTracer>();
-            var operationName = "testing";
-            var sampler = Substitute.For<ISampler>();
-            var metrics = Substitute.For<IMetrics>();
-            tracer.ActiveSpan.Returns((ISpan)null);
-            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, object>()));
+            var tracer = GetTracer();
 
-            var sb = new SpanBuilder(tracer, operationName, sampler, metrics);
-            sb.AsChildOf((ISpan)null);
-            var builtSpan = (ILetsTraceSpan)sb.Start();
+            var builtSpan = (ILetsTraceSpan)tracer.BuildSpan("foo")
+                .AsChildOf((ISpan)null)
+                .Start();
 
             Assert.Empty(builtSpan.References);
         }
@@ -179,16 +158,11 @@ namespace LetsTrace.Tests
         [Fact]
         public void SpanBuilder_AsChildOf_IgnoresNullContext()
         {
-            var tracer = Substitute.For<ILetsTraceTracer>();
-            var operationName = "testing";
-            var sampler = Substitute.For<ISampler>();
-            var metrics = Substitute.For<IMetrics>();
-            tracer.ActiveSpan.Returns((ISpan)null);
-            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, object>()));
+            var tracer = GetTracer();
 
-            var sb = new SpanBuilder(tracer, operationName, sampler, metrics);
-            sb.AsChildOf((ISpanContext)null);
-            var builtSpan = (ILetsTraceSpan)sb.Start();
+            var builtSpan = (ILetsTraceSpan)tracer.BuildSpan("foo")
+                .AsChildOf((ISpanContext)null)
+                .Start();
 
             Assert.Empty(builtSpan.References);
         }
@@ -196,76 +170,63 @@ namespace LetsTrace.Tests
         [Fact]
         public void SpanBuilder_AsChildOf_UsingSpan_ShouldAddReference()
         {
-            var tracer = Substitute.For<ILetsTraceTracer>();
-            var operationName = "testing";
-            var sampler = Substitute.For<ISampler>();
-            var metrics = Substitute.For<IMetrics>();
-            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, object>()));
+            var tracer = GetTracer();
 
-            var refContext = Substitute.For<ILetsTraceSpanContext>();
-            var expectedReferences = new List<Reference> {
-                new Reference(References.ChildOf, refContext)
-            };
-            var parentSpan = new Span(tracer, operationName, refContext);
+            // Reference
+            var parentSpan = (ILetsTraceSpan)tracer.BuildSpan("parent").Start();
+            Assert.Empty(parentSpan.References);
 
-            var sb = new SpanBuilder(tracer, operationName, sampler, metrics);
-            sb.AsChildOf(parentSpan);
-            var builtSpan = (ILetsTraceSpan)sb.Start();
+            // Child
+            var span = (ILetsTraceSpan)tracer.BuildSpan("child")
+                .AsChildOf(parentSpan)
+                .Start();
 
-            Assert.Equal(expectedReferences, builtSpan.References);
+            Assert.Collection(span.References, item =>
+            {
+                Assert.Equal(References.ChildOf, item.Type);
+                Assert.Same(parentSpan.Context, item.Context);
+            });
         }
 
         [Fact]
         public void SpanBuilder_AsChildOf_UsingSpanContext_ShouldAddReference()
         {
-            var tracer = Substitute.For<ILetsTraceTracer>();
-            var operationName = "testing";
-            var sampler = Substitute.For<ISampler>();
-            var metrics = Substitute.For<IMetrics>();
-            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, object>()));
+            var tracer = GetTracer();
 
-            var refContext = Substitute.For<ILetsTraceSpanContext>();
-            var expectedReferences = new List<Reference> {
-                new Reference(References.ChildOf, refContext)
-            };
+            // Reference
+            var parentSpan = (ILetsTraceSpan)tracer.BuildSpan("parent").Start();
+            Assert.Empty(parentSpan.References);
 
-            var sb = new SpanBuilder(tracer, operationName, sampler, metrics);
-            sb.AsChildOf(refContext);
-            var builtSpan = (ILetsTraceSpan)sb.Start();
+            // Child
+            var span = (ILetsTraceSpan)tracer.BuildSpan("child")
+                .AsChildOf(parentSpan.Context)
+                .Start();
 
-            Assert.Equal(expectedReferences, builtSpan.References);
+            Assert.Collection(span.References, item =>
+            {
+                Assert.Equal(References.ChildOf, item.Type);
+                Assert.Same(parentSpan.Context, item.Context);
+            });
         }
 
         [Fact]
         public void SpanBuilder_ShouldUseFlagsFromParent()
         {
-            var tracer = Substitute.For<ILetsTraceTracer>();
-            var operationName = "testing";
-            var sampler = Substitute.For<ISampler>();
-            var metrics = Substitute.For<IMetrics>();
-            ContextFlags flags = (ContextFlags)2;
+            var tracer = new Tracer.Builder("service")
+                .WithSampler(new ConstSampler(true))
+                .Build();
 
-            var traceId = new TraceId(4867928, 543789);
-            var parentSpanId = new SpanId(139546);
-            var baggage = new Dictionary<string, string> { { "key", "value" } };
+            var parentSpan = (ILetsTraceSpan)tracer.BuildSpan("parent").Start();
+            Assert.True(parentSpan.Context.Flags.HasFlag(ContextFlags.Sampled));
 
-            var refContext = new SpanContext(traceId, parentSpanId, null, baggage, flags);
-
-            var sb = new SpanBuilder(tracer, operationName, sampler, metrics);
-            sb.AsChildOf(refContext);
-            var builtSpan = (ILetsTraceSpan)sb.Start();
-
-            var context = (ILetsTraceSpanContext)builtSpan.Context;
-            Assert.Equal(flags, context.Flags);
+            var childSpan = (ILetsTraceSpan)tracer.BuildSpan("child").AsChildOf(parentSpan).Start();
+            Assert.Equal(parentSpan.Context.Flags, childSpan.Context.Flags);
         }
 
         [Fact]
         public void SpanBuilder_ShouldBuildFlagsAndTagsFromSampler()
         {
-            var tracer = Substitute.For<ILetsTraceTracer>();
-            var operationName = "testing";
             var sampler = Substitute.For<ISampler>();
-            var metrics = Substitute.For<IMetrics>();
             var samplerTags = new Dictionary<string, object> {
                 { "tag.1", "value1" },
                 { "tag.2", "value2" }
@@ -273,158 +234,98 @@ namespace LetsTrace.Tests
             sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>())
                 .Returns((true, samplerTags));
 
-            var refContext = Substitute.For<ILetsTraceSpanContext>();
+            var tracer = new Tracer.Builder("service")
+                .WithSampler(sampler)
+                .Build();
 
-            var sb = new SpanBuilder(tracer, operationName, sampler, metrics);
-            var builtSpan = (ILetsTraceSpan)sb.Start();
+            var builtSpan = (ILetsTraceSpan)tracer.BuildSpan("foo").Start();
 
-            var context = (ILetsTraceSpanContext)builtSpan.Context;
-            Assert.Equal(ContextFlags.Sampled, context.Flags);
+            Assert.Equal(ContextFlags.Sampled, builtSpan.Context.Flags);
             Assert.Equal(samplerTags, builtSpan.Tags);
         }
 
         [Fact]
         public void SpanBuilder_ShouldDefaultFlagsToZeroWhenNotSampled()
         {
-            var tracer = Substitute.For<ILetsTraceTracer>();
-            var operationName = "testing";
-            var sampler = Substitute.For<ISampler>();
-            var metrics = Substitute.For<IMetrics>();
-            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, object>()));
+            var tracer = new Tracer.Builder("service")
+                .WithSampler(new ConstSampler(false))
+                .Build();
 
-            var refContext = Substitute.For<ILetsTraceSpanContext>();
+            var builtSpan = (ILetsTraceSpan)tracer.BuildSpan("foo").Start();
 
-            var sb = new SpanBuilder(tracer, operationName, sampler, metrics);
-            var builtSpan = (ILetsTraceSpan)sb.Start();
-
-            var context = (ILetsTraceSpanContext)builtSpan.Context;
-            Assert.Equal(ContextFlags.None, context.Flags);
+            Assert.Equal(ContextFlags.None, builtSpan.Context.Flags);
         }
 
         [Fact]
         public void SpanBuilder_StartActive_AddsStartedSpanToScopeManager()
         {
-            var tracer = Substitute.For<ILetsTraceTracer>();
-            var sampler = Substitute.For<ISampler>();
-            var metrics = Substitute.For<IMetrics>();
-            var scopeManager = Substitute.For<IScopeManager>();
-            var operationName = "testing";
-            IScope nullScope = null;
-            tracer.ScopeManager.Returns(scopeManager);
+            var tracer = GetTracer();
 
-            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, object>()));
+            using (var scope = tracer.BuildSpan("foo").StartActive(finishSpanOnDispose: true))
+            {
+                Assert.Equal(scope, tracer.ScopeManager.Active);
+                Assert.IsType<Span>(scope.Span);
+            }
 
-            scopeManager.Active.Returns(nullScope);
-            scopeManager.Activate(
-                Arg.Is<ISpan>(s => ((ILetsTraceSpan)s).OperationName == operationName),
-                Arg.Is<bool>(fsod => fsod == false)
-            );
-
-            var sb = new SpanBuilder(tracer, operationName, sampler, metrics);
-            var scope = sb.StartActive(false);
-
-            scopeManager.Received(1).Activate(
-                Arg.Any<ISpan>(),
-                Arg.Any<bool>()
-            );
+            Assert.Null(tracer.ScopeManager.Active);
         }
 
         [Fact]
         public void SpanBuilder_Start_ShouldAddActiveAsParent()
         {
-            var tracer = Substitute.For<ILetsTraceTracer>();
-            var sampler = Substitute.For<ISampler>();
-            var metrics = Substitute.For<IMetrics>();
-            var scopeManager = Substitute.For<IScopeManager>();
-            var operationName = "testing";
-            var activeScope = Substitute.For<IScope>();
-            var activeSpan = Substitute.For<ISpan>();
-            var activeTraceId = new TraceId(34967, 31298);
-            var activeSpanId = new SpanId(3829);
-            var activeContext = new SpanContext(activeTraceId, activeSpanId);
+            var tracer = GetTracer();
 
-            activeSpan.Context.Returns(activeContext);
-            activeScope.Span.Returns(activeSpan);
-            scopeManager.Active.Returns(activeScope);
-            tracer.ScopeManager.Returns(scopeManager);
-            tracer.ActiveSpan.Returns(activeSpan);
+            using (var parentScope = tracer.BuildSpan("parent").StartActive(finishSpanOnDispose: true))
+            {
+                var parentSpan = (ILetsTraceSpan)parentScope.Span;
+                var newSpan = (ILetsTraceSpan)tracer.BuildSpan("child").Start();
 
-            var sb = new SpanBuilder(tracer, operationName, sampler, metrics);
-            var newSpan = sb.Start();
-
-            var newContext = (ILetsTraceSpanContext)newSpan.Context;
-            Assert.Equal(activeSpanId, newContext.ParentId);
-            Assert.Equal(activeTraceId.Low, newContext.TraceId.Low);
-            Assert.Equal(activeTraceId.High, newContext.TraceId.High);
+                Assert.Single(newSpan.References);
+                Assert.Equal(parentSpan.Context.TraceId, newSpan.Context.TraceId);
+                Assert.Equal(parentSpan.Context.SpanId, newSpan.Context.ParentId);
+            }
         }
 
         [Fact]
         public void SpanBuilder_Start_ShouldNotAddActiveAsParent_WhenIgnoreActiveSpanIsSet()
         {
-            var tracer = Substitute.For<ILetsTraceTracer>();
-            var sampler = Substitute.For<ISampler>();
-            var metrics = Substitute.For<IMetrics>();
-            var scopeManager = Substitute.For<IScopeManager>();
-            var operationName = "testing";
-            var activeScope = Substitute.For<IScope>();
-            var activeSpan = Substitute.For<ISpan>();
-            var activeContext = Substitute.For<ILetsTraceSpanContext>();
-            var activeTraceId = new TraceId(34967, 31298);
-            var activeSpanId = new SpanId(3829);
+            var tracer = GetTracer();
 
-            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, object>()));
+            using (var parentScope = tracer.BuildSpan("parent").StartActive(finishSpanOnDispose: true))
+            {
+                var parentSpan = (ILetsTraceSpan)parentScope.Span;
+                var newSpan = (ILetsTraceSpan)tracer.BuildSpan("child")
+                    .IgnoreActiveSpan()
+                    .Start();
 
-            activeContext.TraceId.Returns(activeTraceId);
-            activeContext.SpanId.Returns(activeSpanId);
-            activeSpan.Context.Returns(activeContext);
-            activeScope.Span.Returns(activeSpan);
-            scopeManager.Active.Returns(activeScope);
-            tracer.ScopeManager.Returns(scopeManager);
-            tracer.ActiveSpan.Returns(activeSpan);
-
-            var sb = new SpanBuilder(tracer, operationName, sampler, metrics);
-            sb.IgnoreActiveSpan();
-            var newSpan = sb.Start();
-
-            var newContext = (ILetsTraceSpanContext)newSpan.Context;
-            Assert.Equal(0.ToString(), newContext.ParentId.ToString());
-            Assert.NotEqual(activeTraceId.Low, newContext.TraceId.Low);
-            Assert.NotEqual(activeTraceId.High, newContext.TraceId.High);
+                Assert.Empty(newSpan.References);
+                Assert.Equal(new SpanId(0).ToString(), newSpan.Context.ParentId.ToString()); // TODO SpanId should implement Equals()
+                Assert.NotEqual(parentSpan.Context.TraceId, newSpan.Context.TraceId);
+            }
         }
 
         [Fact]
         public void SpanBuilder_Start_ShouldNotAddActiveAsParent_WhenOtherReferencesExist()
         {
-            var tracer = Substitute.For<ILetsTraceTracer>();
-            var sampler = Substitute.For<ISampler>();
-            var metrics = Substitute.For<IMetrics>();
-            var scopeManager = Substitute.For<IScopeManager>();
-            var operationName = "testing";
-            var activeScope = Substitute.For<IScope>();
-            var activeSpan = Substitute.For<ISpan>();
-            var activeContext = Substitute.For<ILetsTraceSpanContext>();
-            var activeTraceId = new TraceId(34967, 31298);
-            var activeSpanId = new SpanId(3829);
+            var tracer = GetTracer();
 
-            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, object>()));
+            var otherReference = (ILetsTraceSpan)tracer.BuildSpan("reference").Start();
 
-            activeContext.TraceId.Returns(activeTraceId);
-            activeContext.SpanId.Returns(activeSpanId);
-            activeSpan.Context.Returns(activeContext);
-            activeScope.Span.Returns(activeSpan);
-            scopeManager.Active.Returns(activeScope);
-            tracer.ScopeManager.Returns(scopeManager);
-            tracer.ActiveSpan.Returns(activeSpan);
+            using (var parentScope = tracer.BuildSpan("parent").StartActive(finishSpanOnDispose: true))
+            {
+                var newSpan = (ILetsTraceSpan)tracer.BuildSpan("child")
+                    .AsChildOf(otherReference)
+                    .Start();
 
-            var refContext = Substitute.For<ILetsTraceSpanContext>();
-            var sb = new SpanBuilder(tracer, operationName, sampler, metrics);
-            sb.AddReference(References.FollowsFrom, refContext);
-            var newSpan = sb.Start();
+                Assert.Collection(newSpan.References, item =>
+                {
+                    Assert.Equal(References.ChildOf, item.Type);
+                    Assert.Same(otherReference.Context, item.Context);
+                });
 
-            var newContext = (ILetsTraceSpanContext)newSpan.Context;
-            Assert.Equal(0.ToString(), newContext.ParentId.ToString());
-            Assert.NotEqual(activeTraceId.Low, newContext.TraceId.Low);
-            Assert.NotEqual(activeTraceId.High, newContext.TraceId.High);
+                Assert.Equal(otherReference.Context.TraceId, newSpan.Context.TraceId);
+                Assert.Equal(otherReference.Context.SpanId, newSpan.Context.ParentId);
+            }
         }
     }
 }
