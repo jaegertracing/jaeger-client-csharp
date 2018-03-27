@@ -93,7 +93,7 @@ namespace LetsTrace.Jaeger.Tests.Serialization
                 { boolFieldKey, true },
                 { ushortFieldKey, (ushort)5 },
                 { uintFieldKey, (uint)12 },
-                { ulongFieldKey, (ulong)549 },
+                { ulongFieldKey, ulong.MaxValue },
                 { shortFieldKey, (short)95 },
                 { intFieldKey, 346 },
                 { longFieldKey, (long)1942 },
@@ -126,9 +126,9 @@ namespace LetsTrace.Jaeger.Tests.Serialization
             Assert.Equal(uintFieldKey, converted.Fields[4].Key);
             Assert.Equal(Convert.ToInt64(fields[uintFieldKey]), converted.Fields[4].VLong);
 
-            Assert.Equal(JaegerTagType.LONG, converted.Fields[5].VType);
+            Assert.Equal(JaegerTagType.STRING, converted.Fields[5].VType);
             Assert.Equal(ulongFieldKey, converted.Fields[5].Key);
-            Assert.Equal(Convert.ToInt64(fields[ulongFieldKey]), converted.Fields[5].VLong);
+            Assert.Equal($"Ulong: {fields[ulongFieldKey]}", converted.Fields[5].VStr);
 
             Assert.Equal(JaegerTagType.LONG, converted.Fields[6].VType);
             Assert.Equal(shortFieldKey, converted.Fields[6].Key);

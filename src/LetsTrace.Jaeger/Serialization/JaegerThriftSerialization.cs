@@ -116,7 +116,7 @@ namespace LetsTrace.Jaeger.Serialization
                     tags.Add(new JaegerTag { Key = key, VType = JaegerTagType.LONG, VLong = val });
                     break;
                 case ulong val:
-                    tags.Add(new JaegerTag{ Key = key, VType = JaegerTagType.LONG, VLong = (long)val });
+                    tags.Add(new JaegerTag{ Key = key, VType = JaegerTagType.STRING, VStr = $"Ulong: {val}" });
                     break;
                 case short val:
                     tags.Add(new JaegerTag { Key = key, VType = JaegerTagType.LONG, VLong = val });
