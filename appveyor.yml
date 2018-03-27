@@ -10,9 +10,7 @@ nuget:
   disable_publish_on_pr: true
 
 cache:
-- C:\ProgramData\chocolatey\bin -> appveyor.yml
-- C:\ProgramData\chocolatey\lib -> appveyor.yml
-- '%USERPROFILE%\.nuget\packages -> **\project.json'
+- '%USERPROFILE%\.nuget\packages -> **\*.csproj'
 
 environment:
   global:
