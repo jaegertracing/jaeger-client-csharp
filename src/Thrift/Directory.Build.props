@@ -1,0 +1,13 @@
+<Project>
+  <!-- Thrift is a separate package so we don't import the parent/global settings -->
+
+  <PropertyGroup>
+
+    <!-- Thrift is currently IL merged -->
+    <IsPackable>false</IsPackable>
+
+    <!-- As this is an internal dependency, we don't need the XML docs (There would be XML errors otherwise) -->
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+
+  </PropertyGroup>
+</Project>

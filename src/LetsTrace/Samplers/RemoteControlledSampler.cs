@@ -24,21 +24,21 @@ namespace LetsTrace.Samplers
         private readonly Task _pollTimer;
 
         private RemoteControlledSampler(
-            string serviceName, 
+            string serviceName,
             ISamplingManager samplingManager,
-            ILoggerFactory loggerFactory, 
-            IMetrics metrics, 
+            ILoggerFactory loggerFactory,
+            IMetrics metrics,
             ISampler sampler,
             int pollingIntervalMs)
         : this(serviceName, samplingManager, loggerFactory, metrics, sampler, new SamplerFactory(), pollingIntervalMs, PollTimer)
         {}
 
         internal RemoteControlledSampler(
-            string serviceName, 
-            ISamplingManager samplingManager, 
-            ILoggerFactory loggerFactory, 
-            IMetrics metrics, 
-            ISampler sampler, 
+            string serviceName,
+            ISamplingManager samplingManager,
+            ILoggerFactory loggerFactory,
+            IMetrics metrics,
+            ISampler sampler,
             ISamplerFactory samplerFactory,
             int pollingIntervalMs,
             Func<Action, int, CancellationToken, Task> pollTimer)
@@ -142,7 +142,7 @@ namespace LetsTrace.Samplers
         internal void UpdateRateLimitingSampler(RateLimitingSamplingStrategy strategy)
         {
             var sampler = _samplerFactory.NewRateLimitingSampler(strategy.MaxTracesPerSecond);
-            
+
             SetSamplerIfNotTheSame(sampler);
         }
 
@@ -159,7 +159,7 @@ namespace LetsTrace.Samplers
                 }
                 else
                 {
-                    _sampler = _samplerFactory.NewPerOperationSampler(_maxOperations, 
+                    _sampler = _samplerFactory.NewPerOperationSampler(_maxOperations,
                         samplingParameters.DefaultSamplingProbability,
                         samplingParameters.DefaultLowerBoundTracesPerSecond,
                         _loggerFactory);
@@ -191,6 +191,11 @@ namespace LetsTrace.Samplers
             }
 
             return false;
+        }
+        public override int GetHashCode()
+        {
+            // TODO Do we need special handling here? (see Equals handling)
+            return base.GetHashCode();
         }
 
         public sealed class Builder

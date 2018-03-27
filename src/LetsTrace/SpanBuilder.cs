@@ -14,11 +14,11 @@ namespace LetsTrace
         private readonly string _operationName;
         private readonly ISampler _sampler;
         private readonly IMetrics _metrics;
-        private readonly List<Reference> _references;
         private readonly Dictionary<string, Field> _tags;
 
+        private List<Reference> _references;
         private bool _ignoreActiveSpan;
-        private DateTimeOffset? _startTimestamp;
+        private DateTime? _startTimestampUtc;
 
         public SpanBuilder(ILetsTraceTracer tracer, string operationName, ISampler sampler, IMetrics metrics)
         {
@@ -26,13 +26,25 @@ namespace LetsTrace
             _operationName = operationName ?? throw new ArgumentNullException(nameof(operationName));
             _sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
             _metrics = metrics ?? throw new ArgumentNullException(nameof(metrics));
-            _references = new List<Reference>();
+
+            // There will be tags in most cases so it should be fine to always initiate this variable.
             _tags = new Dictionary<string, Field>();
         }
 
         public ISpanBuilder AddReference(string referenceType, ISpanContext referencedContext)
         {
-            _references.Add(new Reference(referenceType, referencedContext));
+            if (referencedContext != null)
+            {
+                if (_references == null)
+                {
+                    // Adding an item to a new list normally creates an array with 4 items.
+                    // Since we'll either have zero or one reference in 99% of all cases, we can optimize this
+                    // and provide better performance for zero/one references with slightly worse perf for multiple references.
+                    _references = new List<Reference>(1);
+                }
+
+                _references.Add(new Reference(referenceType, referencedContext));
+            }
             return this;
         }
 
@@ -42,40 +54,40 @@ namespace LetsTrace
             return this;
         }
 
-        public ISpanBuilder AsChildOf(ISpan parent) => AsChildOf(parent.Context);
+        public ISpanBuilder AsChildOf(ISpan parent) => AsChildOf(parent?.Context);
 
         public ISpanBuilder AsChildOf(ISpanContext parent) => AddReference(References.ChildOf, parent);
 
-        public ISpanBuilder FollowsFrom(ISpan parent) => FollowsFrom(parent.Context);
-
-        public ISpanBuilder FollowsFrom(ISpanContext parent) => AddReference(References.FollowsFrom, parent);
-
         public IScope StartActive(bool finishSpanOnDispose)
         {
-            if (_tracer.ScopeManager.Active != null && _references.Count == 0 && !_ignoreActiveSpan)
-            {
-                AsChildOf(_tracer.ScopeManager.Active.Span.Context);
-            }
-
             return _tracer.ScopeManager.Activate(Start(), finishSpanOnDispose);
         }
-        
+
         public ISpan Start()
         {
-            SpanContext parent = null;
-            foreach(var reference in _references)
+            if (!_ignoreActiveSpan && _references == null)
             {
-                if (reference.Type == References.ChildOf) {
-                    parent = reference.Context as SpanContext;
-                    break;
+                AsChildOf(_tracer.ActiveSpan);
+            }
+
+            SpanContext parent = null;
+            if (_references != null)
+            {
+                foreach (var reference in _references)
+                {
+                    if (reference.Type == References.ChildOf)
+                    {
+                        parent = reference.Context as SpanContext;
+                        break;
+                    }
                 }
             }
 
-            var spanContext = parent != null 
-                ? CreateRootSpanContext(parent) 
+            var spanContext = parent != null
+                ? CreateRootSpanContext(parent)
                 : CreateChildSpanContext();
 
-            var span = new Span(_tracer, _operationName, spanContext, _startTimestamp, _tags, _references);
+            var span = new Span(_tracer, _operationName, spanContext, _startTimestampUtc, _tags, _references);
             if (spanContext.IsSampled)
             {
                 _metrics.SpansStartedSampled.Inc(1);
@@ -138,7 +150,7 @@ namespace LetsTrace
 
         public ISpanBuilder WithStartTimestamp(DateTimeOffset startTimestamp)
         {
-            _startTimestamp = startTimestamp;
+            _startTimestampUtc = startTimestamp.UtcDateTime;
             return this;
         }
 

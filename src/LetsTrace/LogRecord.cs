@@ -5,12 +5,12 @@ namespace LetsTrace
 {
     public class LogRecord
     {
-        public DateTimeOffset Timestamp { get; }
+        public DateTime TimestampUtc { get; }
         public List<Field> Fields { get; }
 
-        public LogRecord(DateTimeOffset timestamp, List<Field> fields)
+        public LogRecord(DateTime timestampUtc, List<Field> fields)
         {
-            Timestamp = timestamp;
+            TimestampUtc = timestampUtc;
             Fields = fields;
         }
     }

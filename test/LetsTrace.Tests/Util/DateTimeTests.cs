@@ -5,12 +5,12 @@ using Xunit;
 
 namespace LetsTrace.Tests.Util
 {
-    public class DateTimeOffsetTests
+    public class DateTimeTests
     {
         [Fact]
-        public void DateTimeOffsetMicroseconds()
+        public void DateTimeMicroseconds()
         {
-            var time = DateTimeOffset.Now;
+            var time = DateTime.UtcNow;
             Assert.Equal(time.ToUnixTimeMilliseconds() * 1000, time.ToUnixTimeMicroseconds());
 
             var past = time.Subtract(TimeSpan.FromDays(-60));

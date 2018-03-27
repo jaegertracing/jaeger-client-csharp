@@ -2,15 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-
-    <PackageId>LetsTrace.Jaeger</PackageId>
-    <PackageProjectUrl>https://github.com/Chatham/LetsTrace.Jaeger/</PackageProjectUrl>
-    <PackageLicenseUrl>https://github.com/Chatham/LetsTrace.Jaeger/blob/master/LICENSE</PackageLicenseUrl>
-    <PackageVersion>0.0.5</PackageVersion>
     <PackageTags>letstrace;tracing;opentracing;jaeger</PackageTags>
-    <Authors>Chatham Financial Corp.</Authors>
     <Description>Jaeger support for LetsTrace</Description>
-    <Copyright>Copyright 2018 (c) Chatham Financial Corp. All rights reserved.</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
@@ -35,5 +28,16 @@
     <PackageReference Include="System.Net.Requests" Version="[4.3,)" />
     <PackageReference Include="System.Net.Security" Version="[4.3,)" />
   </ItemGroup>
+
+  <Target Name="ILRepack" AfterTargets="Build">
+    <Message Importance="High" Text="ILRepack - $(OutputPath)" />
+    <Exec Command="$(USERPROFILE)\.nuget\packages\ILRepack\2.0.15\tools\ilrepack.exe /parallel /internalize /out:LetsTrace.Jaeger.dll LetsTrace.Jaeger.dll Thrift.dll Jaeger.Thrift.dll"
+      WorkingDirectory="$(OutputPath)" />
+    <Delete Files="$(OutputPath)\Thrift.dll" />
+    <Delete Files="$(OutputPath)\Thrift.dll.config" />
+    <Delete Files="$(OutputPath)\Thrift.pdb" />
+    <Delete Files="$(OutputPath)\Jaeger.Thrift.dll" />
+    <Delete Files="$(OutputPath)\Jaeger.Thrift.pdb" />
+  </Target>
 
 </Project>

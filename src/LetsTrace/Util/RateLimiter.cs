@@ -32,13 +32,13 @@ namespace LetsTrace.Util
             _clock = clock;
 
             _balance = maxBalance;
-            _lastTick = _clock.CurrentTime().ToUnixTimeMilliseconds();
+            _lastTick = _clock.UtcNow().ToUnixTimeMilliseconds();
         }
 
         public bool CheckCredit(double itemCost)
         {
             // calculate how much time passed since the last tick, and update current tick
-            var currentTime = _clock.CurrentTime().ToUnixTimeMilliseconds();
+            var currentTime = _clock.UtcNow().ToUnixTimeMilliseconds();
             var elapsedTime = currentTime - _lastTick;
             _lastTick = currentTime;
 

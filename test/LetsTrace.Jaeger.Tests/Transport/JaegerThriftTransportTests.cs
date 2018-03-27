@@ -17,8 +17,8 @@ namespace LetsTrace.Jaeger.Tests.Transport
     public class JaegerThriftTransportTests
     {
         private readonly ISerialization _mockJaegerThriftSerialization;
-        protected readonly ITProtocolFactory _mockProtocolFactory;
-        protected readonly ISender _mockSender;
+        private readonly ITProtocolFactory _mockProtocolFactory;
+        private readonly ISender _mockSender;
         private readonly JaegerThriftTransport _testingTransport;
         private int _bufferSize = 4;
 
@@ -35,7 +35,7 @@ namespace LetsTrace.Jaeger.Tests.Transport
         public void Constructor_ShouldSetBufferSizeToDefaultIfPassedInIsZero()
         {
             var transport = Substitute.For<JaegerThriftTransport>(_mockProtocolFactory, _mockSender, _mockJaegerThriftSerialization, 0);
-            
+
             Assert.Equal(JaegerThriftTransport.DefaultBufferSize, transport.BufferSize);
         }
 
