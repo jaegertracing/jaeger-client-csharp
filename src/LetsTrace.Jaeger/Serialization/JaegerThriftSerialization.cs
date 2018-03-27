@@ -1,9 +1,9 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using OpenTracing;
 
 using LetsTrace.Util;
-using LetsTrace.Jaeger.Transport;
 
 using JaegerSpan = Jaeger.Thrift.Span;
 using JaegerProcess = Jaeger.Thrift.Process;
@@ -11,6 +11,7 @@ using JaegerTag = Jaeger.Thrift.Tag;
 using JaegerReference = Jaeger.Thrift.SpanRef;
 using JaegerReferenceType = Jaeger.Thrift.SpanRefType;
 using JaegerLog = Jaeger.Thrift.Log;
+using JaegerTagType = Jaeger.Thrift.TagType;
 
 namespace LetsTrace.Jaeger.Serialization
 {
@@ -50,13 +51,12 @@ namespace LetsTrace.Jaeger.Serialization
             };
         }
 
-        public static List<JaegerTag> BuildJaegerTags(IDictionary<string, Field> inTags)
+        public static List<JaegerTag> BuildJaegerTags(IDictionary<string, object> inTags)
         {
             var tags = new List<JaegerTag>();
             foreach (var tag in inTags)
             {
-                tag.Value.Key = tag.Key;
-                tag.Value.Marshal(tags);
+                AddToJaegerTagList(tag.Key, tag.Value, tags);
             }
             return tags;
         }
@@ -84,10 +84,50 @@ namespace LetsTrace.Jaeger.Serialization
 
             foreach (var field in log.Fields)
             {
-                field.Marshal(tags);
+                AddToJaegerTagList(field.Key, field.Value, tags);
             }
 
             return tags;
+        }
+
+        public static void AddToJaegerTagList(string key, object value, List<JaegerTag> tags)
+        {
+            switch(value)
+            {
+                case byte[] val:
+                    tags.Add(new JaegerTag{ Key = key, VType = JaegerTagType.BINARY, VBinary = val });
+                    break;
+                case string val:
+                    tags.Add(new JaegerTag{ Key = key, VType = JaegerTagType.STRING, VStr = val });
+                    break;
+                case double val:
+                    tags.Add(new JaegerTag{ Key = key, VType = JaegerTagType.DOUBLE, VDouble = val });
+                    break;
+                case decimal val:
+                    tags.Add(new JaegerTag{ Key = key, VType = JaegerTagType.DOUBLE, VDouble = (double)val });
+                    break;
+                case bool val:
+                    tags.Add(new JaegerTag{ Key = key, VType = JaegerTagType.BOOL, VBool = val });
+                    break;
+                case ushort val:
+                    tags.Add(new JaegerTag { Key = key, VType = JaegerTagType.LONG, VLong = val });
+                    break;
+                case uint val:
+                    tags.Add(new JaegerTag { Key = key, VType = JaegerTagType.LONG, VLong = val });
+                    break;
+                case ulong val:
+                    tags.Add(new JaegerTag{ Key = key, VType = JaegerTagType.STRING, VStr = $"Ulong: {val}" });
+                    break;
+                case short val:
+                    tags.Add(new JaegerTag { Key = key, VType = JaegerTagType.LONG, VLong = val });
+                    break;
+                case int val:
+                    tags.Add(new JaegerTag { Key = key, VType = JaegerTagType.LONG, VLong = val });
+                    break;
+                case long val:
+                    tags.Add(new JaegerTag { Key = key, VType = JaegerTagType.LONG, VLong = val });
+                    break;
+            }
         }
     }
 }

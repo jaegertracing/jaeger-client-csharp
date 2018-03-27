@@ -75,31 +75,30 @@ namespace LetsTrace.Jaeger.Tests.Serialization
         public void BuildJaegerLog()
         {
             var timestamp = new DateTime(2018, 2, 16, 11, 33, 29, DateTimeKind.Utc);
-            var doubleField = new Field<double> { Key = "doubleField", Value = 1.1 };
-            var decimalField = new Field<decimal> { Key = "decimalField", Value = 5.5m };
-            var boolField = new Field<bool> { Key = "boolField", Value = true };
-            var uint16Field = new Field<UInt16> { Key = "uint16Field", Value = 5 };
-            var uint32Field = new Field<UInt32> { Key = "uint32Field", Value = 12 };
-            var uint64Field = new Field<UInt64> { Key = "uint64Field", Value = 549 };
-            var int16Field = new Field<Int16> { Key = "int16Field", Value = 95 };
-            var int32Field = new Field<Int32> { Key = "int32Field", Value = 346 };
-            var int64Field = new Field<Int64> { Key = "int64Field", Value = 1942 };
+            var doubleFieldKey = "doubleField";
+            var decimalFieldKey = "decimalField";
+            var boolFieldKey = "boolField";
+            var ushortFieldKey = "uint16Field";
+            var uintFieldKey = "uint32Field";
+            var ulongFieldKey = "uint64Field";
+            var shortFieldKey = "int16Field";
+            var intFieldKey = "int32Field";
+            var longFieldKey = "int64Field";
+            var stringFieldKey = "stringField";
+            var binaryFieldKey = "binaryField";
 
-            var stringField = new Field<string> { Key = "stringField", Value = "stringValue" };
-            var binaryField = new Field<byte[]> { Key = "binaryField", Value = new byte[7] { 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20 } };
-
-            var fields = new List<Field> {
-                doubleField,
-                decimalField,
-                boolField,
-                uint16Field,
-                uint32Field,
-                uint64Field,
-                int16Field,
-                int32Field,
-                int64Field,
-                stringField,
-                binaryField
+            var fields = new Dictionary<string, object> {
+                { doubleFieldKey, 1.1 },
+                { decimalFieldKey, 5.5m },
+                { boolFieldKey, true },
+                { ushortFieldKey, (ushort)5 },
+                { uintFieldKey, (uint)12 },
+                { ulongFieldKey, ulong.MaxValue },
+                { shortFieldKey, (short)95 },
+                { intFieldKey, 346 },
+                { longFieldKey, (long)1942 },
+                { stringFieldKey, "stringValue" },
+                { binaryFieldKey, new byte[7] { 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20 } }
             };
             var log = new LogRecord(timestamp, fields);
 
@@ -108,65 +107,61 @@ namespace LetsTrace.Jaeger.Tests.Serialization
             Assert.Equal(1518780809000000, converted.Timestamp);
 
             Assert.Equal(JaegerTagType.DOUBLE, converted.Fields[0].VType);
-            Assert.Equal(doubleField.Key, converted.Fields[0].Key);
-            Assert.Equal(doubleField.Value, converted.Fields[0].VDouble);
+            Assert.Equal(doubleFieldKey, converted.Fields[0].Key);
+            Assert.Equal(fields[doubleFieldKey], converted.Fields[0].VDouble);
 
             Assert.Equal(JaegerTagType.DOUBLE, converted.Fields[1].VType);
-            Assert.Equal(decimalField.Key, converted.Fields[1].Key);
-            Assert.Equal((double)decimalField.Value, converted.Fields[1].VDouble);
+            Assert.Equal(decimalFieldKey, converted.Fields[1].Key);
+            Assert.Equal(Convert.ToDouble(fields[decimalFieldKey]), converted.Fields[1].VDouble);
 
             Assert.Equal(JaegerTagType.BOOL, converted.Fields[2].VType);
-            Assert.Equal(boolField.Key, converted.Fields[2].Key);
-            Assert.Equal(boolField.Value, converted.Fields[2].VBool);
+            Assert.Equal(boolFieldKey, converted.Fields[2].Key);
+            Assert.Equal(fields[boolFieldKey], converted.Fields[2].VBool);
 
             Assert.Equal(JaegerTagType.LONG, converted.Fields[3].VType);
-            Assert.Equal(uint16Field.Key, converted.Fields[3].Key);
-            Assert.Equal(uint16Field.Value, converted.Fields[3].VLong);
+            Assert.Equal(ushortFieldKey, converted.Fields[3].Key);
+            Assert.Equal(Convert.ToInt64(fields[ushortFieldKey]), converted.Fields[3].VLong);
 
             Assert.Equal(JaegerTagType.LONG, converted.Fields[4].VType);
-            Assert.Equal(uint32Field.Key, converted.Fields[4].Key);
-            Assert.Equal(uint32Field.Value, converted.Fields[4].VLong);
+            Assert.Equal(uintFieldKey, converted.Fields[4].Key);
+            Assert.Equal(Convert.ToInt64(fields[uintFieldKey]), converted.Fields[4].VLong);
 
-            Assert.Equal(JaegerTagType.LONG, converted.Fields[5].VType);
-            Assert.Equal(uint64Field.Key, converted.Fields[5].Key);
-            Assert.Equal((long)uint64Field.Value, converted.Fields[5].VLong);
+            Assert.Equal(JaegerTagType.STRING, converted.Fields[5].VType);
+            Assert.Equal(ulongFieldKey, converted.Fields[5].Key);
+            Assert.Equal($"Ulong: {fields[ulongFieldKey]}", converted.Fields[5].VStr);
 
             Assert.Equal(JaegerTagType.LONG, converted.Fields[6].VType);
-            Assert.Equal(int16Field.Key, converted.Fields[6].Key);
-            Assert.Equal(int16Field.Value, converted.Fields[6].VLong);
+            Assert.Equal(shortFieldKey, converted.Fields[6].Key);
+            Assert.Equal(Convert.ToInt64(fields[shortFieldKey]), converted.Fields[6].VLong);
 
             Assert.Equal(JaegerTagType.LONG, converted.Fields[7].VType);
-            Assert.Equal(int32Field.Key, converted.Fields[7].Key);
-            Assert.Equal(int32Field.Value, converted.Fields[7].VLong);
+            Assert.Equal(intFieldKey, converted.Fields[7].Key);
+            Assert.Equal(Convert.ToInt64(fields[intFieldKey]), converted.Fields[7].VLong);
 
             Assert.Equal(JaegerTagType.LONG, converted.Fields[8].VType);
-            Assert.Equal(int64Field.Key, converted.Fields[8].Key);
-            Assert.Equal(int64Field.Value, converted.Fields[8].VLong);
+            Assert.Equal(longFieldKey, converted.Fields[8].Key);
+            Assert.Equal(fields[longFieldKey], converted.Fields[8].VLong);
 
             Assert.Equal(JaegerTagType.STRING, converted.Fields[9].VType);
-            Assert.Equal(stringField.Key, converted.Fields[9].Key);
-            Assert.Equal(stringField.Value, converted.Fields[9].VStr);
+            Assert.Equal(stringFieldKey, converted.Fields[9].Key);
+            Assert.Equal(fields[stringFieldKey], converted.Fields[9].VStr);
 
             Assert.Equal(JaegerTagType.BINARY, converted.Fields[10].VType);
-            Assert.Equal(binaryField.Key, converted.Fields[10].Key);
-            Assert.Equal(binaryField.Value, converted.Fields[10].VBinary);
+            Assert.Equal(binaryFieldKey, converted.Fields[10].Key);
+            Assert.Equal(fields[binaryFieldKey], converted.Fields[10].VBinary);
         }
 
         [Fact]
         public void BuildJeagerProcessThrift()
         {
-            var doubleField = new Field<double> { Key = "doubleField", Value = 1.1 };
-            var int64Field = new Field<Int64> { Key = "int64Field", Value = 1942 };
-            var stringField = new Field<string> { Key = "stringField", Value = "stringValue" };
-
             var serialization = new JaegerThriftSerialization();
             var tracer = Substitute.For<ILetsTraceTracer>();
             tracer.ServiceName.Returns("testingService");
-            var tracerTags = new Dictionary<string, Field>
+            var tracerTags = new Dictionary<string, object>
             {
-                { "doubleTag", doubleField },
-                { "int64Tag", int64Field },
-                { "stringTag", stringField }
+                { "doubleTag", 1.1 },
+                { "intTag", 1942 },
+                { "stringTag", "stringValue" }
             };
             tracer.Tags.Returns(tracerTags);
 
@@ -175,32 +170,35 @@ namespace LetsTrace.Jaeger.Tests.Serialization
             Assert.Equal(tracer.ServiceName, process.ServiceName);
             Assert.Equal(3, process.Tags.Count);
             Assert.Equal("doubleTag", process.Tags[0].Key);
-            Assert.Equal(doubleField.Value, process.Tags[0].VDouble);
-            Assert.Equal("int64Tag", process.Tags[1].Key);
-            Assert.Equal(int64Field.Value, process.Tags[1].VLong);
+            Assert.Equal(tracerTags["doubleTag"], process.Tags[0].VDouble);
+            Assert.Equal("intTag", process.Tags[1].Key);
+            Assert.Equal(Convert.ToInt64(tracerTags["intTag"]), process.Tags[1].VLong);
             Assert.Equal("stringTag", process.Tags[2].Key);
-            Assert.Equal(stringField.Value, process.Tags[2].VStr);
+            Assert.Equal(tracerTags["stringTag"], process.Tags[2].VStr);
         }
 
         [Fact]
         public void BuildJeagerThriftSpan()
         {
-            var doubleField = new Field<double> { Key = "doubleField", Value = 1.1 };
-            var decimalField = new Field<decimal> { Key = "decimalField", Value = 5.5m };
-            var int64Field = new Field<Int64> { Key = "int64Field", Value = 1942 };
-            var stringField = new Field<string> { Key = "stringField", Value = "stringValue" };
-            var tracerTags = new Dictionary<string, Field>
+            var doubleTagKey = "doubleTag";
+            var doubleLogKey = "doubleLog";
+            var decimalLogKey = "decimalLog";
+            var int64TagKey = "int64Tag";
+            var stringTagKey = "stringTag";
+            var tracerTags = new Dictionary<string, object>
             {
-                { "doubleTag", doubleField },
-                { "int64Tag", int64Field },
-                { "stringTag", stringField }
+                { doubleTagKey, 1.1 },
+                { int64TagKey, (Int64)1942 },
+                { stringTagKey, "stringValue" }
             };
             var logTimestamp = new DateTime(2018, 2, 16, 11, 33, 29, DateTimeKind.Utc);
-            var logFields1 = new List<Field> {
-                doubleField
+            var logFields1 = new Dictionary<string, object>
+            {
+                { doubleLogKey, 1.3 }
             };
-            var logFields2 = new List<Field> {
-                decimalField
+            var logFields2 = new Dictionary<string, object>
+            {
+                { decimalLogKey, 5.5m }
             };
             var logs = new List<LogRecord>
             {
@@ -244,21 +242,21 @@ namespace LetsTrace.Jaeger.Tests.Serialization
 
             // tags
             Assert.Equal(3, jSpan.Tags.Count);
-            Assert.Equal("doubleTag", jSpan.Tags[0].Key);
-            Assert.Equal(doubleField.Value, jSpan.Tags[0].VDouble);
-            Assert.Equal("int64Tag", jSpan.Tags[1].Key);
-            Assert.Equal(int64Field.Value, jSpan.Tags[1].VLong);
-            Assert.Equal("stringTag", jSpan.Tags[2].Key);
-            Assert.Equal(stringField.Value, jSpan.Tags[2].VStr);
+            Assert.Equal(doubleTagKey, jSpan.Tags[0].Key);
+            Assert.Equal(1.1, jSpan.Tags[0].VDouble);
+            Assert.Equal(int64TagKey, jSpan.Tags[1].Key);
+            Assert.Equal(1942, jSpan.Tags[1].VLong);
+            Assert.Equal(stringTagKey, jSpan.Tags[2].Key);
+            Assert.Equal("stringValue", jSpan.Tags[2].VStr);
 
             // logs
             Assert.Equal(JaegerTagType.DOUBLE, jSpan.Logs[0].Fields[0].VType);
-            Assert.Equal(doubleField.Key, jSpan.Logs[0].Fields[0].Key);
-            Assert.Equal(doubleField.Value, jSpan.Logs[0].Fields[0].VDouble);
+            Assert.Equal(doubleLogKey, jSpan.Logs[0].Fields[0].Key);
+            Assert.Equal(1.3, jSpan.Logs[0].Fields[0].VDouble);
 
             Assert.Equal(JaegerTagType.DOUBLE, jSpan.Logs[1].Fields[0].VType);
-            Assert.Equal(decimalField.Key, jSpan.Logs[1].Fields[0].Key);
-            Assert.Equal((double)decimalField.Value, jSpan.Logs[1].Fields[0].VDouble);
+            Assert.Equal(decimalLogKey, jSpan.Logs[1].Fields[0].Key);
+            Assert.Equal((double)5.5m, jSpan.Logs[1].Fields[0].VDouble);
 
             // references
             Assert.Single(jSpan.References);
