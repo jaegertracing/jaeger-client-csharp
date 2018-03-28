@@ -7,37 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Jaeger.Thrift\Jaeger.Thrift.csproj" PrivateAssets="All" />
+    <ProjectReference Include="..\Jaeger.Thrift\Jaeger.Thrift.csproj" />
     <ProjectReference Include="..\LetsTrace\LetsTrace.csproj" />
   </ItemGroup>
-
-  <ItemGroup>
-    <DotNetCliToolReference Include="ILRepack" Version="2.0.15" />
-    <PackageReference Include="OpenTracing" Version="0.11.0" />
-  </ItemGroup>
-
-  <!-- This is included for Thrift that we pack into the LetsTrace.Jaeger.dll -->
-  <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore" Version="[2.0,)" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="[2.0,)" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="[2.0,)" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="[2.0,)" />
-    <PackageReference Include="System.IO.Pipes" Version="[4.3,)" />
-    <PackageReference Include="System.Net.Http.WinHttpHandler" Version="4.4.0" />
-    <PackageReference Include="System.Net.NameResolution" Version="[4.3,)" />
-    <PackageReference Include="System.Net.Requests" Version="[4.3,)" />
-    <PackageReference Include="System.Net.Security" Version="[4.3,)" />
-  </ItemGroup>
-
-  <Target Name="ILRepack" AfterTargets="Build">
-    <Message Importance="High" Text="ILRepack - $(OutputPath)" />
-    <Exec Command="$(USERPROFILE)\.nuget\packages\ILRepack\2.0.15\tools\ilrepack.exe /parallel /internalize /out:LetsTrace.Jaeger.dll LetsTrace.Jaeger.dll Thrift.dll Jaeger.Thrift.dll"
-      WorkingDirectory="$(OutputPath)" />
-    <Delete Files="$(OutputPath)\Thrift.dll" />
-    <Delete Files="$(OutputPath)\Thrift.dll.config" />
-    <Delete Files="$(OutputPath)\Thrift.pdb" />
-    <Delete Files="$(OutputPath)\Jaeger.Thrift.dll" />
-    <Delete Files="$(OutputPath)\Jaeger.Thrift.pdb" />
-  </Target>
 
 </Project>

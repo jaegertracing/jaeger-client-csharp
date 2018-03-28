@@ -2,9 +2,9 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <AssemblyName>Thrift</AssemblyName>
-    <PackageId>Thrift</PackageId>
-    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <AssemblyName>Jaeger.Thrift.VendoredThrift</AssemblyName>
+    <PackageId>Jaeger.Thrift.VendoredThrift</PackageId>
+    <IsPackable>true</IsPackable>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
@@ -16,17 +16,5 @@
     <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
     <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
   </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore" Version="[2.0,)" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="[2.0,)" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="[2.0,)" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="[2.0,)" />
-    <PackageReference Include="System.IO.Pipes" Version="[4.3,)" />
-    <PackageReference Include="System.Net.Http.WinHttpHandler" Version="4.4.0" />
-    <PackageReference Include="System.Net.NameResolution" Version="[4.3,)" />
-    <PackageReference Include="System.Net.Requests" Version="[4.3,)" />
-    <PackageReference Include="System.Net.Security" Version="[4.3,)" />
-  </ItemGroup>
 
 </Project>
