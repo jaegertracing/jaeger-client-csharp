@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <PackageTags>jaeger;tracing;opentracing</PackageTags>
+    <Description>Jaeger .NET Tracing</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Jaeger.Transport.Thrift\Jaeger.Transport.Thrift.csproj" />
+  </ItemGroup>
+
+</Project>
