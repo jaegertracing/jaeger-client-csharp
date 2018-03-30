@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace LetsTrace.Transport
+namespace Jaeger.Core.Transport
 {
     // Transport abstracts sending spans along to a tracing specific collector.
     // This is where spans are translated into their target format from the
@@ -14,7 +14,7 @@ namespace LetsTrace.Transport
         // transporters internal buffer. If the buffer grows larger than a
         // specified size the transporter should use Flush and return the
         // number of spans flushed.
-        Task<int> AppendAsync(ILetsTraceSpan span, CancellationToken canellationToken);
+        Task<int> AppendAsync(IJaegerCoreSpan span, CancellationToken canellationToken);
 
         // Flush sends the internal buffer to the remote server and returns the
         // number of spans sent.

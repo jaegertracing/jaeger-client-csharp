@@ -2,7 +2,7 @@
 using System.Net.Sockets;
 using System.Threading.Tasks;
 
-namespace LetsTrace.Jaeger.Transport.Internal
+namespace Jaeger.Transport.Thrift.Transport.Internal
 {
     internal interface IUdpClient : IDisposable
     {

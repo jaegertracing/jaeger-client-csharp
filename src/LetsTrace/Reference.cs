@@ -1,6 +1,6 @@
 using OpenTracing;
 
-namespace LetsTrace
+namespace Jaeger.Core
 {
     public struct Reference
     {

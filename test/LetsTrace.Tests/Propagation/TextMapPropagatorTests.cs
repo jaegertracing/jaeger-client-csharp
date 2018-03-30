@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using LetsTrace.Propagation;
+using Jaeger.Core.Propagation;
 using NSubstitute;
 using Xunit;
 
-namespace LetsTrace.Tests.Propagation
+namespace Jaeger.Core.Tests.Propagation
 {
     public class TextMapPropagatorTests
     {
@@ -34,7 +34,7 @@ namespace LetsTrace.Tests.Propagation
         public void TextMapPropagator_Inject_ThrowsWhenCarrierIsNotITextMap()
         {
             var propagator = new TextMapPropagator(new HeadersConfig("", ""), (val) => val, (val) => val);
-            var spanContext = Substitute.For<ILetsTraceSpanContext>();
+            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
 
             var ex = Assert.Throws<ArgumentException>(() => propagator.Inject(spanContext, new List<string>()));
             Assert.Equal("carrier is not ITextMap", ex.Message);
@@ -46,7 +46,7 @@ namespace LetsTrace.Tests.Propagation
             var headersConfig = new HeadersConfig("TraceContextHeaderName", "TraceBaggageHeaderPrefix");
             var propagator = new TextMapPropagator(headersConfig, (val) => val, (val) => val);
             var baggage = new Dictionary<string, string> { { "key1", "value1" }, { "key2", "value2" } };
-            var spanContext = Substitute.For<ILetsTraceSpanContext>();
+            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
             var carrier = new DictionaryTextMap();
 
             spanContext.GetBaggageItems().Returns(baggage);
@@ -64,7 +64,7 @@ namespace LetsTrace.Tests.Propagation
         public void TextMapPropagator_Extract_ThrowsWhenCarrierIsNotITextMap()
         {
             var propagator = new TextMapPropagator(new HeadersConfig("", ""), (val) => val, (val) => val);
-            var spanContext = Substitute.For<ILetsTraceSpanContext>();
+            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
 
             var ex = Assert.Throws<ArgumentException>(() => propagator.Extract(new List<string>()));
             Assert.Equal("carrier is not ITextMap", ex.Message);

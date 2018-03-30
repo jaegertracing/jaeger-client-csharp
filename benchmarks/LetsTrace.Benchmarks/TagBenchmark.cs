@@ -1,4 +1,5 @@
 using BenchmarkDotNet.Attributes;
+using Jaeger.Core;
 
 namespace LetsTrace.Benchmarks
 {

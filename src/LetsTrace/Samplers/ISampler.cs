@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace LetsTrace.Samplers
+namespace Jaeger.Core.Samplers
 {
     public interface ISampler : IDisposable
     {

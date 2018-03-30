@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace LetsTrace.Samplers
+﻿namespace Jaeger.Core.Samplers
 {
     public class SamplerConstants
     {

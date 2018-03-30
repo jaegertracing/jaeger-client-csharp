@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace LetsTrace
+namespace Jaeger.Core
 {
     public class LogRecord
     {

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace LetsTrace.Metrics
+namespace Jaeger.Core.Metrics
 {
     [AttributeUsage(AttributeTargets.All)]
     public class MetricAttribute : Attribute

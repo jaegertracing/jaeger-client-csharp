@@ -1,6 +1,6 @@
-using LetsTrace.Samplers.HTTP;
+using Jaeger.Core.Samplers.HTTP;
 
-namespace LetsTrace.Jaeger.Samplers.Http
+namespace Jaeger.Transport.Thrift.Samplers.HTTP
 {
     public static class ProbabilisticSamplingStrategyMarshaller
     {

@@ -3,7 +3,7 @@ using System.Data;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 
-namespace LetsTrace.Metrics
+namespace Jaeger.Core.Metrics
 {
     [ExcludeFromCodeCoverage]
     internal class PropertyGrouping

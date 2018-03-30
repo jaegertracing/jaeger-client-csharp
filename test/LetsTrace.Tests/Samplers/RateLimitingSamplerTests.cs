@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
-using LetsTrace.Samplers;
-using LetsTrace.Util;
+using Jaeger.Core.Samplers;
+using Jaeger.Core.Util;
 using NSubstitute;
 using Xunit;
 
-namespace LetsTrace.Tests.Samplers
+namespace Jaeger.Core.Tests.Samplers
 {
     public class RateLimitingSamplerTests
     {

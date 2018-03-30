@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 
-namespace LetsTrace.Samplers
+namespace Jaeger.Core.Samplers
 {
     // ISamplerFactory defines a factory to build new samplers
     internal interface ISamplerFactory

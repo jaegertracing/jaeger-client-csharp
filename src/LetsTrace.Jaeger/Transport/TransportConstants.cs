@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace LetsTrace.Jaeger.Transport
+﻿namespace Jaeger.Transport.Thrift.Transport
 {
     public class TransportConstants
     {

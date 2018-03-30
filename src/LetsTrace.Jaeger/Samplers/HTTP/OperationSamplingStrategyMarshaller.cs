@@ -1,7 +1,7 @@
-using LetsTraceOperationSamplingStrategy = LetsTrace.Samplers.HTTP.OperationSamplingStrategy;
+using LetsTraceOperationSamplingStrategy = Jaeger.Core.Samplers.HTTP.OperationSamplingStrategy;
 using JaegerThriftOperationSamplingStrategy = Jaeger.Thrift.Agent.OperationSamplingStrategy;
 
-namespace LetsTrace.Jaeger.Samplers.Http
+namespace Jaeger.Transport.Thrift.Samplers.HTTP
 {
     public static class OperationSamplingStrategyMarshaller
     {

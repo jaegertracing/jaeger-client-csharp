@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace LetsTrace.Samplers
+namespace Jaeger.Core.Samplers
 {
     /// <summary>
     /// Only used for unit testing

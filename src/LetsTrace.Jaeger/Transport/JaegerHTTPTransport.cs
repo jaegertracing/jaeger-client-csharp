@@ -1,8 +1,8 @@
 using System;
+using Jaeger.Transport.Thrift.Transport.Sender;
 using Thrift.Protocols;
-using LetsTrace.Jaeger.Transport.Sender;
 
-namespace LetsTrace.Jaeger.Transport
+namespace Jaeger.Transport.Thrift.Transport
 {
     public class JaegerHttpTransport : JaegerThriftTransport
     {

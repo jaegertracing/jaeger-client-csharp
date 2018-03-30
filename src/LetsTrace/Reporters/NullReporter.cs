@@ -1,13 +1,13 @@
 using System.Diagnostics.CodeAnalysis;
 
-namespace LetsTrace.Reporters
+namespace Jaeger.Core.Reporters
 {
     [ExcludeFromCodeCoverage]
     public class NullReporter : IReporter
     {
         public void Dispose() {}
 
-        public void Report(ILetsTraceSpan span) {}
+        public void Report(IJaegerCoreSpan span) {}
 
     }
 }

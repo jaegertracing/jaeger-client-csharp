@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using OpenTracing.Propagation;
 
-namespace LetsTrace.Propagation
+namespace Jaeger.Core.Propagation
 {
     public class DictionaryTextMap : ITextMap
     {

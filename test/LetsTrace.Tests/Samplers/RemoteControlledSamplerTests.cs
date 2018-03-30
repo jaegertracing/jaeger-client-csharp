@@ -2,15 +2,15 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using LetsTrace.Metrics;
-using LetsTrace.Samplers;
-using LetsTrace.Samplers.HTTP;
+using Jaeger.Core.Metrics;
+using Jaeger.Core.Samplers;
+using Jaeger.Core.Samplers.HTTP;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Xunit;
 
-namespace LetsTrace.Tests.Samplers
+namespace Jaeger.Core.Tests.Samplers
 {
     public class RemoteControlledSamplerTests
     {

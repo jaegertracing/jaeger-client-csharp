@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
-namespace LetsTrace.Metrics
+namespace Jaeger.Core.Metrics
 {
     [ExcludeFromCodeCoverage]
     public abstract partial class BaseMetricsFactory : IMetricsFactory

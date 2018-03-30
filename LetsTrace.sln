@@ -1,37 +1,37 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26124.0
+VisualStudioVersion = 15.0.27130.2024
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{4FB0DAC9-D8C6-4368-B48E-363FA85029A4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LetsTrace", "src\LetsTrace\LetsTrace.csproj", "{B0B20678-3793-4DAE-AD7D-096BF0CEADF6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jaeger.Core", "src\LetsTrace\Jaeger.Core.csproj", "{B0B20678-3793-4DAE-AD7D-096BF0CEADF6}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{F4DBFB49-2F67-49B0-A60F-E8ED78ACF550}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LetsTrace.Tests", "test\LetsTrace.Tests\LetsTrace.Tests.csproj", "{5F1C7EB5-98A6-48C8-9F35-2A296148FD01}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jaeger.Core.Tests", "test\LetsTrace.Tests\Jaeger.Core.Tests.csproj", "{5F1C7EB5-98A6-48C8-9F35-2A296148FD01}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "benchmarks", "benchmarks", "{6663429B-6376-4317-8310-C3E15CF7D491}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LetsTrace.Benchmarks", "benchmarks\LetsTrace.Benchmarks\LetsTrace.Benchmarks.csproj", "{79DCD3B4-4FE7-4C15-B5B8-8498F0E13E78}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LetsTrace.Benchmarks", "benchmarks\LetsTrace.Benchmarks\LetsTrace.Benchmarks.csproj", "{79DCD3B4-4FE7-4C15-B5B8-8498F0E13E78}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jaeger.Thrift", "src\Jaeger.Thrift\Jaeger.Thrift.csproj", "{F9EC3615-1D62-4AD3-8E55-0D9CE517A6C6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jaeger.Thrift", "src\Jaeger.Thrift\Jaeger.Thrift.csproj", "{F9EC3615-1D62-4AD3-8E55-0D9CE517A6C6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LetsTrace.Jaeger", "src\LetsTrace.Jaeger\LetsTrace.Jaeger.csproj", "{980E2941-0F84-49DC-A2F1-17EC1EC08114}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jaeger.Transport.Thrift", "src\LetsTrace.Jaeger\Jaeger.Transport.Thrift.csproj", "{980E2941-0F84-49DC-A2F1-17EC1EC08114}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Thrift", "Thrift", "{FB248F0A-11FE-412A-8860-664E337966DC}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "netcore", "netcore", "{2C8AB2EF-30D6-4C8D-BD51-226B9CBBEA78}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Thrift", "src\Thrift\netcore\Thrift\Thrift.csproj", "{1FE7FE90-8745-4C1C-9772-1D68B395278E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Thrift", "src\Thrift\netcore\Thrift\Thrift.csproj", "{1FE7FE90-8745-4C1C-9772-1D68B395278E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LetsTrace.Jaeger.Tests", "test\LetsTrace.Jaeger.Tests\LetsTrace.Jaeger.Tests.csproj", "{DCC352C1-281B-428D-AF2D-0CAE58A808CB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jaeger.Transport.Thrift.Tests", "test\LetsTrace.Jaeger.Tests\Jaeger.Transport.Thrift.Tests.csproj", "{DCC352C1-281B-428D-AF2D-0CAE58A808CB}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{B699D79B-C838-4636-B5FF-86FF6D571682}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Thrift.Tests", "src\Thrift\netcore\Tests\Thrift.Tests\Thrift.Tests.csproj", "{DC2CEED3-740F-48C5-8A3C-AA74AB582008}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Thrift.Tests", "src\Thrift\netcore\Tests\Thrift.Tests\Thrift.Tests.csproj", "{DC2CEED3-740F-48C5-8A3C-AA74AB582008}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Thrift.IntegrationTests", "src\Thrift\netcore\Tests\Thrift.IntegrationTests\Thrift.IntegrationTests.csproj", "{B5C1039A-75E5-4F7F-BDB0-4A9EEA2716D5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Thrift.IntegrationTests", "src\Thrift\netcore\Tests\Thrift.IntegrationTests\Thrift.IntegrationTests.csproj", "{B5C1039A-75E5-4F7F-BDB0-4A9EEA2716D5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -42,34 +42,31 @@ Global
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
 	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
-	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{B0B20678-3793-4DAE-AD7D-096BF0CEADF6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B0B20678-3793-4DAE-AD7D-096BF0CEADF6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B0B20678-3793-4DAE-AD7D-096BF0CEADF6}.Debug|x64.ActiveCfg = Debug|x64
-		{B0B20678-3793-4DAE-AD7D-096BF0CEADF6}.Debug|x64.Build.0 = Debug|x64
-		{B0B20678-3793-4DAE-AD7D-096BF0CEADF6}.Debug|x86.ActiveCfg = Debug|x86
-		{B0B20678-3793-4DAE-AD7D-096BF0CEADF6}.Debug|x86.Build.0 = Debug|x86
+		{B0B20678-3793-4DAE-AD7D-096BF0CEADF6}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B0B20678-3793-4DAE-AD7D-096BF0CEADF6}.Debug|x64.Build.0 = Debug|Any CPU
+		{B0B20678-3793-4DAE-AD7D-096BF0CEADF6}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B0B20678-3793-4DAE-AD7D-096BF0CEADF6}.Debug|x86.Build.0 = Debug|Any CPU
 		{B0B20678-3793-4DAE-AD7D-096BF0CEADF6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B0B20678-3793-4DAE-AD7D-096BF0CEADF6}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B0B20678-3793-4DAE-AD7D-096BF0CEADF6}.Release|x64.ActiveCfg = Release|x64
-		{B0B20678-3793-4DAE-AD7D-096BF0CEADF6}.Release|x64.Build.0 = Release|x64
-		{B0B20678-3793-4DAE-AD7D-096BF0CEADF6}.Release|x86.ActiveCfg = Release|x86
-		{B0B20678-3793-4DAE-AD7D-096BF0CEADF6}.Release|x86.Build.0 = Release|x86
+		{B0B20678-3793-4DAE-AD7D-096BF0CEADF6}.Release|x64.ActiveCfg = Release|Any CPU
+		{B0B20678-3793-4DAE-AD7D-096BF0CEADF6}.Release|x64.Build.0 = Release|Any CPU
+		{B0B20678-3793-4DAE-AD7D-096BF0CEADF6}.Release|x86.ActiveCfg = Release|Any CPU
+		{B0B20678-3793-4DAE-AD7D-096BF0CEADF6}.Release|x86.Build.0 = Release|Any CPU
 		{5F1C7EB5-98A6-48C8-9F35-2A296148FD01}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5F1C7EB5-98A6-48C8-9F35-2A296148FD01}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5F1C7EB5-98A6-48C8-9F35-2A296148FD01}.Debug|x64.ActiveCfg = Debug|x64
-		{5F1C7EB5-98A6-48C8-9F35-2A296148FD01}.Debug|x64.Build.0 = Debug|x64
-		{5F1C7EB5-98A6-48C8-9F35-2A296148FD01}.Debug|x86.ActiveCfg = Debug|x86
-		{5F1C7EB5-98A6-48C8-9F35-2A296148FD01}.Debug|x86.Build.0 = Debug|x86
+		{5F1C7EB5-98A6-48C8-9F35-2A296148FD01}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{5F1C7EB5-98A6-48C8-9F35-2A296148FD01}.Debug|x64.Build.0 = Debug|Any CPU
+		{5F1C7EB5-98A6-48C8-9F35-2A296148FD01}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{5F1C7EB5-98A6-48C8-9F35-2A296148FD01}.Debug|x86.Build.0 = Debug|Any CPU
 		{5F1C7EB5-98A6-48C8-9F35-2A296148FD01}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5F1C7EB5-98A6-48C8-9F35-2A296148FD01}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5F1C7EB5-98A6-48C8-9F35-2A296148FD01}.Release|x64.ActiveCfg = Release|x64
-		{5F1C7EB5-98A6-48C8-9F35-2A296148FD01}.Release|x64.Build.0 = Release|x64
-		{5F1C7EB5-98A6-48C8-9F35-2A296148FD01}.Release|x86.ActiveCfg = Release|x86
-		{5F1C7EB5-98A6-48C8-9F35-2A296148FD01}.Release|x86.Build.0 = Release|x86
+		{5F1C7EB5-98A6-48C8-9F35-2A296148FD01}.Release|x64.ActiveCfg = Release|Any CPU
+		{5F1C7EB5-98A6-48C8-9F35-2A296148FD01}.Release|x64.Build.0 = Release|Any CPU
+		{5F1C7EB5-98A6-48C8-9F35-2A296148FD01}.Release|x86.ActiveCfg = Release|Any CPU
+		{5F1C7EB5-98A6-48C8-9F35-2A296148FD01}.Release|x86.Build.0 = Release|Any CPU
 		{79DCD3B4-4FE7-4C15-B5B8-8498F0E13E78}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{79DCD3B4-4FE7-4C15-B5B8-8498F0E13E78}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{79DCD3B4-4FE7-4C15-B5B8-8498F0E13E78}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -155,6 +152,9 @@ Global
 		{B5C1039A-75E5-4F7F-BDB0-4A9EEA2716D5}.Release|x86.ActiveCfg = Release|Any CPU
 		{B5C1039A-75E5-4F7F-BDB0-4A9EEA2716D5}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{B0B20678-3793-4DAE-AD7D-096BF0CEADF6} = {4FB0DAC9-D8C6-4368-B48E-363FA85029A4}
 		{5F1C7EB5-98A6-48C8-9F35-2A296148FD01} = {F4DBFB49-2F67-49B0-A60F-E8ED78ACF550}
@@ -168,5 +168,8 @@ Global
 		{B699D79B-C838-4636-B5FF-86FF6D571682} = {2C8AB2EF-30D6-4C8D-BD51-226B9CBBEA78}
 		{DC2CEED3-740F-48C5-8A3C-AA74AB582008} = {B699D79B-C838-4636-B5FF-86FF6D571682}
 		{B5C1039A-75E5-4F7F-BDB0-4A9EEA2716D5} = {B699D79B-C838-4636-B5FF-86FF6D571682}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {83668757-63F5-48E3-A8E0-8AED6B7562D0}
 	EndGlobalSection
 EndGlobal

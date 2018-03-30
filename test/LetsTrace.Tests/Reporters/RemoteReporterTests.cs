@@ -1,16 +1,16 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using LetsTrace.Exceptions;
-using LetsTrace.Metrics;
-using LetsTrace.Reporters;
-using LetsTrace.Transport;
+using Jaeger.Core.Exceptions;
+using Jaeger.Core.Metrics;
+using Jaeger.Core.Reporters;
+using Jaeger.Core.Transport;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Xunit;
 
-namespace LetsTrace.Tests.Reporters
+namespace Jaeger.Core.Tests.Reporters
 {
     public class RemoteReporterTests
     {
@@ -25,7 +25,7 @@ namespace LetsTrace.Tests.Reporters
         public void RemoteReporter_ShouldCallTransport()
         {
             var transport = Substitute.For<ITransport>();
-            var span = Substitute.For<ILetsTraceSpan>();
+            var span = Substitute.For<IJaegerCoreSpan>();
 
             using (var reporter = new RemoteReporter.Builder(transport).Build())
             {
@@ -54,7 +54,7 @@ namespace LetsTrace.Tests.Reporters
         public void RemoteReporter_ShouldCallMetrics()
         {
             var transport = Substitute.For<ITransport>();
-            var span = Substitute.For<ILetsTraceSpan>();
+            var span = Substitute.For<IJaegerCoreSpan>();
             var metrics = InMemoryMetricsFactory.Instance.CreateMetrics();
 
             transport.CloseAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult(2));
@@ -86,7 +86,7 @@ namespace LetsTrace.Tests.Reporters
         public void RemoteReporter_ShouldCountReporterDropped()
         {
             var transport = Substitute.For<ITransport>();
-            var span = Substitute.For<ILetsTraceSpan>();
+            var span = Substitute.For<IJaegerCoreSpan>();
             var metrics = InMemoryMetricsFactory.Instance.CreateMetrics();
 
             transport.AppendAsync(span, Arg.Any<CancellationToken>()).Throws(new SenderException(String.Empty, 1));
@@ -107,7 +107,7 @@ namespace LetsTrace.Tests.Reporters
         public void RemoteReporter_ShouldCountReporterFailure()
         {
             var transport = Substitute.For<ITransport>();
-            var span = Substitute.For<ILetsTraceSpan>();
+            var span = Substitute.For<IJaegerCoreSpan>();
             var metrics = InMemoryMetricsFactory.Instance.CreateMetrics();
 
             transport.CloseAsync(Arg.Any<CancellationToken>()).Throws(new SenderException(String.Empty, 1));

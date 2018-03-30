@@ -1,15 +1,15 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using LetsTrace.Exceptions;
-using LetsTrace.Jaeger.Serialization;
-using LetsTrace.Jaeger.Transport.Sender;
-using LetsTrace.Transport;
-
+using Jaeger.Core;
+using Jaeger.Core.Exceptions;
+using Jaeger.Core.Transport;
+using Jaeger.Transport.Thrift.Serialization;
+using Jaeger.Transport.Thrift.Transport.Sender;
 using Thrift.Protocols;
 using JaegerProcess = Jaeger.Thrift.Process;
 
-namespace LetsTrace.Jaeger.Transport
+namespace Jaeger.Transport.Thrift.Transport
 {
     public abstract class JaegerThriftTransport : ITransport
     {
@@ -39,7 +39,7 @@ namespace LetsTrace.Jaeger.Transport
             _sender.Dispose();
         }
 
-        public async Task<int> AppendAsync(ILetsTraceSpan span, CancellationToken canellationToken)
+        public async Task<int> AppendAsync(IJaegerCoreSpan span, CancellationToken canellationToken)
         {
             if (_process == null) {
                 _process = _jaegerThriftSerialization.BuildJaegerProcessThrift(span.Tracer);

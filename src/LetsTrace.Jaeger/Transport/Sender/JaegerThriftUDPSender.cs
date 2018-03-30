@@ -2,12 +2,12 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Jaeger.Thrift.Agent;
-using LetsTrace.Jaeger.Transport.Internal;
+using Jaeger.Transport.Thrift.Transport.Internal;
 using Thrift.Protocols;
 using JaegerBatch = Jaeger.Thrift.Batch;
 using JaegerSpan = Jaeger.Thrift.Span;
 
-namespace LetsTrace.Jaeger.Transport.Sender
+namespace Jaeger.Transport.Thrift.Transport.Sender
 {
     public class JaegerThriftUdpSender : JaegerSender
     {

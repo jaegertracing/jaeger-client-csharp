@@ -1,15 +1,13 @@
 ﻿using System.Collections.Generic;
-using Jaeger.Thrift.Agent;
-using LetsTrace.Jaeger.Samplers.Http;
+using Jaeger.Transport.Thrift.Samplers.HTTP;
 using Xunit;
-
 using JaegerThriftOperationSamplingStrategy = Jaeger.Thrift.Agent.OperationSamplingStrategy;
 using JaegerThriftProbabilisticSamplingStrategy = Jaeger.Thrift.Agent.ProbabilisticSamplingStrategy;
 using JaegerThriftPerOperationSamplingStrategies = Jaeger.Thrift.Agent.PerOperationSamplingStrategies;
 using JaegerThriftRateLimitingSamplingStrategy = Jaeger.Thrift.Agent.RateLimitingSamplingStrategy;
 using JaegerThriftSamplingStrategyResponse = Jaeger.Thrift.Agent.SamplingStrategyResponse;
 
-namespace LetsTrace.Jaeger.Tests.Samplers.Http
+namespace Jaeger.Transport.Thrift.Tests.Samplers.Http
 {
     public class MarshallersTests
     {

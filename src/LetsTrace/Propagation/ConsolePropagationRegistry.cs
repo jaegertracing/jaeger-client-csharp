@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using OpenTracing;
 using OpenTracing.Propagation;
 
-namespace LetsTrace.Propagation
+namespace Jaeger.Core.Propagation
 {
     [ExcludeFromCodeCoverage]
     public sealed class ConsolePropagationRegistry : IPropagationRegistry

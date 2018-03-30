@@ -2,13 +2,13 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <PackageTags>letstrace;tracing;opentracing;jaeger</PackageTags>
-    <Description>Jaeger support for LetsTrace</Description>
+    <PackageTags>jaeger;tracing;opentracing</PackageTags>
+    <Description>Jaeger Thrift support for Jaeger.Core</Description>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Jaeger.Thrift\Jaeger.Thrift.csproj" />
-    <ProjectReference Include="..\LetsTrace\LetsTrace.csproj" />
+    <ProjectReference Include="..\LetsTrace\Jaeger.Core.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,10 +1,10 @@
 ﻿using System;
-using LetsTrace.Reporters;
+using Jaeger.Core.Reporters;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Xunit;
 
-namespace LetsTrace.Tests.Reporters
+namespace Jaeger.Core.Tests.Reporters
 {
     public class LoggingReporterTests
     {
@@ -13,7 +13,7 @@ namespace LetsTrace.Tests.Reporters
         {
             var loggerFactory = Substitute.For<ILoggerFactory>();
             var logger = Substitute.For<ILogger>();
-            var span = Substitute.For<ILetsTraceSpan>();
+            var span = Substitute.For<IJaegerCoreSpan>();
 
             loggerFactory.CreateLogger<LoggingReporter>().Returns(logger);
 

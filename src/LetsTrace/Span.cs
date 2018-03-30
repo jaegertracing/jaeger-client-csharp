@@ -3,15 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using OpenTracing;
 
-namespace LetsTrace
+namespace Jaeger.Core
 {
     // Span holds everything relevant to a specific span
-    public class Span : ILetsTraceSpan
+    public class Span : IJaegerCoreSpan
     {
         // OpenTracing API: Retrieve the Spans SpanContext
         // C# doesn't have "return type covariance" so we use the trick with the explicit interface implementation
         // and this separate property.
-        public ILetsTraceSpanContext Context { get; }
+        public IJaegerCoreSpanContext Context { get; }
         ISpanContext ISpan.Context => Context;
 
         public DateTime? FinishTimestampUtc { get; private set; }
@@ -25,9 +25,9 @@ namespace LetsTrace
         public IEnumerable<Reference> References { get; }
         public DateTime StartTimestampUtc { get; }
         public Dictionary<string, object> Tags { get; }
-        public ILetsTraceTracer Tracer { get; }
+        public IJaegerCoreTracer Tracer { get; }
 
-        public Span(ILetsTraceTracer tracer, string operationName, ILetsTraceSpanContext context, DateTime? startTimestampUtc = null, Dictionary<string, object> tags = null, List<Reference> references = null)
+        public Span(IJaegerCoreTracer tracer, string operationName, IJaegerCoreSpanContext context, DateTime? startTimestampUtc = null, Dictionary<string, object> tags = null, List<Reference> references = null)
         {
             Tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
 

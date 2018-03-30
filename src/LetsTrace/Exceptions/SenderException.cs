@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace LetsTrace.Exceptions
+namespace Jaeger.Core.Exceptions
 {
     public class SenderException : Exception
     {

@@ -1,4 +1,4 @@
-namespace LetsTrace.Util
+namespace Jaeger.Core.Util
 {
     // RateLimiter is a rate limiter based on leaky bucket algorithm, formulated in terms of a
     // credits balance that is replenished every time CheckCredit() method is called (tick) by the amount proportional

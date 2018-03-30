@@ -1,7 +1,7 @@
-using LetsTraceRateLimitingSamplingStrategy = LetsTrace.Samplers.HTTP.RateLimitingSamplingStrategy;
+using LetsTraceRateLimitingSamplingStrategy = Jaeger.Core.Samplers.HTTP.RateLimitingSamplingStrategy;
 using JaegerThriftRateLimitingSamplingStrategy = Jaeger.Thrift.Agent.RateLimitingSamplingStrategy;
 
-namespace LetsTrace.Jaeger.Samplers.Http
+namespace Jaeger.Transport.Thrift.Samplers.HTTP
 {
     public static class RateLimitingSamplingStrategyMarshaller
     {

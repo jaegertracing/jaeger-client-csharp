@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
-using LetsTrace.Util;
+using Jaeger.Core.Util;
 using NSubstitute;
 using OpenTracing;
 using Xunit;
 
-namespace LetsTrace.Tests
+namespace Jaeger.Core.Tests
 {
     public class SpanTests
     {
@@ -13,11 +13,11 @@ namespace LetsTrace.Tests
         [Fact]
         public void Span_Constructor_ShouldAssignEverythingCorrectlyWhenPassed()
         {
-            var tracer = Substitute.For<ILetsTraceTracer>();
+            var tracer = Substitute.For<IJaegerCoreTracer>();
             var operationName = "testing";
-            var spanContext = Substitute.For<ILetsTraceSpanContext>();
+            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
             var startTimestamp = DateTime.UtcNow;
-            var ref1Context = Substitute.For<ILetsTraceSpanContext>();
+            var ref1Context = Substitute.For<IJaegerCoreSpanContext>();
             var tags = new Dictionary<string, object> { { "key", "something"} };
             var references = new List<Reference> {
                 new Reference("type1", ref1Context)
@@ -34,7 +34,7 @@ namespace LetsTrace.Tests
         [Fact]
         public void Span_Constructor_ShouldThrowIfTracerIsNull()
         {
-            var spanContext = Substitute.For<ILetsTraceSpanContext>();
+            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
 
             var ex = Assert.Throws<ArgumentNullException>(() => new Span(null, "", spanContext));
             Assert.Equal("tracer", ex.ParamName);
@@ -43,8 +43,8 @@ namespace LetsTrace.Tests
         [Fact]
         public void Span_Constructor_ShouldThrowIfOperationNameIsNullOrEmpty()
         {
-            var tracer = Substitute.For<ILetsTraceTracer>();
-            var spanContext = Substitute.For<ILetsTraceSpanContext>();
+            var tracer = Substitute.For<IJaegerCoreTracer>();
+            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
 
             var ex1 = Assert.Throws<ArgumentException>(() => new Span(tracer, "", spanContext));
             Assert.StartsWith("Argument is empty", ex1.Message);
@@ -56,7 +56,7 @@ namespace LetsTrace.Tests
         [Fact]
         public void Span_Constructor_ShouldThrowIfContextIsNull()
         {
-            var tracer = Substitute.For<ILetsTraceTracer>();
+            var tracer = Substitute.For<IJaegerCoreTracer>();
 
             var ex = Assert.Throws<ArgumentNullException>(() => new Span(tracer, "testing", null));
             Assert.Equal("context", ex.ParamName);
@@ -65,10 +65,10 @@ namespace LetsTrace.Tests
         [Fact]
         public void Span_Constructor_ShouldDefaultStartTimestampTagsAndReferencesIfNull()
         {
-            var tracer = Substitute.For<ILetsTraceTracer>();
+            var tracer = Substitute.For<IJaegerCoreTracer>();
             var operationName = "testing";
             var clock = Substitute.For<IClock>();
-            var spanContext = Substitute.For<ILetsTraceSpanContext>();
+            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
             var startTimestamp = DateTime.UtcNow;
 
             tracer.Clock.Returns(clock);
@@ -87,9 +87,9 @@ namespace LetsTrace.Tests
         [Fact]
         public void Span_Finish_ShouldReportTheSpanToTheTracerOnce()
         {
-            var tracer = Substitute.For<ILetsTraceTracer>();
+            var tracer = Substitute.For<IJaegerCoreTracer>();
             var clock = Substitute.For<IClock>();
-            var spanContext = Substitute.For<ILetsTraceSpanContext>();
+            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
             var startTimestamp = DateTime.UtcNow;
             var currentTime = DateTime.UtcNow.AddSeconds(1);
 
@@ -102,16 +102,16 @@ namespace LetsTrace.Tests
             span.Finish();
 
             clock.Received(3).UtcNow();
-            tracer.Received(1).ReportSpan(Arg.Is<ILetsTraceSpan>(s => s == span));
+            tracer.Received(1).ReportSpan(Arg.Is<IJaegerCoreSpan>(s => s == span));
             Assert.Equal(currentTime, span.FinishTimestampUtc);
         }
 
         [Fact]
         public void Span_Finish_WithFinishTimestamp_ShouldReportTheSpanToTheTracerOnce()
         {
-            var tracer = Substitute.For<ILetsTraceTracer>();
+            var tracer = Substitute.For<IJaegerCoreTracer>();
             var clock = Substitute.For<IClock>();
-            var spanContext = Substitute.For<ILetsTraceSpanContext>();
+            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
             var startTimestamp = DateTime.UtcNow;
             var currentTime = DateTime.UtcNow.AddSeconds(1);
 
@@ -123,16 +123,16 @@ namespace LetsTrace.Tests
             span.Finish(currentTime);
 
             clock.Received(0).UtcNow();
-            tracer.Received(1).ReportSpan(Arg.Is<ILetsTraceSpan>(s => s == span));
+            tracer.Received(1).ReportSpan(Arg.Is<IJaegerCoreSpan>(s => s == span));
             Assert.Equal(currentTime, span.FinishTimestampUtc);
         }
 
         [Fact]
         public void Span_Dispose_ShouldReportTheSpanToTheTracerOnce()
         {
-            var tracer = Substitute.For<ILetsTraceTracer>();
+            var tracer = Substitute.For<IJaegerCoreTracer>();
             var clock = Substitute.For<IClock>();
-            var spanContext = Substitute.For<ILetsTraceSpanContext>();
+            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
             var startTimestamp = DateTime.UtcNow;
             var currentTime = DateTime.UtcNow.AddSeconds(1);
 
@@ -145,15 +145,15 @@ namespace LetsTrace.Tests
             span.Dispose();
 
             clock.Received(3).UtcNow();
-            tracer.Received(1).ReportSpan(Arg.Is<ILetsTraceSpan>(s => s == span));
+            tracer.Received(1).ReportSpan(Arg.Is<IJaegerCoreSpan>(s => s == span));
             Assert.Equal(currentTime, span.FinishTimestampUtc);
         }
 
         [Fact]
         public void Span_GetBaggageItem_ShouldUseTheContextBaggage()
         {
-            var tracer = Substitute.For<ILetsTraceTracer>();
-            var spanContext = Substitute.For<ILetsTraceSpanContext>();
+            var tracer = Substitute.For<IJaegerCoreTracer>();
+            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
             var startTimestamp = DateTime.UtcNow;
             var baggage = new Dictionary<string, string> { { "key1", "value1" }, { "key2", "value2" } };
 
@@ -168,8 +168,8 @@ namespace LetsTrace.Tests
         [Fact]
         public void Span_GetBaggageItem_ShouldReturnNull_WhenKeyDoesNotExist()
         {
-            var tracer = Substitute.For<ILetsTraceTracer>();
-            var spanContext = Substitute.For<ILetsTraceSpanContext>();
+            var tracer = Substitute.For<IJaegerCoreTracer>();
+            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
             var startTimestamp = DateTime.UtcNow;
             var baggage = new Dictionary<string, string> { { "key1", "value1" }, { "key2", "value2" } };
 
@@ -184,15 +184,15 @@ namespace LetsTrace.Tests
         [Fact]
         public void Span_SetBaggageItem_ShouldOffLoadToTracer()
         {
-            var tracer = Substitute.For<ILetsTraceTracer>();
+            var tracer = Substitute.For<IJaegerCoreTracer>();
             var operationName = "testing";
-            var spanContext = Substitute.For<ILetsTraceSpanContext>();
+            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
             var startTimestamp = DateTime.UtcNow;
             var key = "key";
             var value = "value";
 
             tracer.SetBaggageItem(
-                Arg.Is<ILetsTraceSpan>(s => s.OperationName == operationName),
+                Arg.Is<IJaegerCoreSpan>(s => s.OperationName == operationName),
                 Arg.Is<string>(k => k == key),
                 Arg.Is<string>(v => v == value)
             );
@@ -200,7 +200,7 @@ namespace LetsTrace.Tests
             var span = new Span(tracer, operationName, spanContext, startTimestamp);
             span.SetBaggageItem(key, value);
 
-            tracer.Received(1).SetBaggageItem(Arg.Any<ILetsTraceSpan>(), Arg.Any<string>(), Arg.Any<string>());
+            tracer.Received(1).SetBaggageItem(Arg.Any<IJaegerCoreSpan>(), Arg.Any<string>(), Arg.Any<string>());
         }
 
         [Fact]
@@ -213,10 +213,10 @@ namespace LetsTrace.Tests
                 { "log4", new Clock() }
             };
 
-            var tracer = Substitute.For<ILetsTraceTracer>();
+            var tracer = Substitute.For<IJaegerCoreTracer>();
             var operationName = "testing";
             var clock = Substitute.For<IClock>();
-            var spanContext = Substitute.For<ILetsTraceSpanContext>();
+            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
             var startTimestamp = DateTime.UtcNow;
             var currentTime = DateTime.UtcNow.AddSeconds(1);
 
@@ -242,9 +242,9 @@ namespace LetsTrace.Tests
                 { "log2", 15m }
             };
 
-            var tracer = Substitute.For<ILetsTraceTracer>();
+            var tracer = Substitute.For<IJaegerCoreTracer>();
             var operationName = "testing";
-            var spanContext = Substitute.For<ILetsTraceSpanContext>();
+            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
             var startTimestamp = DateTime.UtcNow;
             var logTimestamp = DateTime.UtcNow.AddMilliseconds(150);
 
@@ -261,10 +261,10 @@ namespace LetsTrace.Tests
         {
             var eventName = "event, yo";
 
-            var tracer = Substitute.For<ILetsTraceTracer>();
+            var tracer = Substitute.For<IJaegerCoreTracer>();
             var operationName = "testing";
             var clock = Substitute.For<IClock>();
-            var spanContext = Substitute.For<ILetsTraceSpanContext>();
+            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
             var startTimestamp = DateTime.UtcNow;
             var currentTime = DateTime.UtcNow.AddSeconds(1);
 
@@ -284,9 +284,9 @@ namespace LetsTrace.Tests
         {
             var eventName = "event, yo";
 
-            var tracer = Substitute.For<ILetsTraceTracer>();
+            var tracer = Substitute.For<IJaegerCoreTracer>();
             var operationName = "testing";
-            var spanContext = Substitute.For<ILetsTraceSpanContext>();
+            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
             var startTimestamp = DateTime.UtcNow;
             var logTimestamp = DateTime.UtcNow.AddMilliseconds(150);
 
@@ -300,9 +300,9 @@ namespace LetsTrace.Tests
         [Fact]
         public void Span_SetOperationName()
         {
-            var tracer = Substitute.For<ILetsTraceTracer>();
+            var tracer = Substitute.For<IJaegerCoreTracer>();
             var operationName = "testing";
-            var spanContext = Substitute.For<ILetsTraceSpanContext>();
+            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
             var startTimestamp = DateTime.UtcNow;
             var logTimestamp = DateTime.UtcNow.AddMilliseconds(150);
 
@@ -319,9 +319,9 @@ namespace LetsTrace.Tests
         [Fact]
         public void Span_SetTag_Bool_ShouldSetTag()
         {
-            var tracer = Substitute.For<ILetsTraceTracer>();
+            var tracer = Substitute.For<IJaegerCoreTracer>();
             var operationName = "testing";
-            var spanContext = Substitute.For<ILetsTraceSpanContext>();
+            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
             var startTimestamp = DateTime.UtcNow;
             var tagName = "testing.tag";
             var value = true;
@@ -335,9 +335,9 @@ namespace LetsTrace.Tests
         [Fact]
         public void Span_SetTag_Double_ShouldSetTag()
         {
-            var tracer = Substitute.For<ILetsTraceTracer>();
+            var tracer = Substitute.For<IJaegerCoreTracer>();
             var operationName = "testing";
-            var spanContext = Substitute.For<ILetsTraceSpanContext>();
+            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
             var startTimestamp = DateTime.UtcNow;
             var tagName = "testing.tag";
             var value = 3D;
@@ -351,9 +351,9 @@ namespace LetsTrace.Tests
         [Fact]
         public void Span_SetTag_Int_ShouldSetTag()
         {
-            var tracer = Substitute.For<ILetsTraceTracer>();
+            var tracer = Substitute.For<IJaegerCoreTracer>();
             var operationName = "testing";
-            var spanContext = Substitute.For<ILetsTraceSpanContext>();
+            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
             var startTimestamp = DateTime.UtcNow;
             var tagName = "testing.tag";
             var value = 55;
@@ -367,9 +367,9 @@ namespace LetsTrace.Tests
         [Fact]
         public void Span_SetTag_String_ShouldSetTag()
         {
-            var tracer = Substitute.For<ILetsTraceTracer>();
+            var tracer = Substitute.For<IJaegerCoreTracer>();
             var operationName = "testing";
-            var spanContext = Substitute.For<ILetsTraceSpanContext>();
+            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
             var startTimestamp = DateTime.UtcNow;
             var tagName = "testing.tag";
             var value = "testing, yo";
@@ -383,9 +383,9 @@ namespace LetsTrace.Tests
         [Fact]
         public void Span_SetTag_ShouldOverwriteTag()
         {
-            var tracer = Substitute.For<ILetsTraceTracer>();
+            var tracer = Substitute.For<IJaegerCoreTracer>();
             var operationName = "testing";
-            var spanContext = Substitute.For<ILetsTraceSpanContext>();
+            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
             var startTimestamp = DateTime.UtcNow;
             var tagName = "testing.tag";
             var value = "testing, yo";

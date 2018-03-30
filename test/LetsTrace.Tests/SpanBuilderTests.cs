@@ -1,12 +1,11 @@
 using System;
 using System.Collections.Generic;
-using LetsTrace.Metrics;
-using LetsTrace.Samplers;
+using Jaeger.Core.Samplers;
 using NSubstitute;
 using OpenTracing;
 using Xunit;
 
-namespace LetsTrace.Tests
+namespace Jaeger.Core.Tests
 {
     public class SpanBuilderTests
     {
@@ -43,7 +42,7 @@ namespace LetsTrace.Tests
         [Fact]
         public void SpanBuilder_Constructor_ShouldThrowIfMetricsIsNull()
         {
-            var tracer = Substitute.For<ILetsTraceTracer>();
+            var tracer = Substitute.For<IJaegerCoreTracer>();
             var sampler = Substitute.For<ISampler>();
 
             var ex = Assert.Throws<ArgumentNullException>(() => new SpanBuilder(tracer, "op", sampler, null));
@@ -55,7 +54,7 @@ namespace LetsTrace.Tests
         {
             var tracer = GetTracer();
 
-            var span = (ILetsTraceSpan)tracer.BuildSpan("testing")
+            var span = (IJaegerCoreSpan)tracer.BuildSpan("testing")
                 .AddReference(References.ChildOf, null)
                 .Start();
 
@@ -68,11 +67,11 @@ namespace LetsTrace.Tests
             var tracer = GetTracer();
 
             // Reference
-            var referencedSpan = (ILetsTraceSpan)tracer.BuildSpan("parent").Start();
+            var referencedSpan = (IJaegerCoreSpan)tracer.BuildSpan("parent").Start();
             Assert.Empty(referencedSpan.References);
 
             // Child
-            var span = (ILetsTraceSpan)tracer.BuildSpan("child")
+            var span = (IJaegerCoreSpan)tracer.BuildSpan("child")
                 .AddReference(References.FollowsFrom, referencedSpan.Context)
                 .Start();
 
@@ -89,18 +88,18 @@ namespace LetsTrace.Tests
             var tracer = GetTracer();
 
             // Reference
-            var referencedSpan = (ILetsTraceSpan)tracer.BuildSpan("parent")
+            var referencedSpan = (IJaegerCoreSpan)tracer.BuildSpan("parent")
                 .Start()
                 .SetBaggageItem("key", "value");
 
             Assert.Empty(referencedSpan.References);
 
             // Child
-            var span = (ILetsTraceSpan)tracer.BuildSpan("child")
+            var span = (IJaegerCoreSpan)tracer.BuildSpan("child")
                 .AddReference(References.ChildOf, referencedSpan.Context)
                 .Start();
 
-            var builtContext = (ILetsTraceSpanContext)span.Context;
+            var builtContext = (IJaegerCoreSpanContext)span.Context;
 
             Assert.Single(span.References);
             Assert.Equal(referencedSpan.Context.TraceId, span.Context.TraceId);
@@ -118,7 +117,7 @@ namespace LetsTrace.Tests
             var tracer = GetTracer();
 
             var timestamp = new DateTimeOffset(2018, 2, 12, 17, 49, 19, TimeSpan.Zero);
-            var span = (ILetsTraceSpan)tracer.BuildSpan("foo")
+            var span = (IJaegerCoreSpan)tracer.BuildSpan("foo")
                 .WithStartTimestamp(timestamp)
                 .Start();
 
@@ -130,7 +129,7 @@ namespace LetsTrace.Tests
         {
             var tracer = GetTracer();
 
-            var builtSpan = (ILetsTraceSpan)tracer.BuildSpan("foo")
+            var builtSpan = (IJaegerCoreSpan)tracer.BuildSpan("foo")
                 .WithTag("boolkey", true)
                 .WithTag("doublekey", 3d)
                 .WithTag("intkey", 2)
@@ -148,7 +147,7 @@ namespace LetsTrace.Tests
         {
             var tracer = GetTracer();
 
-            var builtSpan = (ILetsTraceSpan)tracer.BuildSpan("foo")
+            var builtSpan = (IJaegerCoreSpan)tracer.BuildSpan("foo")
                 .AsChildOf((ISpan)null)
                 .Start();
 
@@ -160,7 +159,7 @@ namespace LetsTrace.Tests
         {
             var tracer = GetTracer();
 
-            var builtSpan = (ILetsTraceSpan)tracer.BuildSpan("foo")
+            var builtSpan = (IJaegerCoreSpan)tracer.BuildSpan("foo")
                 .AsChildOf((ISpanContext)null)
                 .Start();
 
@@ -173,11 +172,11 @@ namespace LetsTrace.Tests
             var tracer = GetTracer();
 
             // Reference
-            var parentSpan = (ILetsTraceSpan)tracer.BuildSpan("parent").Start();
+            var parentSpan = (IJaegerCoreSpan)tracer.BuildSpan("parent").Start();
             Assert.Empty(parentSpan.References);
 
             // Child
-            var span = (ILetsTraceSpan)tracer.BuildSpan("child")
+            var span = (IJaegerCoreSpan)tracer.BuildSpan("child")
                 .AsChildOf(parentSpan)
                 .Start();
 
@@ -194,11 +193,11 @@ namespace LetsTrace.Tests
             var tracer = GetTracer();
 
             // Reference
-            var parentSpan = (ILetsTraceSpan)tracer.BuildSpan("parent").Start();
+            var parentSpan = (IJaegerCoreSpan)tracer.BuildSpan("parent").Start();
             Assert.Empty(parentSpan.References);
 
             // Child
-            var span = (ILetsTraceSpan)tracer.BuildSpan("child")
+            var span = (IJaegerCoreSpan)tracer.BuildSpan("child")
                 .AsChildOf(parentSpan.Context)
                 .Start();
 
@@ -216,10 +215,10 @@ namespace LetsTrace.Tests
                 .WithSampler(new ConstSampler(true))
                 .Build();
 
-            var parentSpan = (ILetsTraceSpan)tracer.BuildSpan("parent").Start();
+            var parentSpan = (IJaegerCoreSpan)tracer.BuildSpan("parent").Start();
             Assert.True(parentSpan.Context.Flags.HasFlag(ContextFlags.Sampled));
 
-            var childSpan = (ILetsTraceSpan)tracer.BuildSpan("child").AsChildOf(parentSpan).Start();
+            var childSpan = (IJaegerCoreSpan)tracer.BuildSpan("child").AsChildOf(parentSpan).Start();
             Assert.Equal(parentSpan.Context.Flags, childSpan.Context.Flags);
         }
 
@@ -238,7 +237,7 @@ namespace LetsTrace.Tests
                 .WithSampler(sampler)
                 .Build();
 
-            var builtSpan = (ILetsTraceSpan)tracer.BuildSpan("foo").Start();
+            var builtSpan = (IJaegerCoreSpan)tracer.BuildSpan("foo").Start();
 
             Assert.Equal(ContextFlags.Sampled, builtSpan.Context.Flags);
             Assert.Equal(samplerTags, builtSpan.Tags);
@@ -251,7 +250,7 @@ namespace LetsTrace.Tests
                 .WithSampler(new ConstSampler(false))
                 .Build();
 
-            var builtSpan = (ILetsTraceSpan)tracer.BuildSpan("foo").Start();
+            var builtSpan = (IJaegerCoreSpan)tracer.BuildSpan("foo").Start();
 
             Assert.Equal(ContextFlags.None, builtSpan.Context.Flags);
         }
@@ -277,8 +276,8 @@ namespace LetsTrace.Tests
 
             using (var parentScope = tracer.BuildSpan("parent").StartActive(finishSpanOnDispose: true))
             {
-                var parentSpan = (ILetsTraceSpan)parentScope.Span;
-                var newSpan = (ILetsTraceSpan)tracer.BuildSpan("child").Start();
+                var parentSpan = (IJaegerCoreSpan)parentScope.Span;
+                var newSpan = (IJaegerCoreSpan)tracer.BuildSpan("child").Start();
 
                 Assert.Single(newSpan.References);
                 Assert.Equal(parentSpan.Context.TraceId, newSpan.Context.TraceId);
@@ -293,8 +292,8 @@ namespace LetsTrace.Tests
 
             using (var parentScope = tracer.BuildSpan("parent").StartActive(finishSpanOnDispose: true))
             {
-                var parentSpan = (ILetsTraceSpan)parentScope.Span;
-                var newSpan = (ILetsTraceSpan)tracer.BuildSpan("child")
+                var parentSpan = (IJaegerCoreSpan)parentScope.Span;
+                var newSpan = (IJaegerCoreSpan)tracer.BuildSpan("child")
                     .IgnoreActiveSpan()
                     .Start();
 
@@ -309,11 +308,11 @@ namespace LetsTrace.Tests
         {
             var tracer = GetTracer();
 
-            var otherReference = (ILetsTraceSpan)tracer.BuildSpan("reference").Start();
+            var otherReference = (IJaegerCoreSpan)tracer.BuildSpan("reference").Start();
 
             using (var parentScope = tracer.BuildSpan("parent").StartActive(finishSpanOnDispose: true))
             {
-                var newSpan = (ILetsTraceSpan)tracer.BuildSpan("child")
+                var newSpan = (IJaegerCoreSpan)tracer.BuildSpan("child")
                     .AsChildOf(otherReference)
                     .Start();
 

@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 
-namespace LetsTrace.Metrics
+namespace Jaeger.Core.Metrics
 {
     internal interface IAttributedProperty
     {

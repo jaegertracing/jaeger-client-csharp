@@ -1,9 +1,9 @@
 using System.Linq;
-using LetsTracePerOperationSamplingStrategies = LetsTrace.Samplers.HTTP.PerOperationSamplingStrategies;
+using LetsTracePerOperationSamplingStrategies = Jaeger.Core.Samplers.HTTP.PerOperationSamplingStrategies;
 using JaegerThriftPerOperationSamplingStrategies = Jaeger.Thrift.Agent.PerOperationSamplingStrategies;
 
 
-namespace LetsTrace.Jaeger.Samplers.Http
+namespace Jaeger.Transport.Thrift.Samplers.HTTP
 {
     public static class PerOperationSamplingStrategiesMarshaller
     {

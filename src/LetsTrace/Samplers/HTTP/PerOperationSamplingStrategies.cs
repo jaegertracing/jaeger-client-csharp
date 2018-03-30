@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace LetsTrace.Samplers.HTTP
+namespace Jaeger.Core.Samplers.HTTP
 {
     public class PerOperationSamplingStrategies
     {

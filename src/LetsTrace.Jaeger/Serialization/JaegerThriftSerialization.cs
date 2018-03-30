@@ -1,10 +1,8 @@
-﻿using System;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Collections.Generic;
+using Jaeger.Core;
+using Jaeger.Core.Util;
 using OpenTracing;
-
-using LetsTrace.Util;
-
 using JaegerSpan = Jaeger.Thrift.Span;
 using JaegerProcess = Jaeger.Thrift.Process;
 using JaegerTag = Jaeger.Thrift.Tag;
@@ -13,12 +11,12 @@ using JaegerReferenceType = Jaeger.Thrift.SpanRefType;
 using JaegerLog = Jaeger.Thrift.Log;
 using JaegerTagType = Jaeger.Thrift.TagType;
 
-namespace LetsTrace.Jaeger.Serialization
+namespace Jaeger.Transport.Thrift.Serialization
 {
     public class JaegerThriftSerialization : ISerialization
     {
 
-        public JaegerSpan BuildJaegerThriftSpan(ILetsTraceSpan span)
+        public JaegerSpan BuildJaegerThriftSpan(IJaegerCoreSpan span)
         {
             var context = span.Context;
             var startTime = span.StartTimestampUtc.ToUnixTimeMicroseconds();
@@ -43,7 +41,7 @@ namespace LetsTrace.Jaeger.Serialization
             return jaegerSpan;
         }
 
-        public JaegerProcess BuildJaegerProcessThrift(ILetsTraceTracer tracer)
+        public JaegerProcess BuildJaegerProcessThrift(IJaegerCoreTracer tracer)
         {
             return new JaegerProcess(tracer.ServiceName)
             {
@@ -68,7 +66,7 @@ namespace LetsTrace.Jaeger.Serialization
         {
             if (reference.Type != References.ChildOf && reference.Type != References.FollowsFrom) { return null; }
 
-            var context = (ILetsTraceSpanContext)reference.Context;
+            var context = (IJaegerCoreSpanContext)reference.Context;
             var type = reference.Type == References.ChildOf ? JaegerReferenceType.CHILD_OF : JaegerReferenceType.FOLLOWS_FROM;
             return new JaegerReference(type, (long)context.TraceId.Low, (long)context.TraceId.High, context.SpanId);
         }

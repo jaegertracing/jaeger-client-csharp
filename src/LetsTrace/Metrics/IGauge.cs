@@ -1,4 +1,4 @@
-﻿namespace LetsTrace.Metrics
+﻿namespace Jaeger.Core.Metrics
 {
     public interface IGauge : IMetricValue
     {

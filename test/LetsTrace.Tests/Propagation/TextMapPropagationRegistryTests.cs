@@ -2,25 +2,25 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
-using LetsTrace.Propagation;
+using Jaeger.Core.Propagation;
 using NSubstitute;
 using OpenTracing.Propagation;
 using Xunit;
 
-namespace LetsTrace.Tests.Propagation
+namespace Jaeger.Core.Tests.Propagation
 {
     public class TextMapPropagationRegistryTests
     {
         private readonly IPropagationRegistry _propagationRegistry;
         private readonly Dictionary<string, string> _baggage;
-        private readonly ILetsTraceSpanContext _spanContext;
+        private readonly IJaegerCoreSpanContext _spanContext;
         private readonly IFormat<ITextMap> _format;
 
         public TextMapPropagationRegistryTests()
         {
             _propagationRegistry = Propagators.TextMap;
             _baggage = new Dictionary<string, string> { { "key1", "value1/val" }, { "key2", "value2/val" } };
-            _spanContext = Substitute.For<ILetsTraceSpanContext>();
+            _spanContext = Substitute.For<IJaegerCoreSpanContext>();
             _format = Substitute.For<IFormat<ITextMap>>();
 
             _spanContext.GetBaggageItems().Returns(_baggage);

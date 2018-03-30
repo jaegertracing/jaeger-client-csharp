@@ -1,6 +1,4 @@
-using System;
-
-namespace LetsTrace
+namespace Jaeger.Core
 {
     public class Constants
     {

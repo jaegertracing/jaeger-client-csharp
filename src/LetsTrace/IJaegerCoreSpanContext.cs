@@ -1,8 +1,8 @@
 using OpenTracing;
 
-namespace LetsTrace
+namespace Jaeger.Core
 {
-    public interface ILetsTraceSpanContext : ISpanContext
+    public interface IJaegerCoreSpanContext : ISpanContext
     {
         TraceId TraceId { get; }
         SpanId SpanId { get; }

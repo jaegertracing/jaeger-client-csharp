@@ -1,6 +1,6 @@
 using System;
 
-namespace LetsTrace.Util
+namespace Jaeger.Core.Util
 {
     public interface IClock
     {

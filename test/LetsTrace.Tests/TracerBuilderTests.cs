@@ -1,9 +1,9 @@
 ﻿using System;
-using LetsTrace.Metrics;
-using LetsTrace.Propagation;
-using LetsTrace.Reporters;
-using LetsTrace.Samplers;
-using LetsTrace.Transport;
+using Jaeger.Core.Metrics;
+using Jaeger.Core.Propagation;
+using Jaeger.Core.Reporters;
+using Jaeger.Core.Samplers;
+using Jaeger.Core.Transport;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using OpenTracing;
@@ -11,7 +11,7 @@ using OpenTracing.Propagation;
 using OpenTracing.Util;
 using Xunit;
 
-namespace LetsTrace.Tests
+namespace Jaeger.Core.Tests
 {
     public class TracerBuilderTests
     {
@@ -148,7 +148,7 @@ namespace LetsTrace.Tests
         {
             var loggerFactory = Substitute.For<ILoggerFactory>();
             var logger = Substitute.For<ILogger>();
-            var span = Substitute.For<ILetsTraceSpan>();
+            var span = Substitute.For<IJaegerCoreSpan>();
             loggerFactory.CreateLogger<LoggingReporter>().Returns(logger);
             span.Context.IsSampled.Returns(true);
 

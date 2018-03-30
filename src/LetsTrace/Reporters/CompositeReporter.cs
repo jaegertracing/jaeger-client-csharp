@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace LetsTrace.Reporters
+namespace Jaeger.Core.Reporters
 {
     public class CompositeReporter : IReporter
     {
@@ -19,7 +19,7 @@ namespace LetsTrace.Reporters
             }
         }
 
-        public void Report(ILetsTraceSpan span)
+        public void Report(IJaegerCoreSpan span)
         {
             foreach(var reporter in _reporters)
             {

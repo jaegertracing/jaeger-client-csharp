@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using LetsTrace.Metrics;
-using LetsTrace.Samplers.HTTP;
+using Jaeger.Core.Metrics;
+using Jaeger.Core.Samplers.HTTP;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace LetsTrace.Samplers
+namespace Jaeger.Core.Samplers
 {
     public class RemoteControlledSampler : ISampler
     {

@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\LetsTrace\LetsTrace.csproj" />
+    <ProjectReference Include="..\..\src\LetsTrace\Jaeger.Core.csproj" />
   </ItemGroup>
 
 </Project>

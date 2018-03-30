@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using OpenTracing;
 
-namespace LetsTrace
+namespace Jaeger.Core
 {
     // TraceId represents unique 128bit identifier of a trace
     public class TraceId
@@ -111,7 +111,7 @@ namespace LetsTrace
 
     // The SpanContext is used to pass the information needed by other spans so
     // that they can correctly reference other spans
-    public class SpanContext : ILetsTraceSpanContext
+    public class SpanContext : IJaegerCoreSpanContext
     {
         public TraceId TraceId { get; }
         public SpanId SpanId { get; }

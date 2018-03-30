@@ -4,22 +4,22 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Net.Sockets;
 using System.Reflection;
-using LetsTrace.Metrics;
-using LetsTrace.Propagation;
-using LetsTrace.Reporters;
-using LetsTrace.Samplers;
-using LetsTrace.Transport;
-using LetsTrace.Util;
+using Jaeger.Core.Metrics;
+using Jaeger.Core.Propagation;
+using Jaeger.Core.Reporters;
+using Jaeger.Core.Samplers;
+using Jaeger.Core.Transport;
+using Jaeger.Core.Util;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using OpenTracing;
 using OpenTracing.Propagation;
 using OpenTracing.Util;
 
-namespace LetsTrace
+namespace Jaeger.Core
 {
     // Tracer is the main object that consumers use to start spans
-    public class Tracer : ILetsTraceTracer
+    public class Tracer : IJaegerCoreTracer
     {
         private readonly ILogger _logger;
 
@@ -71,7 +71,7 @@ namespace LetsTrace
             return new SpanBuilder(this, operationName, Sampler, Metrics);
         }
 
-        public void ReportSpan(ILetsTraceSpan span)
+        public void ReportSpan(IJaegerCoreSpan span)
         {
             if (span.Context.IsSampled) {
                 Reporter.Report(span);
@@ -90,7 +90,7 @@ namespace LetsTrace
         }
 
         // TODO: setup baggage restriction
-        public ILetsTraceSpan SetBaggageItem(ILetsTraceSpan span, string key, string value)
+        public IJaegerCoreSpan SetBaggageItem(IJaegerCoreSpan span, string key, string value)
         {
             var context = (SpanContext)span.Context;
             var baggage = context.GetBaggageItems().ToDictionary(b => b.Key, b => b.Value);

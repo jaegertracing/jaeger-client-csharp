@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace LetsTrace.Samplers
+namespace Jaeger.Core.Samplers
 {
     // ConstSampler is a sampler that always makes the same decision.
     public class ConstSampler : ISampler

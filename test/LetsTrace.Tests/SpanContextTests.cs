@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Xunit;
 
-namespace LetsTrace.Tests
+namespace Jaeger.Core.Tests
 {
     public class SpanContextTests
     {

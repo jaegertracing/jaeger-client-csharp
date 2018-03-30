@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Threading;
+using Jaeger.Core.Samplers;
 using Jaeger.Thrift.Agent;
-using LetsTrace.Jaeger.Samplers.Http;
-using LetsTrace.Samplers;
+using Jaeger.Transport.Thrift.Samplers.HTTP;
 using Thrift.Protocols;
 using Thrift.Transports.Client;
-using SamplingStrategyResponse = LetsTrace.Samplers.HTTP.SamplingStrategyResponse;
+using SamplingStrategyResponse = Jaeger.Core.Samplers.HTTP.SamplingStrategyResponse;
 
-namespace LetsTrace.Jaeger.Samplers
+namespace Jaeger.Transport.Thrift.Samplers
 {
     public class HttpSamplingManager : ISamplingManager
     {

@@ -1,7 +1,7 @@
-using LetsTrace.Jaeger.Transport.Sender;
+using Jaeger.Transport.Thrift.Transport.Sender;
 using Thrift.Protocols;
 
-namespace LetsTrace.Jaeger.Transport
+namespace Jaeger.Transport.Thrift.Transport
 {
     public class JaegerUdpTransport : JaegerThriftTransport
     {

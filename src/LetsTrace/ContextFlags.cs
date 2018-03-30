@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace LetsTrace
+namespace Jaeger.Core
 {
     [Flags]
     public enum ContextFlags

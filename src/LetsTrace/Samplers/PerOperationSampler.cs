@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using LetsTrace.Samplers.HTTP;
+using Jaeger.Core.Samplers.HTTP;
 using Microsoft.Extensions.Logging;
-using SamplerDictionary = System.Collections.Generic.Dictionary<string, LetsTrace.Samplers.IGuaranteedThroughputProbabilisticSampler>;
+using SamplerDictionary = System.Collections.Generic.Dictionary<string, Jaeger.Core.Samplers.IGuaranteedThroughputProbabilisticSampler>;
 
-namespace LetsTrace.Samplers
+namespace Jaeger.Core.Samplers
 {
     // PerOperationSampler is a sampler that uses the name of the operation to
     // maintain a specific GuaranteedThroughputProbabilisticSampler instance

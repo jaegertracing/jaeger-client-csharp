@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using LetsTrace.Samplers;
+using Jaeger.Core.Samplers;
 using NSubstitute;
 using Xunit;
 
-namespace LetsTrace.Tests.Samplers
+namespace Jaeger.Core.Tests.Samplers
 {
     public class GuaranteedThroughputProbabilisticSamplerTests
     {

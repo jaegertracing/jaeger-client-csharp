@@ -1,4 +1,4 @@
-namespace LetsTrace.Samplers.HTTP
+namespace Jaeger.Core.Samplers.HTTP
 {
     public class RateLimitingSamplingStrategy
     {

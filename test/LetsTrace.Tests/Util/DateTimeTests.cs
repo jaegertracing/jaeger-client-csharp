@@ -1,9 +1,8 @@
 using System;
-using LetsTrace.Util;
-using NSubstitute;
+using Jaeger.Core.Util;
 using Xunit;
 
-namespace LetsTrace.Tests.Util
+namespace Jaeger.Core.Tests.Util
 {
     public class DateTimeTests
     {

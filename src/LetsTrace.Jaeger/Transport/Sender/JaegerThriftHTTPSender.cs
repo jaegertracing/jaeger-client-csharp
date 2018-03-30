@@ -7,7 +7,7 @@ using Thrift.Transports.Client;
 using JaegerBatch = Jaeger.Thrift.Batch;
 using JaegerSpan = Jaeger.Thrift.Span;
 
-namespace LetsTrace.Jaeger.Transport.Sender
+namespace Jaeger.Transport.Thrift.Transport.Sender
 {
     public class JaegerThriftHttpSender : JaegerSender
     {

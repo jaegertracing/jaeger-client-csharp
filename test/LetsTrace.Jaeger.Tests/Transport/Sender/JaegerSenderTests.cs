@@ -2,14 +2,14 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using LetsTrace.Jaeger.Transport.Sender;
+using Jaeger.Transport.Thrift.Transport.Sender;
 using NSubstitute;
 using Thrift.Protocols;
 using Xunit;
 using JaegerSpan = Jaeger.Thrift.Span;
 using JaegerProcess = Jaeger.Thrift.Process;
 
-namespace LetsTrace.Jaeger.Tests.Transport.Sender
+namespace Jaeger.Transport.Thrift.Tests.Transport.Sender
 {
     public class JaegerSenderTests
     {

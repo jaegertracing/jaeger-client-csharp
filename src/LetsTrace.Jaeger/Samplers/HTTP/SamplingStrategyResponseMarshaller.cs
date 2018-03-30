@@ -1,7 +1,7 @@
-using LetsTraceSamplingStrategyResponse = LetsTrace.Samplers.HTTP.SamplingStrategyResponse;
+using LetsTraceSamplingStrategyResponse = Jaeger.Core.Samplers.HTTP.SamplingStrategyResponse;
 using JaegerThriftSamplingStrategyResponse = Jaeger.Thrift.Agent.SamplingStrategyResponse;
 
-namespace LetsTrace.Jaeger.Samplers.Http
+namespace Jaeger.Transport.Thrift.Samplers.HTTP
 {
     public static class SamplingStrategyResponseMarshaller
     {

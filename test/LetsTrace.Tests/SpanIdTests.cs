@@ -1,7 +1,7 @@
 using System;
 using Xunit;
 
-namespace LetsTrace.Tests
+namespace Jaeger.Core.Tests
 {
     public class SpanIdTests
     {

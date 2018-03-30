@@ -1,9 +1,9 @@
 using System;
-using LetsTrace.Util;
+using Jaeger.Core.Util;
 using NSubstitute;
 using Xunit;
 
-namespace LetsTrace.Tests.Util
+namespace Jaeger.Core.Tests.Util
 {
     public class RateLimiterTests
     {

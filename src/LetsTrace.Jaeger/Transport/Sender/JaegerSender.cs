@@ -6,7 +6,7 @@ using Thrift.Protocols;
 using JaegerSpan = Jaeger.Thrift.Span;
 using JaegerProcess = Jaeger.Thrift.Process;
 
-namespace LetsTrace.Jaeger.Transport.Sender
+namespace Jaeger.Transport.Thrift.Transport.Sender
 {
     public abstract class JaegerSender : ISender
     {

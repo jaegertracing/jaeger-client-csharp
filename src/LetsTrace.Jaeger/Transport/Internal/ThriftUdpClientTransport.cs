@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Thrift.Transports;
 
-namespace LetsTrace.Jaeger.Transport.Internal
+namespace Jaeger.Transport.Thrift.Transport.Internal
 {
     // TODO: TMemoryBufferClientTransport is missing a Reset method or having _byteStream protected
     internal class ThriftUdpClientTransport : TClientTransport

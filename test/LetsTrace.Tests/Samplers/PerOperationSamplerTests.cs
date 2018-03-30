@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
-using LetsTrace.Samplers;
-using LetsTrace.Samplers.HTTP;
+using Jaeger.Core.Samplers;
+using Jaeger.Core.Samplers.HTTP;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Xunit;
 
-namespace LetsTrace.Tests.Samplers
+namespace Jaeger.Core.Tests.Samplers
 {
     public class PerOperationSamplerTests
     {

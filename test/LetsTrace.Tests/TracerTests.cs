@@ -1,19 +1,19 @@
 using System;
 using System.Collections.Generic;
-using LetsTrace.Propagation;
-using LetsTrace.Reporters;
-using LetsTrace.Samplers;
+using Jaeger.Core.Propagation;
+using Jaeger.Core.Reporters;
+using Jaeger.Core.Samplers;
 using NSubstitute;
 using NSubstitute.ReturnsExtensions;
 using OpenTracing;
 using OpenTracing.Propagation;
 using Xunit;
 
-namespace LetsTrace.Tests
+namespace Jaeger.Core.Tests
 {
     public class TracerTests
     {
-        private readonly ILetsTraceTracer _builtTracer;
+        private readonly IJaegerCoreTracer _builtTracer;
         private readonly IReporter _mockReporter;
         private readonly string _operationName;
         private readonly string _serviceName;
@@ -53,7 +53,7 @@ namespace LetsTrace.Tests
         {
             _mockSampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, object>()));
 
-            var span = (ILetsTraceSpan)_builtTracer.BuildSpan(_operationName).Start();
+            var span = (IJaegerCoreSpan)_builtTracer.BuildSpan(_operationName).Start();
 
             Assert.Equal(_operationName, span.OperationName);
             Assert.Equal(_builtTracer, span.Tracer);
@@ -62,32 +62,32 @@ namespace LetsTrace.Tests
         [Fact]
         public void Tracer_ReportSpan_ShouldPassSpanToReporter()
         {
-            var span = Substitute.For<ILetsTraceSpan>();
-            var context = Substitute.For<ILetsTraceSpanContext>();
+            var span = Substitute.For<IJaegerCoreSpan>();
+            var context = Substitute.For<IJaegerCoreSpanContext>();
             context.IsSampled.Returns(true);
             span.Context.Returns(context);
 
             _builtTracer.ReportSpan(span);
-            _mockReporter.Received(1).Report(Arg.Any<ILetsTraceSpan>());
+            _mockReporter.Received(1).Report(Arg.Any<IJaegerCoreSpan>());
         }
 
         [Fact]
         public void Tracer_ReportSpan_ShouldNotReportWhenNotSampled()
         {
-            var span = Substitute.For<ILetsTraceSpan>();
-            var context = Substitute.For<ILetsTraceSpanContext>();
+            var span = Substitute.For<IJaegerCoreSpan>();
+            var context = Substitute.For<IJaegerCoreSpanContext>();
             context.IsSampled.Returns(false);
             span.Context.Returns(context);
 
             _builtTracer.ReportSpan(span);
-            _mockReporter.Received(0).Report(Arg.Any<ILetsTraceSpan>());
+            _mockReporter.Received(0).Report(Arg.Any<IJaegerCoreSpan>());
         }
 
         [Fact]
         public void Tracer_ExtractAndInject_ShouldThrowWhenCodecDoesNotExist()
         {
             var carrier = "carrier, yo";
-            var spanContext = Substitute.For<ILetsTraceSpanContext>();
+            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
             var format = new Builtin<string>("formatDoesNotExist");
 
             var ex = Assert.Throws<ArgumentException>(() => _builtTracer.Extract(format, carrier));
@@ -101,7 +101,7 @@ namespace LetsTrace.Tests
         public void Tracer_ExtractAndInject_ShouldUseTheCorrectCodec()
         {
             var carrier = "carrier, yo";
-            var spanContext = Substitute.For<ILetsTraceSpanContext>();
+            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
 
             _mockExtractor.Extract(Arg.Is<string>(c => c == carrier));
             _mockInjector.Inject(Arg.Is<ISpanContext>(sc => sc == spanContext), Arg.Is<string>(c => c == carrier));

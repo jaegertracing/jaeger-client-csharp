@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using LetsTrace.Samplers;
+using Jaeger.Core.Samplers;
 using Xunit;
 
-namespace LetsTrace.Tests.Samplers
+namespace Jaeger.Core.Tests.Samplers
 {
     public class ConstSamplerTests
     {

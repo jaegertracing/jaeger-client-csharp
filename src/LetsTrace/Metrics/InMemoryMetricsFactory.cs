@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
-namespace LetsTrace.Metrics
+namespace Jaeger.Core.Metrics
 {
     public class InMemoryMetricsFactory : BaseMetricsFactory
     {

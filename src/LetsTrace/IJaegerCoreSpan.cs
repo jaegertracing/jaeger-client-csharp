@@ -3,17 +3,17 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using OpenTracing;
 
-namespace LetsTrace
+namespace Jaeger.Core
 {
-    public interface ILetsTraceSpan : ISpan, IDisposable
+    public interface IJaegerCoreSpan : ISpan, IDisposable
     {
-        new ILetsTraceSpanContext Context { get; }
+        new IJaegerCoreSpanContext Context { get; }
         DateTime? FinishTimestampUtc { get; }
         List<LogRecord> Logs { get; }
         string OperationName { get; }
         IEnumerable<Reference> References { get; }
         DateTime StartTimestampUtc { get; }
         Dictionary<string, object> Tags { get; }
-        [JsonIgnore] ILetsTraceTracer Tracer { get; }
+        [JsonIgnore] IJaegerCoreTracer Tracer { get; }
     }
 }

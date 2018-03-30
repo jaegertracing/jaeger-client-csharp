@@ -1,6 +1,6 @@
 using OpenTracing;
 
-namespace LetsTrace.Propagation
+namespace Jaeger.Core.Propagation
 {
     public interface IInjector
     {

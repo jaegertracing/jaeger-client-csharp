@@ -1,6 +1,6 @@
 ﻿using OpenTracing.Propagation;
 
-namespace LetsTrace.Propagation
+namespace Jaeger.Core.Propagation
 {
     public class TextMapPropagationRegistry : PropagationRegistry
     {

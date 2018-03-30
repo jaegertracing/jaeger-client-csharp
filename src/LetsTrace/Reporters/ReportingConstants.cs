@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace LetsTrace.Reporters
+namespace Jaeger.Core.Reporters
 {
     public class ReportingConstants
     {

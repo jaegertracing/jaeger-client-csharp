@@ -1,11 +1,12 @@
-﻿using JaegerSpan = Jaeger.Thrift.Span;
+﻿using Jaeger.Core;
+using JaegerSpan = Jaeger.Thrift.Span;
 using JaegerProcess = Jaeger.Thrift.Process;
 
-namespace LetsTrace.Jaeger.Serialization
+namespace Jaeger.Transport.Thrift.Serialization
 {
     public interface ISerialization
     {
-        JaegerSpan BuildJaegerThriftSpan(ILetsTraceSpan span);
-        JaegerProcess BuildJaegerProcessThrift(ILetsTraceTracer tracer);
+        JaegerSpan BuildJaegerThriftSpan(IJaegerCoreSpan span);
+        JaegerProcess BuildJaegerProcessThrift(IJaegerCoreTracer tracer);
     }
 }

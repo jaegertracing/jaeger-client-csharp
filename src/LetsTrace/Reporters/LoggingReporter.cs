@@ -2,7 +2,7 @@ using System;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
-namespace LetsTrace.Reporters
+namespace Jaeger.Core.Reporters
 {
     public class LoggingReporter : IReporter
     {
@@ -15,6 +15,6 @@ namespace LetsTrace.Reporters
 
         public void Dispose() {}
 
-        public void Report(ILetsTraceSpan span) => Logger.LogInformation($"Reporting span:\n {JsonConvert.SerializeObject(span, Formatting.Indented)}");
+        public void Report(IJaegerCoreSpan span) => Logger.LogInformation($"Reporting span:\n {JsonConvert.SerializeObject(span, Formatting.Indented)}");
     }
 }

@@ -1,7 +1,7 @@
 ﻿using System;
-using LetsTrace.Samplers.HTTP;
+using Jaeger.Core.Samplers.HTTP;
 
-namespace LetsTrace.Samplers
+namespace Jaeger.Core.Samplers
 {
     public interface ISamplingManager
     {

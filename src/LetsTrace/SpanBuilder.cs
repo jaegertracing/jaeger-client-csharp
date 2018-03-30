@@ -1,16 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using LetsTrace.Metrics;
-using LetsTrace.Samplers;
-using LetsTrace.Util;
+using Jaeger.Core.Metrics;
+using Jaeger.Core.Samplers;
+using Jaeger.Core.Util;
 using OpenTracing;
 
-namespace LetsTrace
+namespace Jaeger.Core
 {
     public class SpanBuilder : ISpanBuilder
     {
-        private readonly ILetsTraceTracer _tracer;
+        private readonly IJaegerCoreTracer _tracer;
         private readonly string _operationName;
         private readonly ISampler _sampler;
         private readonly IMetrics _metrics;
@@ -20,7 +20,7 @@ namespace LetsTrace
         private bool _ignoreActiveSpan;
         private DateTime? _startTimestampUtc;
 
-        public SpanBuilder(ILetsTraceTracer tracer, string operationName, ISampler sampler, IMetrics metrics)
+        public SpanBuilder(IJaegerCoreTracer tracer, string operationName, ISampler sampler, IMetrics metrics)
         {
             _tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
             _operationName = operationName ?? throw new ArgumentNullException(nameof(operationName));

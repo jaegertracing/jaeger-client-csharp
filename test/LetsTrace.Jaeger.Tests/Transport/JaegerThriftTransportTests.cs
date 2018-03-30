@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using LetsTrace.Exceptions;
-using LetsTrace.Jaeger.Serialization;
-using LetsTrace.Jaeger.Transport;
-using LetsTrace.Jaeger.Transport.Sender;
+using Jaeger.Core;
+using Jaeger.Core.Exceptions;
+using Jaeger.Transport.Thrift.Serialization;
+using Jaeger.Transport.Thrift.Transport;
+using Jaeger.Transport.Thrift.Transport.Sender;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Thrift.Protocols;
@@ -12,7 +13,7 @@ using Xunit;
 using JaegerProcess = Jaeger.Thrift.Process;
 using JaegerSpan = Jaeger.Thrift.Span;
 
-namespace LetsTrace.Jaeger.Tests.Transport
+namespace Jaeger.Transport.Thrift.Tests.Transport
 {
     public class JaegerThriftTransportTests
     {
@@ -50,8 +51,8 @@ namespace LetsTrace.Jaeger.Tests.Transport
         [Fact]
         public async void AppendAsync_ShouldCallSerializationAndSender()
         {
-            var span = Substitute.For<ILetsTraceSpan>();
-            var tracer = Substitute.For<ILetsTraceTracer>();
+            var span = Substitute.For<IJaegerCoreSpan>();
+            var tracer = Substitute.For<IJaegerCoreTracer>();
             span.Tracer.Returns(tracer);
             var cts = new CancellationTokenSource();
 
@@ -75,8 +76,8 @@ namespace LetsTrace.Jaeger.Tests.Transport
         [Fact]
         public async void AppendAsync_ShouldFlushWhenOverTheBufferSize()
         {
-            var span = Substitute.For<ILetsTraceSpan>();
-            var tracer = Substitute.For<ILetsTraceTracer>();
+            var span = Substitute.For<IJaegerCoreSpan>();
+            var tracer = Substitute.For<IJaegerCoreTracer>();
             span.Tracer.Returns(tracer);
             var cts = new CancellationTokenSource();
 

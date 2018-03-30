@@ -1,4 +1,4 @@
-namespace LetsTrace.Propagation
+namespace Jaeger.Core.Propagation
 {
     public interface IHeadersConfig
     {

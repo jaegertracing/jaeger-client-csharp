@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <PackageTags>letstrace;tracing;opentracing</PackageTags>
-    <Description>.NET Tracing</Description>
+    <PackageTags>jaeger;tracing;opentracing</PackageTags>
+    <Description>Jaeger .NET Tracing</Description>
   </PropertyGroup>
 
   <ItemGroup>

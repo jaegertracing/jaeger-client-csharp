@@ -3,14 +3,13 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using System.Threading.Tasks;
-using LetsTrace.Jaeger.Transport.Internal;
+using Jaeger.Transport.Thrift.Transport.Internal;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Thrift.Transports;
 using Xunit;
 
-namespace LetsTrace.Jaeger.Tests.Transport.Internal
+namespace Jaeger.Transport.Thrift.Tests.Transport.Internal
 {
     public class ThriftUdpClientTransportTests : IDisposable
     {

@@ -1,6 +1,6 @@
 ﻿using OpenTracing.Propagation;
 
-namespace LetsTrace.Tests
+namespace Jaeger.Core.Tests
 {
     internal struct Builtin<TCarrier> : IFormat<TCarrier>
     {

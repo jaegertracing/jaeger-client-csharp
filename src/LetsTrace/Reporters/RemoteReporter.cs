@@ -1,12 +1,12 @@
 using System;
 using System.Threading;
-using LetsTrace.Exceptions;
-using LetsTrace.Metrics;
-using LetsTrace.Transport;
+using Jaeger.Core.Exceptions;
+using Jaeger.Core.Metrics;
+using Jaeger.Core.Transport;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace LetsTrace.Reporters
+namespace Jaeger.Core.Reporters
 {
     // TODO: use this to load up spans into a processing queue that will be taken care of by a thread
     public class RemoteReporter : IReporter
@@ -38,7 +38,7 @@ namespace LetsTrace.Reporters
         }
 
         // TODO: Make async!
-        public async void Report(ILetsTraceSpan span)
+        public async void Report(IJaegerCoreSpan span)
         {
             try
             {

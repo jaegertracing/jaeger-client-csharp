@@ -1,10 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using LetsTrace.Metrics;
+using Jaeger.Core.Metrics;
 using Xunit;
 
-namespace LetsTrace.Tests.Metrics
+namespace Jaeger.Core.Tests.Metrics
 {
     public class InMemoryMetricsTests
     {

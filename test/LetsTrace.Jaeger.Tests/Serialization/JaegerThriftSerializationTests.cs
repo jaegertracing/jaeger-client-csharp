@@ -1,13 +1,14 @@
 using System;
 using System.Collections.Generic;
-using LetsTrace.Jaeger.Serialization;
+using Jaeger.Core;
+using Jaeger.Transport.Thrift.Serialization;
 using NSubstitute;
 using OpenTracing;
 using Xunit;
 using JaegerReferenceType = Jaeger.Thrift.SpanRefType;
 using JaegerTagType = Jaeger.Thrift.TagType;
 
-namespace LetsTrace.Jaeger.Tests.Serialization
+namespace Jaeger.Transport.Thrift.Tests.Serialization
 {
     public class JaegerThriftSerializationTests
     {
@@ -15,7 +16,7 @@ namespace LetsTrace.Jaeger.Tests.Serialization
         public void BuildJaegerReference_BuildsChildOfCorrectly()
         {
             var refType = References.ChildOf;
-            var context = Substitute.For<ILetsTraceSpanContext>();
+            var context = Substitute.For<IJaegerCoreSpanContext>();
             var traceId = new TraceId(152387, 4587234);
             var spanId = new SpanId(3087);
 
@@ -36,7 +37,7 @@ namespace LetsTrace.Jaeger.Tests.Serialization
         public void BuildJaegerReference_BuildsFollowsFromCorrectly()
         {
             var refType = References.FollowsFrom;
-            var context = Substitute.For<ILetsTraceSpanContext>();
+            var context = Substitute.For<IJaegerCoreSpanContext>();
             var traceId = new TraceId(98246, 477924576);
             var spanId = new SpanId(846);
 
@@ -57,7 +58,7 @@ namespace LetsTrace.Jaeger.Tests.Serialization
         public void BuildJaegerReference_ShouldReturnNullIfNoJaegerReferenceTypeMatches()
         {
             var refType = "sibling";
-            var context = Substitute.For<ILetsTraceSpanContext>();
+            var context = Substitute.For<IJaegerCoreSpanContext>();
             var traceId = new TraceId(98246, 477924576);
             var spanId = new SpanId(846);
 
@@ -155,7 +156,7 @@ namespace LetsTrace.Jaeger.Tests.Serialization
         public void BuildJeagerProcessThrift()
         {
             var serialization = new JaegerThriftSerialization();
-            var tracer = Substitute.For<ILetsTraceTracer>();
+            var tracer = Substitute.For<IJaegerCoreTracer>();
             tracer.ServiceName.Returns("testingService");
             var tracerTags = new Dictionary<string, object>
             {
@@ -207,7 +208,7 @@ namespace LetsTrace.Jaeger.Tests.Serialization
             };
 
             var serialization = new JaegerThriftSerialization();
-            var span = Substitute.For<ILetsTraceSpan>();
+            var span = Substitute.For<IJaegerCoreSpan>();
             var traceId = new TraceId(10, 2);
             var spanId = new SpanId(15);
             var parentId = new SpanId(82);
@@ -223,7 +224,7 @@ namespace LetsTrace.Jaeger.Tests.Serialization
             span.FinishTimestampUtc.Returns(finishTimestamp);
 
             var parentRefType = References.ChildOf;
-            var parentContext = Substitute.For<ILetsTraceSpanContext>();
+            var parentContext = Substitute.For<IJaegerCoreSpanContext>();
             parentContext.TraceId.Returns(traceId);
             parentContext.SpanId.Returns(parentId);
             var reference = new Reference(parentRefType, context);

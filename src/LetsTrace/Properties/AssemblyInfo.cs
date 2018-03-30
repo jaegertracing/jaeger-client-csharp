@@ -1,4 +1,4 @@
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo(assemblyName: "LetsTrace.Tests")]
+[assembly: InternalsVisibleTo(assemblyName: "Jaeger.Core.Tests")]
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]

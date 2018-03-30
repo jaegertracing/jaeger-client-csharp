@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 
-namespace LetsTrace.Metrics
+namespace Jaeger.Core.Metrics
 {
     public abstract partial class BaseMetricsFactory
     {
