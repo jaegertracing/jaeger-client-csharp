@@ -9,15 +9,15 @@
 This library is still under construction and needs to be peer reviewed as well as have features added.
 
 ## Usage
-This package contains everything you need to get up and running. If you want to report to a system such as Jaeger or Zipkin you will need to use their LetsTrace NuGet packages.
+This package contains everything you need to get up and running. If you want to report to a system such as Jaeger or Zipkin you will need to use their NuGet packages.
 
 ### The Tracer
 The following will give you a tracer that reports spans to the `ILogger` from `ILoggerFactory`.
 
 ```C#
-using LetsTrace;
-using LetsTrace.Reporters;
-using LetsTrace.Samplers;
+using Jaeger.Core;
+using Jaeger.Core.Reporters;
+using Jaeger.Core.Samplers;
 
 var loggerFactory = ; // get Microsoft.Extensions.Logging ILoggerFactory
 
@@ -32,7 +32,7 @@ var tracer = new Tracer.Builder(serviceName)
 ```
 
 #### Sampling
-For more information on sampling see the sampling [README](src/LetsTrace/Samplers/README.md)
+For more information on sampling see the sampling [README](src/Jaeger.Core/Samplers/README.md)
 
 #### Extracting Span Information
 When your code is called you might want to pull current trace information out of calling information before building and starting a span. This allows you to link your span into a current trace and track its relation to other spans. By default text map and http headers are supported. More support is planned for the future as well as allowing custom extractors.
@@ -63,7 +63,7 @@ You can then pass along the headers and as along as what you are calling knows h
 Before you start a span you will want to build it out. You can do this using the span builder. You would build a span for each operation you wanted to trace.
 
 ```C#
-using LetsTrace;
+using Jaeger.Core;
 
 var operationName = "Get::api/values/";
 var builder = tracer.BuildSpan(operationName);
@@ -82,14 +82,7 @@ References allow you to show how this span relates to another span. You need the
 ```C#
 builder.AddReference("follows_from", spanContext);
 ```
-There also exist helper methods to simplify adding follows from or child of references. 
-
-#### Follows From
-Shorthand for adding a follows from reference. You can pass in an `ISpan` or and `ISpanContext`.
-
-```C#
-builder.FollowsFrom(iSpanOrISpanContext);
-```
+There also exist helper methods to simplify adding child of references. 
 
 #### As Child Of
 Shorthand for adding a chold of reference. You can pass in an `ISpan` or and `ISpanContext`.
