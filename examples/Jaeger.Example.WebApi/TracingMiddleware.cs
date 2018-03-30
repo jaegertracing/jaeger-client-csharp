@@ -1,12 +1,11 @@
-using System;
 using System.Globalization;
 using System.Threading.Tasks;
+using Jaeger.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using OpenTracing;
 using OpenTracing.Tag;
 
-namespace LetsTrace.Example.WebApi
+namespace Jaeger.Example.WebApi
 {
     public class TracingMiddleware
     {
@@ -36,7 +35,7 @@ namespace LetsTrace.Example.WebApi
             var builder = _tracer.GetTracer().BuildSpan(operationName)
                 .WithTag(Tags.SpanKind.Key, Tags.SpanKindServer);
 
-            using ((ILetsTraceSpan)builder.Start())
+            using ((IJaegerCoreSpan)builder.Start())
             {
                 await _next(context);
                 _logger.LogInformation($"Finishing span: {operationName}");

@@ -1,18 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using LetsTrace.Reporters;
-using LetsTrace.Samplers;
-using LetsTrace.Transport;
+﻿using Jaeger.Core.Reporters;
+using Jaeger.Core.Samplers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
-namespace LetsTrace.Example.WebApi
+namespace Jaeger.Example.WebApi
 {
     public class Startup
     {
