@@ -1,7 +1,7 @@
 using BenchmarkDotNet.Attributes;
 using Jaeger.Core;
 
-namespace LetsTrace.Benchmarks
+namespace Jaeger.Benchmarks
 {
     [MemoryDiagnoser]
     public class TagBenchmark

@@ -1,7 +1,6 @@
-﻿using System;
-using BenchmarkDotNet.Running;
+﻿using BenchmarkDotNet.Running;
 
-namespace LetsTrace.Benchmarks
+namespace Jaeger.Benchmarks
 {
     class Program
     {

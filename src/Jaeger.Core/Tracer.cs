@@ -118,7 +118,7 @@ namespace Jaeger.Core
                 this._serviceName = CheckValidServiceName(serviceName);
 
                 var version = GetVersion();
-                this.WithTag(Constants.LetsTraceClientVersionTagKey, version);
+                this.WithTag(Constants.JaegerClientVersionTagKey, version);
 
                 string hostname = System.Net.Dns.GetHostName();
                 if (hostname != null)

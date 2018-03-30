@@ -5,7 +5,7 @@ VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LetsTrace.Example.WebApi", "LetsTrace.Example.WebApi.csproj", "{3CB45E2D-B96F-404B-938E-A6679A6FC18B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LetsTrace", "..\..\src\LetsTrace\LetsTrace.csproj", "{44B20AC2-EBE2-4130-9D8B-46EF2090C4D1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jaeger.Core", "..\..\src\Jaeger.Core\Jaeger.Core.csproj", "{44B20AC2-EBE2-4130-9D8B-46EF2090C4D1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

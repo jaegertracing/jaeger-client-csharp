@@ -1,9 +1,7 @@
 [![Build status][ci-img]][ci] [![NuGet][nuget-img]][nuget]
 
-# LetsTrace
-C# OpenTracing
+# Jaeger C# Client
 
-- Support for Zipkin and Jaeger via NuGet packages.
 - Implements C# [OpenTracing API](https://github.com/opentracing/opentracing-csharp) v. 0.11
 - Supports netstandard 2.0
 

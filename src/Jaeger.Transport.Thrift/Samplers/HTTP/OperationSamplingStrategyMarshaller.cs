@@ -1,13 +1,13 @@
-using LetsTraceOperationSamplingStrategy = Jaeger.Core.Samplers.HTTP.OperationSamplingStrategy;
+using JaegerOperationSamplingStrategy = Jaeger.Core.Samplers.HTTP.OperationSamplingStrategy;
 using JaegerThriftOperationSamplingStrategy = Jaeger.Thrift.Agent.OperationSamplingStrategy;
 
 namespace Jaeger.Transport.Thrift.Samplers.HTTP
 {
     public static class OperationSamplingStrategyMarshaller
     {
-        public static LetsTraceOperationSamplingStrategy FromThrift(this JaegerThriftOperationSamplingStrategy thriftInstance)
+        public static JaegerOperationSamplingStrategy FromThrift(this JaegerThriftOperationSamplingStrategy thriftInstance)
         {
-            return new LetsTraceOperationSamplingStrategy
+            return new JaegerOperationSamplingStrategy
             {
                 Operation = thriftInstance.Operation,
                 ProbabilisticSampling = thriftInstance.ProbabilisticSampling.FromThrift()

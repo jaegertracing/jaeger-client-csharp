@@ -5,19 +5,19 @@ VisualStudioVersion = 15.0.27130.2024
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{4FB0DAC9-D8C6-4368-B48E-363FA85029A4}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jaeger.Core", "src\LetsTrace\Jaeger.Core.csproj", "{B0B20678-3793-4DAE-AD7D-096BF0CEADF6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jaeger.Core", "src\Jaeger.Core\Jaeger.Core.csproj", "{B0B20678-3793-4DAE-AD7D-096BF0CEADF6}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{F4DBFB49-2F67-49B0-A60F-E8ED78ACF550}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jaeger.Core.Tests", "test\LetsTrace.Tests\Jaeger.Core.Tests.csproj", "{5F1C7EB5-98A6-48C8-9F35-2A296148FD01}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jaeger.Core.Tests", "test\Jaeger.Core.Tests\Jaeger.Core.Tests.csproj", "{5F1C7EB5-98A6-48C8-9F35-2A296148FD01}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "benchmarks", "benchmarks", "{6663429B-6376-4317-8310-C3E15CF7D491}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LetsTrace.Benchmarks", "benchmarks\LetsTrace.Benchmarks\LetsTrace.Benchmarks.csproj", "{79DCD3B4-4FE7-4C15-B5B8-8498F0E13E78}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jaeger.Benchmarks", "benchmarks\Jaeger.Benchmarks\Jaeger.Benchmarks.csproj", "{79DCD3B4-4FE7-4C15-B5B8-8498F0E13E78}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jaeger.Thrift", "src\Jaeger.Thrift\Jaeger.Thrift.csproj", "{F9EC3615-1D62-4AD3-8E55-0D9CE517A6C6}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jaeger.Transport.Thrift", "src\LetsTrace.Jaeger\Jaeger.Transport.Thrift.csproj", "{980E2941-0F84-49DC-A2F1-17EC1EC08114}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jaeger.Transport.Thrift", "src\Jaeger.Transport.Thrift\Jaeger.Transport.Thrift.csproj", "{980E2941-0F84-49DC-A2F1-17EC1EC08114}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Thrift", "Thrift", "{FB248F0A-11FE-412A-8860-664E337966DC}"
 EndProject
@@ -25,7 +25,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "netcore", "netcore", "{2C8A
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Thrift", "src\Thrift\netcore\Thrift\Thrift.csproj", "{1FE7FE90-8745-4C1C-9772-1D68B395278E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jaeger.Transport.Thrift.Tests", "test\LetsTrace.Jaeger.Tests\Jaeger.Transport.Thrift.Tests.csproj", "{DCC352C1-281B-428D-AF2D-0CAE58A808CB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jaeger.Transport.Thrift.Tests", "test\Jaeger.Transport.Thrift.Tests\Jaeger.Transport.Thrift.Tests.csproj", "{DCC352C1-281B-428D-AF2D-0CAE58A808CB}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{B699D79B-C838-4636-B5FF-86FF6D571682}"
 EndProject

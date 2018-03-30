@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Jaeger.Thrift\Jaeger.Thrift.csproj" />
-    <ProjectReference Include="..\LetsTrace\Jaeger.Core.csproj" />
+    <ProjectReference Include="..\Jaeger.Core\Jaeger.Core.csproj" />
   </ItemGroup>
 
 </Project>

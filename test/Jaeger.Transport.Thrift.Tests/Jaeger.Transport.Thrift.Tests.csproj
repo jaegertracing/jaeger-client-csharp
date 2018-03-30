@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\LetsTrace.Jaeger\Jaeger.Transport.Thrift.csproj" />
+    <ProjectReference Include="..\..\src\Jaeger.Transport.Thrift\Jaeger.Transport.Thrift.csproj" />
   </ItemGroup>
 
 </Project>
