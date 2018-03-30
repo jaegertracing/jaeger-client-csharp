@@ -1,10 +1,12 @@
 <Project>
-  <!-- Thrift is a separate package so we don't import the parent/global settings -->
+  <Import Project="..\Directory.Build.props" />
 
   <PropertyGroup>
 
-    <!-- Thrift is currently IL merged -->
+    <!-- Thrift.csproj overwrites this -->
     <IsPackable>false</IsPackable>
+
+    <Description>A custom version of https://github.com/apache/thrift/src/netcore that does not depend on ASP.NET Core.</Description>
 
     <!-- As this is an internal dependency, we don't need the XML docs (There would be XML errors otherwise) -->
     <GenerateDocumentationFile>false</GenerateDocumentationFile>

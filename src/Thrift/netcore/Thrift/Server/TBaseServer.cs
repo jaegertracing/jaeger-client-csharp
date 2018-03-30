@@ -5,9 +5,9 @@
 // to you under the Apache License, Version 2.0 (the
 // "License"); you may not use this file except in compliance
 // with the License. You may obtain a copy of the License at
-// 
+//
 //     http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing,
 // software distributed under the License is distributed on an
 // "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -18,7 +18,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 using Thrift.Protocols;
 using Thrift.Transports;
 
@@ -27,7 +26,6 @@ namespace Thrift.Server
     // ReSharper disable once InconsistentNaming
     public abstract class TBaseServer
     {
-        protected readonly ILogger Logger;
         protected ITProtocolFactory InputProtocolFactory;
         protected TTransportFactory InputTransportFactory;
         protected ITProcessorFactory ItProcessorFactory;
@@ -39,8 +37,7 @@ namespace Thrift.Server
 
         protected TBaseServer(ITProcessorFactory itProcessorFactory, TServerTransport serverTransport,
             TTransportFactory inputTransportFactory, TTransportFactory outputTransportFactory,
-            ITProtocolFactory inputProtocolFactory, ITProtocolFactory outputProtocolFactory,
-            ILogger logger)
+            ITProtocolFactory inputProtocolFactory, ITProtocolFactory outputProtocolFactory)
         {
             ItProcessorFactory = itProcessorFactory ?? throw new ArgumentNullException(nameof(itProcessorFactory));
             ServerTransport = serverTransport;
@@ -48,7 +45,6 @@ namespace Thrift.Server
             OutputTransportFactory = outputTransportFactory ?? throw new ArgumentNullException(nameof(outputTransportFactory));
             InputProtocolFactory = inputProtocolFactory ?? throw new ArgumentNullException(nameof(inputProtocolFactory));
             OutputProtocolFactory = outputProtocolFactory ?? throw new ArgumentNullException(nameof(outputProtocolFactory));
-            Logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public void SetEventHandler(TServerEventHandler seh)
