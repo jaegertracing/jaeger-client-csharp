@@ -1,6 +1,6 @@
 [![Build status][ci-img]][ci] [![NuGet][nuget-img]][nuget]
 
-# Jaeger C# Client
+# C# Client for Jaeger (http://jaegertracing.io)
 
 - Implements C# [OpenTracing API](https://github.com/opentracing/opentracing-csharp) v. 0.11
 - Supports netstandard 2.0
@@ -169,7 +169,7 @@ span.Finish();
 
 ## Contributing
 
-If you would like to contribute to this project you can fork the repository and send in a pull request. We ask that you use a branch other than `master`.
+We welcome community contributions to this project. Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for more details.
 
 By contributing your code, you agree to license your contribution under the terms of the [APLv2](LICENSE).
 
