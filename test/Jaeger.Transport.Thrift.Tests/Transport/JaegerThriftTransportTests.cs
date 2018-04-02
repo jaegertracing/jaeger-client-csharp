@@ -74,7 +74,7 @@ namespace Jaeger.Transport.Thrift.Tests.Transport
         }
 
         [Fact]
-        public async void AppendAsync_ShouldFlushWhenOverTheBufferSize()
+        public async void AppendAsync_ShouldFlushWhenReachTheBufferSize()
         {
             var span = Substitute.For<IJaegerCoreSpan>();
             var tracer = Substitute.For<IJaegerCoreTracer>();
@@ -87,12 +87,12 @@ namespace Jaeger.Transport.Thrift.Tests.Transport
             var jSpan = Substitute.For<JaegerSpan>();
             _mockJaegerThriftSerialization.BuildJaegerThriftSpan(Arg.Is(span)).Returns(jSpan);
 
-            _mockSender.BufferItem(Arg.Is(jSpan)).Returns(5);
-            _mockSender.FlushAsync(Arg.Any<JaegerProcess>(), Arg.Any<CancellationToken>()).Returns(5);
+            _mockSender.BufferItem(Arg.Is(jSpan)).Returns(4);
+            _mockSender.FlushAsync(Arg.Any<JaegerProcess>(), Arg.Any<CancellationToken>()).Returns(4);
 
             var sent = await _testingTransport.AppendAsync(span, cts.Token);
 
-            Assert.Equal(5, sent);
+            Assert.Equal(4, sent);
             _mockJaegerThriftSerialization.Received(1).BuildJaegerProcessThrift(Arg.Is(tracer));
             _mockJaegerThriftSerialization.Received(1).BuildJaegerThriftSpan(Arg.Is(span));
             _mockSender.Received(1).BufferItem(Arg.Is(jSpan));

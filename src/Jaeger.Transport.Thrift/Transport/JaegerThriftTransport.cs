@@ -48,7 +48,7 @@ namespace Jaeger.Transport.Thrift.Transport
 
             var curBuffCount = _sender.BufferItem(jaegerSpan);
 
-            if (curBuffCount > BufferSize) {
+            if (curBuffCount >= BufferSize) {
                 return await _sender.FlushAsync(_process, canellationToken);
             }
 
