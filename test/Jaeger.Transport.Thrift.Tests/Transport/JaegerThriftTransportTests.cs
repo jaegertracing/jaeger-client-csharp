@@ -8,7 +8,6 @@ using Jaeger.Transport.Thrift.Transport;
 using Jaeger.Transport.Thrift.Transport.Sender;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
-using Thrift.Protocols;
 using Xunit;
 using JaegerProcess = Jaeger.Thrift.Process;
 using JaegerSpan = Jaeger.Thrift.Span;
@@ -18,26 +17,15 @@ namespace Jaeger.Transport.Thrift.Tests.Transport
     public class JaegerThriftTransportTests
     {
         private readonly ISerialization _mockJaegerThriftSerialization;
-        private readonly ITProtocolFactory _mockProtocolFactory;
         private readonly ISender _mockSender;
         private readonly JaegerThriftTransport _testingTransport;
-        private int _bufferSize = 4;
 
         public JaegerThriftTransportTests()
         {
             _mockJaegerThriftSerialization = Substitute.For<ISerialization>();
-            _mockProtocolFactory = Substitute.For<ITProtocolFactory>();
             _mockSender = Substitute.For<ISender>();
 
-            _testingTransport = Substitute.For<JaegerThriftTransport>(_mockProtocolFactory, _mockSender, _mockJaegerThriftSerialization, _bufferSize);
-        }
-
-        [Fact]
-        public void Constructor_ShouldSetBufferSizeToDefaultIfPassedInIsZero()
-        {
-            var transport = Substitute.For<JaegerThriftTransport>(_mockProtocolFactory, _mockSender, _mockJaegerThriftSerialization, 0);
-
-            Assert.Equal(JaegerThriftTransport.DefaultBufferSize, transport.BufferSize);
+            _testingTransport = Substitute.For<JaegerThriftTransport>(_mockSender, _mockJaegerThriftSerialization);
         }
 
         [Fact]
@@ -49,7 +37,7 @@ namespace Jaeger.Transport.Thrift.Tests.Transport
         }
 
         [Fact]
-        public async void AppendAsync_ShouldCallSerializationAndSender()
+        public async void AppendAsync_ShouldCallSerializationAndProtocolAppendLogicAsync()
         {
             var span = Substitute.For<IJaegerCoreSpan>();
             var tracer = Substitute.For<IJaegerCoreTracer>();
@@ -62,41 +50,18 @@ namespace Jaeger.Transport.Thrift.Tests.Transport
             var jSpan = Substitute.For<JaegerSpan>();
             _mockJaegerThriftSerialization.BuildJaegerThriftSpan(Arg.Is(span)).Returns(jSpan);
 
-            _mockSender.BufferItem(Arg.Is(jSpan)).Returns(2);
+            //_mockSender.BufferItem(Arg.Is(jSpan)).Returns(2);
+
+            _testingTransport.ProtocolAppendLogicAsync(Arg.Is(jSpan), Arg.Any<CancellationToken>()).Returns(2);
 
             var sent = await _testingTransport.AppendAsync(span, cts.Token);
 
-            Assert.Equal(0, sent);
+            Assert.Equal(2, sent);
             _mockJaegerThriftSerialization.Received(1).BuildJaegerProcessThrift(Arg.Is(tracer));
             _mockJaegerThriftSerialization.Received(1).BuildJaegerThriftSpan(Arg.Is(span));
-            _mockSender.Received(1).BufferItem(Arg.Is(jSpan));
+            //_mockSender.Received(1).BufferItem(Arg.Is(jSpan));
+            await _testingTransport.Received(1).ProtocolAppendLogicAsync(Arg.Is(jSpan), Arg.Any<CancellationToken>());
             await _mockSender.Received(0).FlushAsync(Arg.Any<JaegerProcess>(), Arg.Any<CancellationToken>());
-        }
-
-        [Fact]
-        public async void AppendAsync_ShouldFlushWhenReachTheBufferSize()
-        {
-            var span = Substitute.For<IJaegerCoreSpan>();
-            var tracer = Substitute.For<IJaegerCoreTracer>();
-            span.Tracer.Returns(tracer);
-            var cts = new CancellationTokenSource();
-
-            var jProcess = Substitute.For<JaegerProcess>();
-            _mockJaegerThriftSerialization.BuildJaegerProcessThrift(Arg.Is(tracer)).Returns(jProcess);
-
-            var jSpan = Substitute.For<JaegerSpan>();
-            _mockJaegerThriftSerialization.BuildJaegerThriftSpan(Arg.Is(span)).Returns(jSpan);
-
-            _mockSender.BufferItem(Arg.Is(jSpan)).Returns(4);
-            _mockSender.FlushAsync(Arg.Any<JaegerProcess>(), Arg.Any<CancellationToken>()).Returns(4);
-
-            var sent = await _testingTransport.AppendAsync(span, cts.Token);
-
-            Assert.Equal(4, sent);
-            _mockJaegerThriftSerialization.Received(1).BuildJaegerProcessThrift(Arg.Is(tracer));
-            _mockJaegerThriftSerialization.Received(1).BuildJaegerThriftSpan(Arg.Is(span));
-            _mockSender.Received(1).BufferItem(Arg.Is(jSpan));
-            await _mockSender.Received(1).FlushAsync(Arg.Any<JaegerProcess>(), Arg.Any<CancellationToken>());
         }
 
         [Fact]

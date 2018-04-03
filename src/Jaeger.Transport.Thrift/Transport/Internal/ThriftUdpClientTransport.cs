@@ -7,7 +7,6 @@ using Thrift.Transports;
 
 namespace Jaeger.Transport.Thrift.Transport.Internal
 {
-    // TODO: TMemoryBufferClientTransport is missing a Reset method or having _byteStream protected
     internal class ThriftUdpClientTransport : TClientTransport
     {
         private readonly IUdpClient _client;
