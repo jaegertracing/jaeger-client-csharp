@@ -82,6 +82,10 @@ namespace Jaeger.Transport.Thrift.Transport.Internal
             {
                 return _client.SendAsync(bytes, bytes.Length);
             }
+            catch (SocketException se)
+            {
+                throw new TTransportException(TTransportException.ExceptionType.Unknown, $"Cannot flush because of socket exception. UDP Packet size was {bytes.Length}. Exception message: {se.Message}");
+            }
             catch (Exception e)
             {
                 throw new TTransportException(TTransportException.ExceptionType.Unknown, $"Cannot flush closed transport. {e.Message}");
