@@ -1,14 +1,14 @@
 <Project>
   <PropertyGroup>
-    <VersionPrefix>0.0.8</VersionPrefix>
+    <VersionPrefix>0.0.9/VersionPrefix>
 
-    <Authors>Chatham Financial Corp.</Authors>
-    <Copyright>Copyright 2018 (c) Chatham Financial Corp. All rights reserved.</Copyright>
-    <PackageProjectUrl>https://github.com/Chatham/LetsTrace</PackageProjectUrl>
-    <PackageLicenseUrl>https://github.com/Chatham/LetsTrace/blob/master/LICENSE</PackageLicenseUrl>
-    <PackageReleaseNotes>https://github.com/Chatham/LetsTrace/releases</PackageReleaseNotes>
+    <Authors>Chatham Financial Corp. and The Jaeger Authors</Authors>
+    <Copyright>Copyright 2018 (c) The Jaeger Authors. Copyright 2018 (c) Chatham Financial Corp.</Copyright>
+    <PackageProjectUrl>https://github.com/jaegertracing/jaeger-client-csharp</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/jaegertracing/jaeger-client-csharp/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageReleaseNotes>https://github.com/jaegertracing/jaeger-client-csharp/releases</PackageReleaseNotes>
     <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>git://github.com/Chatham/LetsTrace</RepositoryUrl>
+    <RepositoryUrl>git://github.com/jaegertracing/jaeger-client-csharp</RepositoryUrl>
 
     <!-- Projects that should generate nupkg files override this -->
     <IsPackable>false</IsPackable>
