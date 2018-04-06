@@ -20,7 +20,7 @@ namespace Jaeger.Transport.Thrift.Transport.Sender
                 Query = TransportConstants.CollectorHttpJaegerThriftFormatParam
             }.Uri;
             var httpTransport = new THttpClientTransport(collectorUri, null);
-            _protocol = _protocolFactory.GetProtocol(httpTransport);
+            _protocol = ProtocolFactory.GetProtocol(httpTransport);
         }
 
         protected override async Task<int> SendAsync(List<JaegerSpan> spans, CancellationToken cancellationToken)

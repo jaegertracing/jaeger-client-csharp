@@ -7,7 +7,6 @@ using Thrift.Transports;
 
 namespace Jaeger.Transport.Thrift.Transport.Internal
 {
-    // TODO: TMemoryBufferClientTransport is missing a Reset method or having _byteStream protected
     internal class ThriftUdpClientTransport : TClientTransport
     {
         private readonly IUdpClient _client;
@@ -82,6 +81,10 @@ namespace Jaeger.Transport.Thrift.Transport.Internal
             try
             {
                 return _client.SendAsync(bytes, bytes.Length);
+            }
+            catch (SocketException se)
+            {
+                throw new TTransportException(TTransportException.ExceptionType.Unknown, $"Cannot flush because of socket exception. UDP Packet size was {bytes.Length}. Exception message: {se.Message}");
             }
             catch (Exception e)
             {

@@ -12,11 +12,11 @@ namespace Jaeger.Transport.Thrift.Transport.Sender
     {
         protected List<JaegerSpan> _buffer = new List<JaegerSpan>();
         protected JaegerProcess _process;
-        protected readonly ITProtocolFactory _protocolFactory;
+        public ITProtocolFactory ProtocolFactory { get; }
 
         protected internal JaegerSender(ITProtocolFactory protocolFactory)
         {
-            _protocolFactory = protocolFactory;
+            ProtocolFactory = protocolFactory;
         }
 
         public void Dispose()

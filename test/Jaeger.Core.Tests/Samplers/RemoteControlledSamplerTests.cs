@@ -286,7 +286,7 @@ namespace Jaeger.Core.Tests.Samplers
             var updateFunc = Substitute.For<Action>();
             var pollingIntervalMs = 1000;
             var cts = new CancellationTokenSource();
-            cts.CancelAfter(2600);
+            cts.CancelAfter(2900);
 
             await RemoteControlledSampler.PollTimer(updateFunc, pollingIntervalMs, cts.Token);
 

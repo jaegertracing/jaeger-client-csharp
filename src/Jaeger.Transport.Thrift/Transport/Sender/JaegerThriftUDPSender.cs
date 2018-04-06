@@ -28,7 +28,7 @@ namespace Jaeger.Transport.Thrift.Transport.Sender
             }
 
             var udpThriftTransport = new ThriftUdpClientTransport(host, port);
-            _agentClient = new Agent.Client(_protocolFactory.GetProtocol(udpThriftTransport));
+            _agentClient = new Agent.Client(ProtocolFactory.GetProtocol(udpThriftTransport));
         }
 
         protected override async Task<int> SendAsync(List<JaegerSpan> spans, CancellationToken cancellationToken)
