@@ -95,6 +95,7 @@ namespace Jaeger.Transport.Thrift.Transport
                 }
 
                 // can't fit anything else in the buffer, flush it
+                _byteBufferSize = _processByteSize;
                 return await FlushAsync(cancellationToken);
             }
 

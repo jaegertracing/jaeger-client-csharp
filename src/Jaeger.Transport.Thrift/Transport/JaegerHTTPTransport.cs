@@ -21,7 +21,7 @@ namespace Jaeger.Transport.Thrift.Transport
 
         /// <inheritdoc />
         /// <param name="batchSize">The number of spans to buffer before sending them to Jaeger</param>
-        /// <param name="host">The host the Jaeger is running on</param>
+        /// <param name="host">The host that Jaeger is running on</param>
         /// <param name="port">The port of the host that Jaeger will accept http thrift</param>
         public JaegerHttpTransport(int batchSize = 0, string host = TransportConstants.DefaultAgentHost, int port = TransportConstants.DefaultCollectorHttpJaegerThriftPort) 
             : this(new Uri($"http://{host}:{port}/api/traces"), batchSize)

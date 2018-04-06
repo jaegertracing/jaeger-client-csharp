@@ -39,12 +39,12 @@ namespace Jaeger.Transport.Thrift.Transport
         /// AppendAsync serializes the passed in span into Jaeger Thrift and passes it off
         /// to the sender which will buffer it to be sent. If the buffer is full enough it
         /// will be flushed and the number of spans sent will be returned. If the buffer is
-        /// not full enough, nothing will be done a 0 will be returned to indicate that 0
+        /// not full enough, nothing will be done and a 0 will be returned to indicate that 0
         /// spans were sent.
         /// </summary>
-        /// <param name="span">the span to serialize into Jaeger Thrift and buffer to be sent</param>
+        /// <param name="span">The span to serialize into Jaeger Thrift and buffer to be sent</param>
         /// <param name="cancellationToken"></param>
-        /// <returns>the number of spans flushed, if any</returns>
+        /// <returns>The number of spans flushed, if any</returns>
         public async Task<int> AppendAsync(IJaegerCoreSpan span, CancellationToken cancellationToken)
         {
             if (_process == null) {
