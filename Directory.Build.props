@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <VersionPrefix>0.0.9/VersionPrefix>
+    <VersionPrefix>0.0.9</VersionPrefix>
 
     <Authors>Chatham Financial Corp. and The Jaeger Authors</Authors>
     <Copyright>Copyright 2018 (c) The Jaeger Authors. Copyright 2018 (c) Chatham Financial Corp.</Copyright>
