@@ -177,8 +177,8 @@ By contributing your code, you agree to license your contribution under the term
 
 All files are released with the [Apache 2.0 license](LICENSE).
 
-[ci-img]: https://ci.appveyor.com/api/projects/status/b1hodx4afck8ffpu?svg=true
-[ci]: https://ci.appveyor.com/project/chatham/letstrace
+[ci-img]: https://ci.appveyor.com/api/projects/status/evahkowja82u3sr4?svg=true
+[ci]: https://ci.appveyor.com/project/jaegertracing/jaeger-client-csharp
 [nuget-img]: https://img.shields.io/nuget/v/LetsTrace.svg
 [nuget]: https://www.nuget.org/packages/LetsTrace/
 
