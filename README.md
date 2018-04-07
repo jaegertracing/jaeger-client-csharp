@@ -1,6 +1,6 @@
 [![Build status][ci-img]][ci] [![NuGet][nuget-img]][nuget]
 
-# C# Client for Jaeger (http://jaegertracing.io)
+# C# Client for Jaeger (https://jaegertracing.io)
 
 - Implements C# [OpenTracing API](https://github.com/opentracing/opentracing-csharp) v. 0.11
 - Supports netstandard 2.0
