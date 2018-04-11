@@ -249,7 +249,7 @@ namespace Jaeger.Core.Samplers
                 }
                 if (_metrics == null)
                 {
-                    _metrics = NoopMetricsFactory.Instance.CreateMetrics();
+                    _metrics = new MetricsImpl(NoopMetricsFactory.Instance);
                 }
                 return new RemoteControlledSampler(_serviceName, _samplingManager, _loggerFactory, _metrics, _initialSampler, _pollingIntervalMs);
             }

@@ -1,9 +1,7 @@
 ﻿namespace Jaeger.Core.Metrics
 {
-    public interface IGauge : IMetricValue
+    public interface IGauge
     {
-        long Value { get; }
-
         void Update(long amount);
     }
 }

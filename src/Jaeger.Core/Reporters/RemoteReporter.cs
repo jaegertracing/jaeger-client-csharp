@@ -28,7 +28,11 @@ namespace Jaeger.Core.Reporters
             try
             {
                 int n = await _transport.CloseAsync(CancellationToken.None).ConfigureAwait(false);
-                _metrics.ReporterSuccess.Inc(n);
+
+                if (n > 0)
+                {
+                    _metrics.ReporterSuccess.Inc(n);
+                }
             }
             catch (SenderException e)
             {
@@ -60,7 +64,10 @@ namespace Jaeger.Core.Reporters
                 // TODO: Not exposed, this should be the list of unprocessed Report calls
                 //_metrics.ReporterQueueLength.Update(_commandQueue.Count);
                 int n = await _transport.FlushAsync(CancellationToken.None).ConfigureAwait(false);
-                _metrics.ReporterSuccess.Inc(n);
+                if (n > 0)
+                {
+                    _metrics.ReporterSuccess.Inc(n);
+                }
             }
             catch (SenderException e)
             {
@@ -79,7 +86,7 @@ namespace Jaeger.Core.Reporters
 
             public Builder(ITransport transport)
             {
-                this._transport = transport ?? throw new ArgumentNullException(nameof(transport));
+                _transport = transport ?? throw new ArgumentNullException(nameof(transport));
             }
 
             public Builder WithLoggerFactory(ILoggerFactory loggerFactory)
@@ -102,13 +109,7 @@ namespace Jaeger.Core.Reporters
 
             public Builder WithMetrics(IMetrics metrics)
             {
-                this._metrics = metrics;
-                return this;
-            }
-
-            public Builder WithMetricsFactory(IMetricsFactory metricsFactory)
-            {
-                this._metrics = metricsFactory.CreateMetrics();
+                _metrics = metrics;
                 return this;
             }
 
@@ -120,8 +121,9 @@ namespace Jaeger.Core.Reporters
                 }
                 if (_metrics == null)
                 {
-                    _metrics = NoopMetricsFactory.Instance.CreateMetrics();
+                    _metrics = new MetricsImpl(NoopMetricsFactory.Instance);
                 }
+
                 return new RemoteReporter(_transport, _loggerFactory/*, _flushInterval, _maxQueueSize*/, _metrics);
             }
         }

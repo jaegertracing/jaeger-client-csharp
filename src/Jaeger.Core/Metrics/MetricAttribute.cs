@@ -1,43 +1,39 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Jaeger.Core.Metrics
 {
-    [AttributeUsage(AttributeTargets.All)]
+    [AttributeUsage(AttributeTargets.Property)]
     public class MetricAttribute : Attribute
     {
-        public enum MetricState
-        {
-            Undefined,
-            Started,
-            Joined
-        }
-
-        public enum MetricSampled
-        {
-            Undefined,
-            Yes,
-            No
-        }
-
-        public enum MetricResult
-        {
-            Undefined,
-            Ok,
-            Error,
-            Dropped
-        }
-
-        public MetricAttribute(string name, MetricState state = MetricState.Undefined, MetricSampled sampled = MetricSampled.Undefined, MetricResult result = MetricResult.Undefined)
-        {
-            Name = name;
-            State = state;
-            Sampled = sampled;
-            Result = result;
-        }
+        // Note: Java allows to pass a list of tags, however C# doesn't allow complex types for attribute constructors
+        // so we have to use simplified constructors.
 
         public string Name { get; }
-        public MetricState State { get; }
-        public MetricSampled Sampled { get; }
-        public MetricResult Result { get; }
+
+        public Dictionary<string, string> Tags { get; } = new Dictionary<string, string>();
+
+        public MetricAttribute(string name)
+        {
+            Name = name ?? throw new ArgumentNullException(nameof(name));
+        }
+
+        public MetricAttribute(string name, string tag1Key, string tag1Value)
+            : this(name)
+        {
+            if (tag1Key != null)
+            {
+                Tags[tag1Key] = tag1Value;
+            }
+        }
+
+        public MetricAttribute(string name, string tag1Key, string tag1Value, string tag2Key, string tag2Value)
+            : this(name, tag1Key, tag1Value)
+        {
+            if (tag2Key != null)
+            {
+                Tags[tag2Key] = tag2Value;
+            }
+        }
     }
 }

@@ -180,7 +180,7 @@ namespace Jaeger.Core
 
             public Builder WithMetricsFactory(IMetricsFactory factory)
             {
-                this._metrics = factory.CreateMetrics();
+                this._metrics = new MetricsImpl(factory);
                 return this;
             }
 
@@ -212,7 +212,7 @@ namespace Jaeger.Core
                 }
                 if (_metrics == null)
                 {
-                    _metrics = NoopMetricsFactory.Instance.CreateMetrics();
+                    _metrics = new MetricsImpl(NoopMetricsFactory.Instance);
                 }
                 if (_reporter == null)
                 {
