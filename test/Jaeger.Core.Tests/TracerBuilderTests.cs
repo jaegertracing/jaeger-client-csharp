@@ -129,21 +129,6 @@ namespace Jaeger.Core.Tests
         }
 
         [Fact]
-        public void Builder_WithMetricsFactory_ShouldCallCreateMetrics()
-        {
-            var metricsFactory = Substitute.For<IMetricsFactory>();
-            var metrics = Substitute.For<IMetrics>();
-            metricsFactory.CreateMetrics().Returns(metrics);
-
-            var tracer = _baseBuilder
-                .WithMetricsFactory(metricsFactory)
-                .Build();
-
-            Assert.Equal(metrics, tracer.Metrics);
-            metricsFactory.Received(1).CreateMetrics();
-        }
-
-        [Fact]
         public void Builder_WithLoggingFactory_ShouldCallCreateLogger()
         {
             var loggerFactory = Substitute.For<ILoggerFactory>();

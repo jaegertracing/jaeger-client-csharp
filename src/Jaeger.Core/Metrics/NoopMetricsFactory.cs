@@ -1,57 +1,48 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Collections.Generic;
 
 namespace Jaeger.Core.Metrics
 {
-    [ExcludeFromCodeCoverage]
-    public class NoopMetricsFactory : BaseMetricsFactory
+    /// <summary>
+    /// A metrics factory that implements NOOP counters, timers and gauges.
+    /// </summary>
+    public class NoopMetricsFactory : IMetricsFactory
     {
         public static readonly NoopMetricsFactory Instance = new NoopMetricsFactory();
-        private static readonly NoopElement Dummy = new NoopElement();
+
+        private readonly NoopMetric _metric = new NoopMetric();
 
         private NoopMetricsFactory()
         {
         }
 
-        private class NoopElement : ICounter, ITimer, IGauge
+        public ICounter CreateCounter(string name, Dictionary<string, string> tags)
         {
-            public string Name { get; }
-            public MetricAttribute Attribute { get; }
-            public long Count { get; }
-            // TODO: Not used now, but ported from java implementation
-            [ExcludeFromCodeCoverage]
-            public long MillisecondsTotal { get; }
-            public long Value { get; }
+            return _metric;
+        }
 
+        public IGauge CreateGauge(string name, Dictionary<string, string> tags)
+        {
+            return _metric;
+        }
+
+        public ITimer CreateTimer(string name, Dictionary<string, string> tags)
+        {
+            return _metric;
+        }
+
+        private class NoopMetric : ICounter, ITimer, IGauge
+        {
             public void Inc(long delta)
             {
             }
 
-            // TODO: Not used now, but ported from java implementation
-            [ExcludeFromCodeCoverage]
-            public void DurationMicros(long time)
+            public void DurationTicks(long ticks)
             {
             }
 
             public void Update(long amount)
             {
             }
-        }
-
-        protected override ICounter CreateCounter(string name, MetricAttribute attribute)
-        {
-            return Dummy;
-        }
-
-        // TODO: Not used now, but ported from java implementation
-        [ExcludeFromCodeCoverage]
-        protected override ITimer CreateTimer(string name, MetricAttribute attribute)
-        {
-            return Dummy;
-        }
-
-        protected override IGauge CreateGauge(string name, MetricAttribute attribute)
-        {
-            return Dummy;
         }
     }
 }

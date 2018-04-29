@@ -55,7 +55,7 @@ namespace Jaeger.Core.Tests.Reporters
         {
             var transport = Substitute.For<ITransport>();
             var span = Substitute.For<IJaegerCoreSpan>();
-            var metrics = InMemoryMetricsFactory.Instance.CreateMetrics();
+            var metrics = Substitute.For<IMetrics>();
 
             transport.CloseAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult(2));
 
@@ -67,19 +67,7 @@ namespace Jaeger.Core.Tests.Reporters
                 transport.Received(2).AppendAsync(span, Arg.Any<CancellationToken>());
             }
             transport.Received(1).CloseAsync(Arg.Any<CancellationToken>());
-            Assert.Equal(2, metrics.ReporterSuccess.Count);
-        }
-
-        [Fact]
-        public void RemoteReporter_ShouldCallMetricsFactory()
-        {
-            var transport = Substitute.For<ITransport>();
-            var metricsFactory = InMemoryMetricsFactory.Instance;
-
-            using (var reporter = new RemoteReporter.Builder(transport).WithMetricsFactory(metricsFactory).Build())
-            {
-                Assert.IsType<InMemoryMetricsFactory.InMemoryElement>(reporter._metrics.ReporterSuccess);
-            }
+            metrics.ReporterSuccess.Received(1).Inc(2);
         }
 
         [Fact]
@@ -87,7 +75,7 @@ namespace Jaeger.Core.Tests.Reporters
         {
             var transport = Substitute.For<ITransport>();
             var span = Substitute.For<IJaegerCoreSpan>();
-            var metrics = InMemoryMetricsFactory.Instance.CreateMetrics();
+            var metrics = Substitute.For<IMetrics>();
 
             transport.AppendAsync(span, Arg.Any<CancellationToken>()).Throws(new SenderException(String.Empty, 1));
 
@@ -98,9 +86,9 @@ namespace Jaeger.Core.Tests.Reporters
                 transport.Received(1).AppendAsync(span, Arg.Any<CancellationToken>());
             }
             transport.Received(1).CloseAsync(Arg.Any<CancellationToken>());
-            Assert.Equal(0, metrics.ReporterSuccess.Count);
-            Assert.Equal(1, metrics.ReporterDropped.Count);
-            Assert.Equal(0, metrics.ReporterFailure.Count);
+            var _ = metrics.DidNotReceive().ReporterSuccess;
+            _ = metrics.Received(1).ReporterDropped;
+            _ = metrics.DidNotReceive().ReporterFailure;
         }
 
         [Fact]
@@ -108,7 +96,7 @@ namespace Jaeger.Core.Tests.Reporters
         {
             var transport = Substitute.For<ITransport>();
             var span = Substitute.For<IJaegerCoreSpan>();
-            var metrics = InMemoryMetricsFactory.Instance.CreateMetrics();
+            var metrics = Substitute.For<IMetrics>();
 
             transport.CloseAsync(Arg.Any<CancellationToken>()).Throws(new SenderException(String.Empty, 1));
 
@@ -119,9 +107,9 @@ namespace Jaeger.Core.Tests.Reporters
                 transport.Received(1).AppendAsync(span, Arg.Any<CancellationToken>());
             }
             transport.Received(1).CloseAsync(Arg.Any<CancellationToken>());
-            Assert.Equal(0, metrics.ReporterSuccess.Count);
-            Assert.Equal(0, metrics.ReporterDropped.Count);
-            Assert.Equal(1, metrics.ReporterFailure.Count);
+            var _ = metrics.DidNotReceive().ReporterSuccess;
+            _ = metrics.DidNotReceive().ReporterDropped;
+            _ = metrics.Received(1).ReporterFailure;
         }
     }
 }
