@@ -67,22 +67,22 @@ using Jaeger.Core;
 
 var operationName = "Get::api/values/";
 var builder = tracer.BuildSpan(operationName);
-``` 
+```
 
 #### Adding Tags
-Any tags you add to the span builder will be added to the span on start and reported to the reporting system you have setup when the span is reported. The following types are supported as tags: bool, double, int, string. 
+Any tags you add to the span builder will be added to the span on start and reported to the reporting system you have setup when the span is reported. The following types are supported as tags: bool, double, int, string.
 
 ```C#
 builder.WithTag("machine.name", "machine1").WithTag("cpu.cores", 8);
 ```
 
 #### Adding References
-References allow you to show how this span relates to another span. You need the `SpanContext` of the span you want to reference. If you add a `child_of` reference the SpanBuilder will use that as the parent of the span being built. 
+References allow you to show how this span relates to another span. You need the `SpanContext` of the span you want to reference. If you add a `child_of` reference the SpanBuilder will use that as the parent of the span being built.
 
 ```C#
 builder.AddReference("follows_from", spanContext);
 ```
-There also exist helper methods to simplify adding child of references. 
+There also exist helper methods to simplify adding child of references.
 
 #### As Child Of
 Shorthand for adding a chold of reference. You can pass in an `ISpan` or and `ISpanContext`.
@@ -162,7 +162,7 @@ span.SetOperationName("PUT::api/values/");
 ```C#
 span.Finish(DateTimeOffset.Now);
 ```
-or 
+or
 ```C#
 span.Finish();
 ```
@@ -179,6 +179,5 @@ All files are released with the [Apache 2.0 license](LICENSE).
 
 [ci-img]: https://ci.appveyor.com/api/projects/status/evahkowja82u3sr4?svg=true
 [ci]: https://ci.appveyor.com/project/jaegertracing/jaeger-client-csharp
-[nuget-img]: https://img.shields.io/nuget/v/LetsTrace.svg
-[nuget]: https://www.nuget.org/packages/LetsTrace/
-
+[nuget-img]: https://img.shields.io/nuget/v/Jaeger.svg
+[nuget]: https://www.nuget.org/packages/Jaeger/
