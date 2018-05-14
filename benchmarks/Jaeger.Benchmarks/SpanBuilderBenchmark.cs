@@ -1,7 +1,6 @@
 using BenchmarkDotNet.Attributes;
-using Jaeger.Core;
-using Jaeger.Core.Reporters;
-using Jaeger.Core.Samplers;
+using Jaeger.Reporters;
+using Jaeger.Samplers;
 using OpenTracing;
 
 namespace Jaeger.Benchmarks

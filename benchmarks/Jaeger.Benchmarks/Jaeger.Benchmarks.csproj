@@ -10,7 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Jaeger.Core\Jaeger.Core.csproj" />
+    <ProjectReference Include="..\..\src\Jaeger\Jaeger.csproj" />
   </ItemGroup>
 
 </Project>
