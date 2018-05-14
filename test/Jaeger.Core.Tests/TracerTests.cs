@@ -1,169 +1,180 @@
 using System;
-using System.Collections.Generic;
+using System.Threading;
+using Jaeger.Core.Metrics;
 using Jaeger.Core.Propagation;
 using Jaeger.Core.Reporters;
 using Jaeger.Core.Samplers;
 using NSubstitute;
-using NSubstitute.ReturnsExtensions;
 using OpenTracing;
 using OpenTracing.Propagation;
+using OpenTracing.Tag;
 using Xunit;
 
 namespace Jaeger.Core.Tests
 {
     public class TracerTests
     {
-        private readonly IJaegerCoreTracer _builtTracer;
-        private readonly IReporter _mockReporter;
-        private readonly string _operationName;
-        private readonly string _serviceName;
-        private readonly ISampler _mockSampler;
-        private readonly IScopeManager _mockScopeManager;
-        private readonly IInjector _mockInjector;
-        private readonly IExtractor _mockExtractor;
-        private readonly IFormat<string> _format;
-        private readonly IPropagationRegistry _propagationRegistry;
-        private readonly string _ip;
+        private Tracer _tracer;
+        private readonly InMemoryMetricsFactory _metricsFactory;
 
         public TracerTests()
         {
-            _mockReporter = Substitute.For<IReporter>();
-            _operationName = "GET::api/values/";
-            _serviceName = "testingService";
-            _mockSampler = Substitute.For<ISampler>();
-            _mockScopeManager = Substitute.For<IScopeManager>();
-            _mockInjector = Substitute.For<IInjector>();
-            _mockExtractor = Substitute.For<IExtractor>();
-            _format = new Builtin<string>("format");
-            _propagationRegistry = new PropagationRegistry();
-            _propagationRegistry.AddCodec(_format, _mockInjector, _mockExtractor);
-            _ip = "192.168.1.1";
+            _metricsFactory = new InMemoryMetricsFactory();
 
-            _builtTracer = new Tracer.Builder(_serviceName)
-                .WithReporter(_mockReporter)
-                .WithSampler(_mockSampler)
-                .WithScopeManager(_mockScopeManager)
-                .WithPropagationRegistry(_propagationRegistry)
-                .WithTag(Constants.TracerIpTagKey, _ip)
+            _tracer = new Tracer.Builder("TracerTestService")
+                .WithReporter(new InMemoryReporter())
+                .WithSampler(new ConstSampler(true))
+                .WithMetrics(new MetricsImpl(_metricsFactory))
                 .Build();
         }
 
         [Fact]
-        public void Tracer_BuildSpan_ShouldPassItselfAndOperationNameToSpanBuilder()
+        public void TestDefaultConstructor()
         {
-            _mockSampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>()).Returns((false, new Dictionary<string, object>()));
-
-            var span = (IJaegerCoreSpan)_builtTracer.BuildSpan(_operationName).Start();
-
-            Assert.Equal(_operationName, span.OperationName);
-            Assert.Equal(_builtTracer, span.Tracer);
+            var tracer = new Tracer.Builder("name").Build();
+            Assert.IsType<RemoteReporter>(tracer.Reporter);
+            // no exception
+            tracer.BuildSpan("foo").Start().Finish();
         }
 
         [Fact]
-        public void Tracer_ReportSpan_ShouldPassSpanToReporter()
+        public void TestBuildSpan()
         {
-            var span = Substitute.For<IJaegerCoreSpan>();
-            var context = Substitute.For<IJaegerCoreSpanContext>();
-            context.IsSampled.Returns(true);
-            span.Context.Returns(context);
+            string expectedOperation = "fry";
+            Span span = (Span)_tracer.BuildSpan(expectedOperation).Start();
 
-            _builtTracer.ReportSpan(span);
-            _mockReporter.Received(1).Report(Arg.Any<IJaegerCoreSpan>());
+            Assert.Equal(expectedOperation, span.OperationName);
         }
 
         [Fact]
-        public void Tracer_ReportSpan_ShouldNotReportWhenNotSampled()
+        public void TestTracerMetrics()
         {
-            var span = Substitute.For<IJaegerCoreSpan>();
-            var context = Substitute.For<IJaegerCoreSpanContext>();
-            context.IsSampled.Returns(false);
-            span.Context.Returns(context);
-
-            _builtTracer.ReportSpan(span);
-            _mockReporter.Received(0).Report(Arg.Any<IJaegerCoreSpan>());
+            string expectedOperation = "fry";
+            _tracer.BuildSpan(expectedOperation).Start();
+            Assert.Equal(1, _metricsFactory.GetCounter("jaeger:started_spans", "sampled=y"));
+            Assert.Equal(0, _metricsFactory.GetCounter("jaeger:started_spans", "sampled=n"));
+            Assert.Equal(1, _metricsFactory.GetCounter("jaeger:traces", "sampled=y,state=started"));
+            Assert.Equal(0, _metricsFactory.GetCounter("jaeger:traces", "sampled=n,state=started"));
         }
 
         [Fact]
-        public void Tracer_ExtractAndInject_ShouldThrowWhenCodecDoesNotExist()
+        public void TestRegisterInjector()
         {
-            var carrier = "carrier, yo";
-            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
-            var format = new Builtin<string>("formatDoesNotExist");
+            Injector<ITextMap> injector = Substitute.For<Injector<ITextMap>>();
 
-            var ex = Assert.Throws<ArgumentException>(() => _builtTracer.Extract(format, carrier));
-            Assert.Contains($"{format} is not a supported extraction format", ex.Message);
+            _tracer = new Tracer.Builder("TracerTestService")
+                    .WithReporter(new InMemoryReporter())
+                    .WithSampler(new ConstSampler(true))
+                    .WithMetrics(new MetricsImpl(new InMemoryMetricsFactory()))
+                    .RegisterInjector(BuiltinFormats.TextMap, injector)
+                    .Build();
 
-            ex = Assert.Throws<ArgumentException>(() => _builtTracer.Inject(spanContext, format, carrier));
-            Assert.Contains($"{format} is not a supported injection format", ex.Message);
+            Span span = (Span)_tracer.BuildSpan("leela").Start();
+
+            ITextMap carrier = Substitute.For<ITextMap>();
+            _tracer.Inject(span.Context, BuiltinFormats.TextMap, carrier);
+
+            injector.Received(1).Inject(Arg.Any<SpanContext>(), Arg.Any<ITextMap>());
         }
 
         [Fact]
-        public void Tracer_ExtractAndInject_ShouldUseTheCorrectCodec()
+        public void TestServiceNameNotNull()
         {
-            var carrier = "carrier, yo";
-            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
-
-            _mockExtractor.Extract(Arg.Is<string>(c => c == carrier));
-            _mockInjector.Inject(Arg.Is<ISpanContext>(sc => sc == spanContext), Arg.Is<string>(c => c == carrier));
-
-            _builtTracer.Extract(_format, carrier);
-            _builtTracer.Inject(spanContext, _format, carrier);
-
-            _mockExtractor.Received(1).Extract(Arg.Any<string>());
-            _mockInjector.Received(1).Inject(Arg.Any<ISpanContext>(), Arg.Any<string>());
+            Assert.Throws<ArgumentException>(() => new Tracer.Builder(null));
         }
 
         [Fact]
-        public void Tracer_SetBaggageItem_ShouldAddAndSetBaggageItems()
+        public void TestServiceNameNotEmptyNull()
         {
-            var spanContext = new SpanContext(new TraceId(1));
-
-            var span = new Span(_builtTracer, "testing", spanContext);
-
-            var key = "key1";
-            var value = "value1";
-            var value2 = "value2";
-
-            _builtTracer.SetBaggageItem(span, key, value);
-            Assert.Equal(value, span.GetBaggageItem(key));
-
-            _builtTracer.SetBaggageItem(span, key, value2);
-            Assert.Equal(value2, span.GetBaggageItem(key));
+            Assert.Throws<ArgumentException>(() => new Tracer.Builder("  "));
         }
 
         [Fact]
-        public void Tracer_ShouldHaveVarsSetFromBuilder()
+        public void TestBuilderIsServerRpc()
         {
-            Assert.Equal(_ip, _builtTracer.HostIPv4);
-            Assert.Equal(_mockScopeManager, _builtTracer.ScopeManager);
-            Assert.Equal(_serviceName, _builtTracer.ServiceName);
-            Assert.Equal(_ip, _builtTracer.Tags[Constants.TracerIpTagKey]);
+            SpanBuilder spanBuilder = (SpanBuilder)_tracer.BuildSpan("ndnd");
+            spanBuilder.WithTag(Tags.SpanKind.Key, "server");
+
+            Assert.True(spanBuilder.IsRpcServer());
         }
 
         [Fact]
-        public void Tracer_ActiveSpan_ShouldPullFromTheScopeManager()
+        public void TestBuilderIsNotServerRpc()
         {
-            var span = Substitute.For<ISpan>();
-            _mockScopeManager.Active.Span.Returns(span);
+            SpanBuilder spanBuilder = (SpanBuilder)_tracer.BuildSpan("Lrrr");
+            spanBuilder.WithTag(Tags.SpanKind.Key, "peachy");
 
-            Assert.Equal(span, _builtTracer.ActiveSpan);
+            Assert.False(spanBuilder.IsRpcServer());
         }
 
         [Fact]
-        public void Tracer_ActiveSpan_ShouldReturnNullWhenTheActiveSpanIsNull()
+        public void TestWithBaggageRestrictionManager()
         {
-            _mockScopeManager.Active.ReturnsNull();
+            _tracer = new Tracer.Builder("TracerTestService")
+                .WithReporter(new InMemoryReporter())
+                .WithSampler(new ConstSampler(true))
+                .WithMetrics(new MetricsImpl(_metricsFactory))
+                .Build();
+            Span span = (Span)_tracer.BuildSpan("some-operation").Start();
+            string key = "key";
+            _tracer.SetBaggage(span, key, "value");
 
-            Assert.Null(_builtTracer.ActiveSpan);
+            Assert.Equal(1, _metricsFactory.GetCounter("jaeger:baggage_updates", "result=ok"));
         }
 
         [Fact]
-        public void Tracer_Dispose_ShouldDisposeCorrectly()
+        public void TestTracerImplementsDisposable()
         {
-            _builtTracer.Dispose();
+            Assert.IsAssignableFrom<IDisposable>(_tracer);
+        }
 
-            _mockSampler.Received(1).Dispose();
-            _mockReporter.Received(1).Dispose();
+        [Fact]
+        public void TestDispose()
+        {
+            IReporter reporter = Substitute.For<IReporter>();
+            ISampler sampler = Substitute.For<ISampler>();
+
+            var tracer = new Tracer.Builder("bonda")
+                .WithReporter(reporter)
+                .WithSampler(sampler)
+                .Build();
+
+            tracer.Dispose();
+            reporter.Received(1).CloseAsync(Arg.Any<CancellationToken>());
+            sampler.Received(1).Close();
+        }
+
+        [Fact]
+        public void TestAsChildOfAcceptNull()
+        {
+            Span span = (Span)_tracer.BuildSpan("foo").AsChildOf((Span)null).Start();
+            span.Finish();
+            Assert.Empty(span.GetReferences());
+
+            span = (Span)_tracer.BuildSpan("foo").AsChildOf((ISpanContext)null).Start();
+            span.Finish();
+            Assert.Empty(span.GetReferences());
+        }
+
+        [Fact]
+        public void TestActiveSpan()
+        {
+            var mockSpan = Substitute.For<ISpan>();
+            _tracer.ScopeManager.Activate(mockSpan, true);
+            Assert.Equal(mockSpan, _tracer.ActiveSpan);
+        }
+
+        [Fact]
+        public void TestSpanContextNotSampled()
+        {
+            string expectedOperation = "fry";
+            Span first = (Span)_tracer.BuildSpan(expectedOperation).Start();
+            _tracer.BuildSpan(expectedOperation).AsChildOf(first.Context.WithFlags((byte)0)).Start();
+
+            Assert.Equal(1, _metricsFactory.GetCounter("jaeger:started_spans", "sampled=y"));
+            Assert.Equal(1, _metricsFactory.GetCounter("jaeger:started_spans", "sampled=n"));
+            Assert.Equal(1, _metricsFactory.GetCounter("jaeger:traces", "sampled=y,state=started"));
+            Assert.Equal(0, _metricsFactory.GetCounter("jaeger:traces", "sampled=n,state=started"));
         }
     }
 }

@@ -1,156 +1,111 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
 using Jaeger.Core.Metrics;
 using Jaeger.Core.Samplers.HTTP;
+using Jaeger.Core.Util;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Jaeger.Core.Samplers
 {
-    public class RemoteControlledSampler : ISampler
+    public class RemoteControlledSampler : ValueObject, ISampler
     {
-        internal readonly ISamplingManager _samplingManager;
+        public const string Type = "remote";
+        public static readonly TimeSpan DefaultPollingInterval = TimeSpan.FromMinutes(1);
 
+        private readonly object _lock = new object();
         private readonly int _maxOperations = 2000;
         private readonly string _serviceName;
+        private readonly ISamplingManager _samplingManager;
         private readonly ILoggerFactory _loggerFactory;
         private readonly ILogger _logger;
         private readonly IMetrics _metrics;
-        private ISampler _sampler;
-        private readonly ISamplerFactory _samplerFactory;
-        private readonly CancellationTokenSource _cancellationTokenSource;
-        private readonly Task _pollTimer;
+        private readonly Timer _pollTimer;
 
-        private RemoteControlledSampler(
-            string serviceName,
-            ISamplingManager samplingManager,
-            ILoggerFactory loggerFactory,
-            IMetrics metrics,
-            ISampler sampler,
-            int pollingIntervalMs)
-        : this(serviceName, samplingManager, loggerFactory, metrics, sampler, new SamplerFactory(), pollingIntervalMs, PollTimer)
-        {}
+        internal ISampler Sampler { get; private set; }
 
-        internal RemoteControlledSampler(
-            string serviceName,
-            ISamplingManager samplingManager,
-            ILoggerFactory loggerFactory,
-            IMetrics metrics,
-            ISampler sampler,
-            ISamplerFactory samplerFactory,
-            int pollingIntervalMs,
-            Func<Action, int, CancellationToken, Task> pollTimer)
+        private RemoteControlledSampler(Builder builder)
         {
-            _serviceName = serviceName;
-            _samplingManager = samplingManager;
-            _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
-            _logger = loggerFactory.CreateLogger<RemoteControlledSampler>();
-            _metrics = metrics;
-            _sampler = sampler;
-            _samplerFactory = samplerFactory;
-            _cancellationTokenSource = new CancellationTokenSource();
-            _pollTimer = pollTimer(UpdateSampler, pollingIntervalMs, _cancellationTokenSource.Token);
-        }
+            _serviceName = builder.ServiceName;
+            _samplingManager = builder.SamplingManager;
+            _loggerFactory = builder.LoggerFactory;
+            _logger = _loggerFactory.CreateLogger<RemoteControlledSampler>();
+            _metrics = builder.Metrics;
+            Sampler = builder.InitialSampler;
 
-        internal static async Task PollTimer(Action updateFunc, int pollingIntervalMs, CancellationToken cancellationToken)
-        {
-            while (!cancellationToken.IsCancellationRequested)
-            {
-                try
-                {
-                    updateFunc();
-                    await Task.Delay(pollingIntervalMs, cancellationToken);
-                }
-                catch (TaskCanceledException)
-                {
-                    return;
-                }
-            }
-        }
-
-        public void Dispose()
-        {
-            _cancellationTokenSource.Cancel();
-            _pollTimer.Wait();
+            _pollTimer = new Timer(_ => UpdateSampler(), null, TimeSpan.Zero, builder.PollingInterval);
         }
 
         /// <summary>
-        /// Updates <see cref="_sampler"/> to a new sampler when it is different.
+        /// Updates <see cref="Sampler"/> to a new sampler when it is different.
         /// </summary>
         internal void UpdateSampler()
         {
-            SamplingStrategyResponse response;
             try
             {
-                response = _samplingManager.GetSamplingStrategy(_serviceName);
-                _metrics.SamplerRetrieved.Inc(1);
-            }
-            catch (Exception)
-            {
-                _metrics.SamplerQueryFailure.Inc(1);
-                return;
-            }
+                SamplingStrategyResponse response = _samplingManager.GetSamplingStrategyAsync(_serviceName)
+                    .ConfigureAwait(false).GetAwaiter().GetResult();
 
-            if (response.OperationSampling != null)
-            {
-                UpdatePerOperationSampler(response.OperationSampling);
+                _metrics.SamplerRetrieved.Inc(1);
+
+                if (response.OperationSampling != null)
+                {
+                    UpdatePerOperationSampler(response.OperationSampling);
+                }
+                else
+                {
+                    UpdateRateLimitingOrProbabilisticSampler(response);
+                }
             }
-            else if (response.ProbabilisticSampling != null)
+            catch (Exception ex)
             {
-                UpdateProbabilisticSampler(response.ProbabilisticSampling);
+                _logger.LogWarning(ex, "Updating sampler failed");
+                _metrics.SamplerQueryFailure.Inc(1);
+            }
+        }
+
+        /// <summary>
+        /// Replace <see cref="Sampler"/> with a new instance when parameters are updated.
+        /// </summary>
+        /// <param name="response">Response which contains either a <see cref="ProbabilisticSampler"/>
+        /// or <see cref="RateLimitingSampler"/>.</param>
+        private void UpdateRateLimitingOrProbabilisticSampler(SamplingStrategyResponse response)
+        {
+            ISampler sampler;
+            if (response.ProbabilisticSampling != null)
+            {
+                ProbabilisticSamplingStrategy strategy = response.ProbabilisticSampling;
+                sampler = new ProbabilisticSampler(strategy.SamplingRate);
             }
             else if (response.RateLimitingSampling != null)
             {
-                UpdateRateLimitingSampler(response.RateLimitingSampling);
+                RateLimitingSamplingStrategy strategy = response.RateLimitingSampling;
+                sampler = new RateLimitingSampler(strategy.MaxTracesPerSecond);
             }
             else
             {
                 _metrics.SamplerParsingFailure.Inc(1);
                 _logger.LogError("No strategy present in response. Not updating sampler.");
+                return;
             }
-        }
 
-        internal void SetSamplerIfNotTheSame(ISampler newSampler)
-        {
-            lock (this)
+            lock (_lock)
             {
-                if (!_sampler.Equals(newSampler))
+                if (!Sampler.Equals(sampler))
                 {
-                    _sampler = newSampler;
+                    Sampler.Close();
+                    Sampler = sampler;
                     _metrics.SamplerUpdated.Inc(1);
                 }
             }
         }
 
-        /// <summary>
-        /// Replace <see cref="_sampler"/> with a new instance when parameters are updated.
-        /// </summary>
-        /// <param name="strategy"><see cref="ProbabilisticSamplingStrategy"/></param>
-        internal void UpdateProbabilisticSampler(ProbabilisticSamplingStrategy strategy)
+        internal void UpdatePerOperationSampler(OperationSamplingParameters samplingParameters)
         {
-            var sampler = _samplerFactory.NewProbabilisticSampler(strategy.SamplingRate);
-
-            SetSamplerIfNotTheSame(sampler);
-        }
-
-        /// <summary>
-        /// Replace <see cref="_sampler"/> with a new instance when parameters are updated.
-        /// </summary>
-        /// <param name="strategy"><see cref="RateLimitingSamplingStrategy"/></param>
-        internal void UpdateRateLimitingSampler(RateLimitingSamplingStrategy strategy)
-        {
-            var sampler = _samplerFactory.NewRateLimitingSampler(strategy.MaxTracesPerSecond);
-
-            SetSamplerIfNotTheSame(sampler);
-        }
-
-        internal void UpdatePerOperationSampler(PerOperationSamplingStrategies samplingParameters)
-        {
-            lock (this)
+            lock (_lock)
             {
-                if (_sampler is PerOperationSampler sampler)
+                if (Sampler is PerOperationSampler sampler)
                 {
                     if (sampler.Update(samplingParameters))
                     {
@@ -159,99 +114,101 @@ namespace Jaeger.Core.Samplers
                 }
                 else
                 {
-                    _sampler = _samplerFactory.NewPerOperationSampler(_maxOperations,
-                        samplingParameters.DefaultSamplingProbability,
-                        samplingParameters.DefaultLowerBoundTracesPerSecond,
-                        _loggerFactory);
+                    Sampler.Close();
+                    Sampler = new PerOperationSampler(_maxOperations, samplingParameters, _loggerFactory);
                 }
             }
         }
 
-        public (bool Sampled, Dictionary<string, object> Tags) IsSampled(TraceId id, string operation)
+        public SamplingStatus Sample(string operation, TraceId id)
         {
-            lock (this)
+            lock (_lock)
             {
-                return _sampler.IsSampled(id, operation);
+                return Sampler.Sample(operation, id);
             }
         }
 
-        public override bool Equals(object obj)
+        public override string ToString()
         {
-            if (ReferenceEquals(null, obj)) return false;
-            if (ReferenceEquals(this, obj)) return true;
-            if (obj is RemoteControlledSampler remoteControlledSampler)
+            lock (_lock)
             {
-                lock (remoteControlledSampler)
-                {
-                    lock (this)
-                    {
-                        return _sampler.Equals(remoteControlledSampler._sampler);
-                    }
-                }
+                return $"{nameof(RemoteControlledSampler)}({Sampler})";
             }
-
-            return false;
         }
-        public override int GetHashCode()
+
+        public void Close()
         {
-            // TODO Do we need special handling here? (see Equals handling)
-            return base.GetHashCode();
+            lock (_lock)
+            {
+                _pollTimer.Dispose();
+                Sampler.Close();
+            }
+        }
+
+        protected override IEnumerable<object> GetAtomicValues()
+        {
+            yield return Sampler;
         }
 
         public sealed class Builder
         {
-            private readonly string _serviceName;
-            private readonly ISamplingManager _samplingManager;
-            private ILoggerFactory _loggerFactory;
-            private ISampler _initialSampler;
-            private IMetrics _metrics;
-            private int _pollingIntervalMs = SamplerConstants.DefaultRemotePollingIntervalMs;
+            internal string ServiceName { get; }
+            internal ISamplingManager SamplingManager { get; private set; }
+            internal ILoggerFactory LoggerFactory { get; private set; }
+            internal ISampler InitialSampler { get; private set; }
+            internal IMetrics Metrics { get; private set; }
+            internal TimeSpan PollingInterval { get; private set; } = DefaultPollingInterval;
 
-            public Builder(string serviceName, ISamplingManager samplingManager)
+            public Builder(string serviceName)
             {
-                _serviceName = serviceName;
-                _samplingManager = samplingManager ?? throw new ArgumentNullException(nameof(samplingManager));
+                ServiceName = serviceName ?? throw new ArgumentNullException(nameof(serviceName));
+            }
+
+            public Builder WithSamplingManager(ISamplingManager samplingManager)
+            {
+                SamplingManager = samplingManager ?? throw new ArgumentNullException(nameof(samplingManager));
+                return this;
             }
 
             public Builder WithLoggerFactory(ILoggerFactory loggerFactory)
             {
-                _loggerFactory = loggerFactory;
+                LoggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
                 return this;
             }
 
             public Builder WithInitialSampler(ISampler initialSampler)
             {
-                _initialSampler = initialSampler;
+                InitialSampler = initialSampler ?? throw new ArgumentNullException(nameof(initialSampler));
                 return this;
             }
 
             public Builder WithMetrics(IMetrics metrics)
             {
-                _metrics = metrics;
+                Metrics = metrics ?? throw new ArgumentNullException(nameof(metrics));
                 return this;
             }
 
-            public Builder WithPollingInterval(int pollingIntervalMs)
+            public Builder WithPollingInterval(TimeSpan pollingIntervalMs)
             {
-                _pollingIntervalMs = pollingIntervalMs;
+                PollingInterval = pollingIntervalMs;
                 return this;
             }
 
             public RemoteControlledSampler Build()
             {
-                if (_loggerFactory == null)
+                if (LoggerFactory == null)
                 {
-                    _loggerFactory = NullLoggerFactory.Instance;
+                    LoggerFactory = NullLoggerFactory.Instance;
                 }
-                if (_initialSampler == null)
+                if (InitialSampler == null)
                 {
-                    _initialSampler = new ProbabilisticSampler();
+                    InitialSampler = new ProbabilisticSampler();
                 }
-                if (_metrics == null)
+                if (Metrics == null)
                 {
-                    _metrics = NoopMetricsFactory.Instance.CreateMetrics();
+                    Metrics = new MetricsImpl(NoopMetricsFactory.Instance);
                 }
-                return new RemoteControlledSampler(_serviceName, _samplingManager, _loggerFactory, _metrics, _initialSampler, _pollingIntervalMs);
+                return new RemoteControlledSampler(this);
             }
         }
     }

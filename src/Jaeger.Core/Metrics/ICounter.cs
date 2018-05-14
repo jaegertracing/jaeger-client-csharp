@@ -1,8 +1,7 @@
 ﻿namespace Jaeger.Core.Metrics
 {
-    public interface ICounter : IMetricValue
+    public interface ICounter
     {
-        long Count { get; }
         void Inc(long delta);
     }
 }

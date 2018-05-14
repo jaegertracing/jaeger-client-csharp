@@ -1,5 +1,7 @@
 using BenchmarkDotNet.Attributes;
 using Jaeger.Core;
+using Jaeger.Core.Reporters;
+using Jaeger.Core.Samplers;
 using OpenTracing;
 
 namespace Jaeger.Benchmarks
@@ -13,7 +15,10 @@ namespace Jaeger.Benchmarks
 
         public SpanBuilderBenchmark()
         {
-            _tracer = new Tracer.Builder("service").Build();
+            _tracer = new Tracer.Builder("service")
+                .WithReporter(new NoopReporter())
+                .WithSampler(new ConstSampler(sample: true))
+                .Build();
 
             _ref1 = _tracer.BuildSpan("ref1").Start();
             _ref2 = _tracer.BuildSpan("ref2").Start();

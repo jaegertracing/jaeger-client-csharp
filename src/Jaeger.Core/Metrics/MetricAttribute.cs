@@ -1,43 +1,49 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Jaeger.Core.Metrics
 {
-    [AttributeUsage(AttributeTargets.All)]
+    [AttributeUsage(AttributeTargets.Property)]
     public class MetricAttribute : Attribute
     {
-        public enum MetricState
-        {
-            Undefined,
-            Started,
-            Joined
-        }
-
-        public enum MetricSampled
-        {
-            Undefined,
-            Yes,
-            No
-        }
-
-        public enum MetricResult
-        {
-            Undefined,
-            Ok,
-            Error,
-            Dropped
-        }
-
-        public MetricAttribute(string name, MetricState state = MetricState.Undefined, MetricSampled sampled = MetricSampled.Undefined, MetricResult result = MetricResult.Undefined)
-        {
-            Name = name;
-            State = state;
-            Sampled = sampled;
-            Result = result;
-        }
+        // Note: Java allows to pass a list of tags, however C# doesn't allow complex types for attribute constructors
+        // so we have to use simplified constructors.
 
         public string Name { get; }
-        public MetricState State { get; }
-        public MetricSampled Sampled { get; }
-        public MetricResult Result { get; }
+
+        public IReadOnlyDictionary<string, string> Tags { get; }
+
+        public MetricAttribute(string name)
+        {
+            Name = name ?? throw new ArgumentNullException(nameof(name));
+            Tags = new Dictionary<string, string>();
+        }
+
+        public MetricAttribute(string name, string tags)
+            : this(name)
+        {
+            Tags = ParseTags(tags);
+        }
+
+        private static IReadOnlyDictionary<string, string> ParseTags(string tags)
+        {
+            string[] entries = tags.Split(',');
+
+            Dictionary<string, string> tagsAsDict = new Dictionary<string, string>(entries.Length);
+            foreach (string entry in entries)
+            {
+                string[] keyValue = entry.Split('=');
+                if (keyValue.Length == 2)
+                {
+                    tagsAsDict[keyValue[0].Trim()] = keyValue[1].Trim();
+                }
+                else
+                {
+                    tagsAsDict[keyValue[0].Trim()] = "";
+                }
+            }
+
+            return tagsAsDict;
+        }
     }
 }

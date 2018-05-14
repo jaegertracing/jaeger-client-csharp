@@ -1,10 +1,10 @@
-﻿using System;
+﻿using System.Threading.Tasks;
 using Jaeger.Core.Samplers.HTTP;
 
 namespace Jaeger.Core.Samplers
 {
     public interface ISamplingManager
     {
-        SamplingStrategyResponse GetSamplingStrategy(String serviceName);
+        Task<SamplingStrategyResponse> GetSamplingStrategyAsync(string serviceName);
     }
 }

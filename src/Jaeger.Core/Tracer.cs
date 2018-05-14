@@ -1,14 +1,16 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
+using Jaeger.Core.Baggage;
 using Jaeger.Core.Metrics;
 using Jaeger.Core.Propagation;
 using Jaeger.Core.Reporters;
 using Jaeger.Core.Samplers;
-using Jaeger.Core.Transport;
 using Jaeger.Core.Util;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -18,189 +20,300 @@ using OpenTracing.Util;
 
 namespace Jaeger.Core
 {
-    // Tracer is the main object that consumers use to start spans
-    public class Tracer : IJaegerCoreTracer
+    public class Tracer : ITracer, IDisposable
     {
-        private readonly ILogger _logger;
+        private readonly BaggageSetter _baggageSetter;
+        private bool _isClosed = false;
 
-        public IScopeManager ScopeManager { get; }
-        public IClock Clock { get; }
-        public ISpan ActiveSpan => ScopeManager.Active?.Span;
-        public string HostIPv4 { get; }
         public string ServiceName { get; }
-        public Dictionary<string, object> Tags { get; }
         public IReporter Reporter { get; }
         public ISampler Sampler { get; }
-        public IPropagationRegistry PropagationRegistry { get; }
+        internal PropagationRegistry Registry { get; }
+        public IClock Clock { get; }
         public IMetrics Metrics { get; }
+        public ILogger Logger { get; }
 
-        private Tracer(string serviceName, Dictionary<string, object> tags, IScopeManager scopeManager, ILoggerFactory loggerFactory,
-            IPropagationRegistry propagationRegistry, ISampler sampler, IReporter reporter, IMetrics metrics)
+        public IScopeManager ScopeManager { get; }
+        public ISpan ActiveSpan => ScopeManager.Active?.Span;
+
+        public IReadOnlyDictionary<string, object> Tags { get; }
+
+        public string Version { get; }
+        public bool ZipkinSharedRpcSpan { get; }
+        public bool ExpandExceptionLogs { get; }
+        public long IPv4 { get; }
+
+        private Tracer(
+            string serviceName,
+            IReporter reporter,
+            ISampler sampler,
+            PropagationRegistry registry,
+            IClock clock,
+            IMetrics metrics,
+            ILoggerFactory loggerFactory,
+            Dictionary<string, object> tags,
+            bool zipkinSharedRpcSpan,
+            IScopeManager scopeManager,
+            IBaggageRestrictionManager baggageRestrictionManager,
+            bool expandExceptionLogs)
         {
             ServiceName = serviceName;
-            Tags = tags;
-            ScopeManager = scopeManager;
-            PropagationRegistry = propagationRegistry;
-            Sampler = sampler;
             Reporter = reporter;
+            Sampler = sampler;
+            Registry = registry;
+            Clock = clock;
             Metrics = metrics;
-            Clock = new Clock();
+            Logger = loggerFactory.CreateLogger<Tracer>();
+            ZipkinSharedRpcSpan = zipkinSharedRpcSpan;
+            ScopeManager = scopeManager;
+            _baggageSetter = new BaggageSetter(baggageRestrictionManager, metrics);
+            ExpandExceptionLogs = expandExceptionLogs;
 
-            _logger = loggerFactory.CreateLogger<Tracer>();
+            Version = LoadVersion();
+            tags[Constants.JaegerClientVersionTagKey] = Version;
 
-            if (tags.TryGetValue(Constants.TracerIpTagKey, out object field))
+            string hostname = GetHostName();
+            if (!tags.ContainsKey(Constants.TracerHostnameTagKey))
             {
-                HostIPv4 = field.ToString();
+                if (hostname != null)
+                {
+                    tags[Constants.TracerHostnameTagKey] = hostname;
+                }
+            }
+
+            if (tags.TryGetValue(Constants.TracerIpTagKey, out object ipTag))
+            {
+                try
+                {
+                    IPv4 = Utils.IpToInt(ipTag as string);
+                }
+                catch
+                {
+                }
+            }
+            else
+            {
+                try
+                {
+                    IPAddress hostIPv4 = Dns.GetHostAddresses(hostname).First(ip => ip.AddressFamily == AddressFamily.InterNetwork);
+
+                    tags[Constants.TracerIpTagKey] = hostIPv4.ToString();
+                    IPv4 = Utils.IpToInt(hostIPv4);
+                }
+                catch
+                {
+                }
+            }
+
+            Tags = tags;
+        }
+
+        public void ReportSpan(Span span)
+        {
+            Reporter.Report(span);
+            Metrics.SpansFinished.Inc(1);
+        }
+
+        public ISpanBuilder BuildSpan(string operationName)
+        {
+            return new SpanBuilder(this, operationName);
+        }
+
+        public void Inject<TCarrier>(ISpanContext spanContext, IFormat<TCarrier> format, TCarrier carrier)
+        {
+            IInjector injector = Registry.GetInjector(format);
+            if (injector == null)
+            {
+                throw new NotSupportedException($"Unsupported format '{format}'");
+            }
+            injector.Inject((SpanContext)spanContext, carrier);
+        }
+
+        public ISpanContext Extract<TCarrier>(IFormat<TCarrier> format, TCarrier carrier)
+        {
+            IExtractor extractor = Registry.GetExtractor(format);
+            if (extractor == null)
+            {
+                throw new NotSupportedException($"Unsupported format '{format}'");
+            }
+            return extractor.Extract(carrier);
+        }
+
+        public SpanContext SetBaggage(Span span, string key, string value)
+        {
+            return _baggageSetter.SetBaggage(span, key, value);
+        }
+
+        /// <summary>
+        /// Shuts down the <see cref="IReporter"/> and <see cref="ISampler"/>.
+        /// </summary>
+        public async Task CloseAsync(CancellationToken cancellationToken)
+        {
+            if (!_isClosed)
+            {
+                await Reporter.CloseAsync(cancellationToken).ConfigureAwait(false);
+                Sampler.Close();
+                _isClosed = true;
             }
         }
 
-        private static string GetVersion()
+        public void Dispose()
+        {
+            CancellationToken disposeTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(15)).Token;
+
+            CloseAsync(disposeTimeout).ConfigureAwait(false).GetAwaiter().GetResult();
+        }
+
+        internal string GetHostName()
+        {
+            return Dns.GetHostName();
+        }
+
+        private static string LoadVersion()
         {
             var version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
             return $"CSharp-{version}";
         }
 
-        public void Dispose()
-        {
-            Sampler?.Dispose();
-            Reporter?.Dispose();
-        }
-
-        public ISpanBuilder BuildSpan(string operationName)
-        {
-            return new SpanBuilder(this, operationName, Sampler, Metrics);
-        }
-
-        public void ReportSpan(IJaegerCoreSpan span)
-        {
-            if (span.Context.IsSampled) {
-                Reporter.Report(span);
-                Metrics.SpansFinished.Inc(1);
-            }
-        }
-
-        public ISpanContext Extract<TCarrier>(IFormat<TCarrier> format, TCarrier carrier)
-        {
-            return PropagationRegistry.Extract(format, carrier);
-        }
-
-        public void Inject<TCarrier>(ISpanContext spanContext, IFormat<TCarrier> format, TCarrier carrier)
-        {
-            PropagationRegistry.Inject(spanContext, format, carrier);
-        }
-
-        // TODO: setup baggage restriction
-        public IJaegerCoreSpan SetBaggageItem(IJaegerCoreSpan span, string key, string value)
-        {
-            var context = (SpanContext)span.Context;
-            var baggage = context.GetBaggageItems().ToDictionary(b => b.Key, b => b.Value);
-            baggage[key] = value;
-            context.SetBaggageItems(baggage);
-            return span;
-        }
-
         public sealed class Builder
         {
-            private readonly string _serviceName;
-            private readonly Dictionary<string, object> _initialTags = new Dictionary<string, object>();
             private ILoggerFactory _loggerFactory;
-            private IScopeManager _scopeManager;
-            private IPropagationRegistry _propagationRegistry;
-            private ISamplingManager _samplingManager;
             private ISampler _sampler;
-            private ITransport _transport;
             private IReporter _reporter;
-            private IMetrics _metrics;
+            private PropagationRegistry _registry;
+            private IMetrics _metrics = new MetricsImpl(NoopMetricsFactory.Instance);
+            private readonly string _serviceName;
+            private IClock _clock = new SystemClock();
+            private readonly Dictionary<string, object> _tags = new Dictionary<string, object>();
+            private bool _zipkinSharedRpcSpan;
+            private IScopeManager _scopeManager = new AsyncLocalScopeManager();
+            private IBaggageRestrictionManager _baggageRestrictionManager = new DefaultBaggageRestrictionManager();
+            private bool _expandExceptionLogs;
 
-            [ExcludeFromCodeCoverage]
-            public Builder(String serviceName)
+            // We need the loggerFactory for the PropagationRegistry so we have to defer these invocations.
+            private readonly List<Action<PropagationRegistry>> _registryActions = new List<Action<PropagationRegistry>>();
+
+            public Builder(string serviceName)
             {
-                this._serviceName = CheckValidServiceName(serviceName);
+                _serviceName = CheckValidServiceName(serviceName);
 
-                var version = GetVersion();
-                this.WithTag(Constants.JaegerClientVersionTagKey, version);
-
-                string hostname = System.Net.Dns.GetHostName();
-                if (hostname != null)
+                _registryActions.Add(registry =>
                 {
-                    this.WithTag(Constants.TracerHostnameTagKey, hostname);
-
-                    try
-                    {
-                        var hostIPv4 = System.Net.Dns.GetHostAddresses(hostname).First(ip => ip.AddressFamily == AddressFamily.InterNetwork).ToString();
-                        this.WithTag(Constants.TracerIpTagKey, hostIPv4);
-                    }
-                    catch
-                    {
-                    }
-                }
+                    _registry.Register(BuiltinFormats.TextMap, new TextMapCodec(urlEncoding: false));
+                    _registry.Register(BuiltinFormats.HttpHeaders, new TextMapCodec(urlEncoding: true));
+                });
             }
 
             public Builder WithLoggerFactory(ILoggerFactory loggerFactory)
             {
-                this._loggerFactory = loggerFactory;
-                return this;
-            }
-
-            public Builder WithPropagationRegistry(IPropagationRegistry propagationRegistry)
-            {
-                this._propagationRegistry = propagationRegistry;
+                _loggerFactory = loggerFactory;
                 return this;
             }
 
             public Builder WithReporter(IReporter reporter)
             {
-                this._reporter = reporter;
-                return this;
-            }
-
-            public Builder WithTransport(ITransport transport)
-            {
-                this._transport = transport;
+                _reporter = reporter;
                 return this;
             }
 
             public Builder WithSampler(ISampler sampler)
             {
-                this._sampler = sampler;
+                _sampler = sampler;
+                return this;
+            }
+            public Builder RegisterInjector<TCarrier>(IFormat<TCarrier> format, Injector<TCarrier> injector)
+            {
+                _registryActions.Add(registry => _registry.Register(format, injector));
                 return this;
             }
 
-            public Builder WithSamplingManager(ISamplingManager samplingManager)
+            public Builder RegisterExtractor<TCarrier>(IFormat<TCarrier> format, Extractor<TCarrier> extractor)
             {
-                this._samplingManager = samplingManager;
+                _registryActions.Add(registry => _registry.Register(format, extractor));
+                return this;
+            }
+
+            public Builder RegisterCodec<TCarrier>(IFormat<TCarrier> format, Codec<TCarrier> codec)
+            {
+                _registryActions.Add(registry => _registry.Register(format, codec));
                 return this;
             }
 
             public Builder WithMetrics(IMetrics metrics)
             {
-                this._metrics = metrics;
+                _metrics = metrics;
                 return this;
             }
 
             public Builder WithMetricsFactory(IMetricsFactory factory)
             {
-                this._metrics = factory.CreateMetrics();
+                _metrics = new MetricsImpl(factory);
                 return this;
             }
 
             public Builder WithScopeManager(IScopeManager scopeManager)
             {
-                this._scopeManager = scopeManager;
+                _scopeManager = scopeManager;
                 return this;
             }
 
-            public Builder WithTag(string key, bool value) => WithTagInternal(key, value);
-
-            public Builder WithTag(string key, double value) => WithTagInternal(key, value);
-
-            public Builder WithTag(string key, int value) => WithTagInternal(key, value);
-
-            public Builder WithTag(string key, string value) => WithTagInternal(key, value);
-
-            private Builder WithTagInternal(string key, object value)
+            public Builder WithClock(IClock clock)
             {
-                this._initialTags[key] = value;
+                _clock = clock;
+                return this;
+            }
+
+            public Builder WithZipkinSharedRpcSpan()
+            {
+                _zipkinSharedRpcSpan = true;
+                return this;
+            }
+
+            public Builder WithExpandExceptionLogs()
+            {
+                _expandExceptionLogs = true;
+                return this;
+            }
+
+            public Builder WithTag(string key, bool value)
+            {
+                _tags[key] = value;
+                return this;
+            }
+
+            public Builder WithTag(string key, double value)
+            {
+                _tags[key] = value;
+                return this;
+            }
+
+            public Builder WithTag(string key, int value)
+            {
+                _tags[key] = value;
+                return this;
+            }
+
+            public Builder WithTag(string key, string value)
+            {
+                _tags[key] = value;
+                return this;
+            }
+
+            public Builder WithTags(IEnumerable<KeyValuePair<string, string>> tags)
+            {
+                if (tags != null)
+                {
+                    foreach (var tag in tags)
+                    {
+                        _tags[tag.Key] = tag.Value;
+                    }
+                }
+                return this;
+            }
+
+            public Builder WithBaggageRestrictionManager(IBaggageRestrictionManager baggageRestrictionManager)
+            {
+                _baggageRestrictionManager = baggageRestrictionManager;
                 return this;
             }
 
@@ -210,66 +323,43 @@ namespace Jaeger.Core
                 {
                     _loggerFactory = NullLoggerFactory.Instance;
                 }
+
+                _registry = new PropagationRegistry(_loggerFactory);
+                foreach (var configureRegistry in _registryActions)
+                {
+                    configureRegistry(_registry);
+                }
+
                 if (_metrics == null)
                 {
-                    _metrics = NoopMetricsFactory.Instance.CreateMetrics();
+                    _metrics = new MetricsImpl(NoopMetricsFactory.Instance);
                 }
+
                 if (_reporter == null)
                 {
-                    if (_transport == null)
-                    {
-                        if (_loggerFactory == NullLoggerFactory.Instance)
-                        {
-                            // TODO: Technically, it would be fine to get rid of NullReporter since the NullLogger does the same.
-                            // Check the performance penalty between using LoggingReporter with NullReporter compared to NullReporter!
-                            _reporter = new NullReporter();
-                        }
-                        else
-                        {
-                            _reporter = new LoggingReporter(_loggerFactory);
-                        }
-                    }
-                    else
-                    {
-                        _reporter = new RemoteReporter.Builder(_transport)
-                            .WithLoggerFactory(_loggerFactory)
-                            .WithMetrics(_metrics)
-                            .Build();
-                    }
+                    _reporter = new RemoteReporter.Builder()
+                        .WithLoggerFactory(_loggerFactory)
+                        .WithMetrics(_metrics)
+                        .Build();
                 }
                 if (_sampler == null)
                 {
-                    if (_samplingManager == null)
-                    {
-                        _sampler = new ConstSampler(true);
-                    }
-                    else
-                    {
-                        _sampler = new RemoteControlledSampler.Builder(_serviceName, _samplingManager)
-                            .WithLoggerFactory(_loggerFactory)
-                            .WithMetrics(_metrics)
-                            .Build();
-                    }
-                }
-                if (_scopeManager == null)
-                {
-                    _scopeManager = new AsyncLocalScopeManager();
-                }
-                if (_propagationRegistry == null)
-                {
-                    _propagationRegistry = Propagators.TextMap;
+                    _sampler = new RemoteControlledSampler.Builder(_serviceName)
+                        .WithLoggerFactory(_loggerFactory)
+                        .WithMetrics(_metrics)
+                        .Build();
                 }
 
-                return new Tracer(_serviceName, _initialTags, _scopeManager, _loggerFactory, _propagationRegistry, _sampler, _reporter, _metrics);
+                return new Tracer(_serviceName, _reporter, _sampler, _registry, _clock, _metrics, _loggerFactory,
+                    _tags, _zipkinSharedRpcSpan, _scopeManager, _baggageRestrictionManager, _expandExceptionLogs);
             }
 
-            private static string CheckValidServiceName(String serviceName)
+            public static String CheckValidServiceName(String serviceName)
             {
-                if (string.IsNullOrEmpty(serviceName?.Trim()))
+                if (string.IsNullOrWhiteSpace(serviceName))
                 {
-                    throw new ArgumentException("Service name must not be null or empty", nameof(serviceName));
+                    throw new ArgumentException("Service name must not be null or empty");
                 }
-
                 return serviceName;
             }
         }

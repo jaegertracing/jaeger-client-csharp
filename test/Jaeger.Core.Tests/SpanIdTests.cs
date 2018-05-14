@@ -5,7 +5,7 @@ namespace Jaeger.Core.Tests
 {
     public class SpanIdTests
     {
-        private readonly ulong _spanIdValue;
+        private readonly long _spanIdValue;
         private readonly SpanId _spanId;
 
         public SpanIdTests()
@@ -18,13 +18,6 @@ namespace Jaeger.Core.Tests
         public void Field_ShouldReturnHexString()
         {
             Assert.Equal("2a", _spanId.ToString());
-        }
-
-        [Fact]
-        public void Field_ShouldBeCastableToUInt64()
-        {
-            var ulongValue = (ulong)_spanId;
-            Assert.Equal(ulongValue, _spanIdValue);
         }
 
         [Fact]

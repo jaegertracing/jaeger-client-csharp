@@ -1,5 +1,6 @@
 ﻿using System;
 using Jaeger.Core.Reporters;
+using Jaeger.Core.Samplers;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Xunit;
@@ -13,17 +14,20 @@ namespace Jaeger.Core.Tests.Reporters
         {
             var loggerFactory = Substitute.For<ILoggerFactory>();
             var logger = Substitute.For<ILogger>();
-            var span = Substitute.For<IJaegerCoreSpan>();
 
             loggerFactory.CreateLogger<LoggingReporter>().Returns(logger);
 
-            using (var reporter = new LoggingReporter(loggerFactory))
-            {
-                loggerFactory.Received(1).CreateLogger<LoggingReporter>();
+            var reporter = new LoggingReporter(loggerFactory);
 
-                reporter.Report(span);
-                logger.Received(1).Log(LogLevel.Information, Arg.Any<EventId>(), Arg.Any<object>(), null, Arg.Any<Func<object, Exception, string>>());
-            }
+            var tracer = new Tracer.Builder("service")
+                .WithReporter(reporter)
+                .WithSampler(new ConstSampler(true))
+                .Build();
+
+            tracer.BuildSpan("foo").Start().Finish();
+
+            loggerFactory.Received(1).CreateLogger<LoggingReporter>();
+            logger.Received(1).Log(LogLevel.Information, Arg.Any<EventId>(), Arg.Any<object>(), null, Arg.Any<Func<object, Exception, string>>());
         }
     }
 }

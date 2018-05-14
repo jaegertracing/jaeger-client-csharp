@@ -1,404 +1,400 @@
 using System;
 using System.Collections.Generic;
+using Jaeger.Core.Baggage;
+using Jaeger.Core.Metrics;
+using Jaeger.Core.Reporters;
+using Jaeger.Core.Samplers;
 using Jaeger.Core.Util;
 using NSubstitute;
 using OpenTracing;
+using OpenTracing.Tag;
 using Xunit;
 
 namespace Jaeger.Core.Tests
 {
     public class SpanTests
     {
+        private IClock clock;
+        private InMemoryReporter reporter;
+        private Tracer tracer;
+        private Span span;
+        private InMemoryMetricsFactory metricsFactory;
+        private IMetrics metrics;
+
+        public SpanTests()
+        {
+            metricsFactory = new InMemoryMetricsFactory();
+            reporter = new InMemoryReporter();
+            clock = Substitute.For<IClock>();
+            metrics = new MetricsImpl(metricsFactory);
+            tracer = new Tracer.Builder("SamplerTest")
+                .WithReporter(reporter)
+                .WithSampler(new ConstSampler(true))
+                .WithMetrics(metrics)
+                .WithClock(clock)
+                .WithBaggageRestrictionManager(new DefaultBaggageRestrictionManager())
+                .WithExpandExceptionLogs()
+                .Build();
+            span = (Span)tracer.BuildSpan("some-operation").Start();
+        }
 
         [Fact]
-        public void Span_Constructor_ShouldAssignEverythingCorrectlyWhenPassed()
+        public void TestSpanMetrics()
         {
-            var tracer = Substitute.For<IJaegerCoreTracer>();
-            var operationName = "testing";
-            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
-            var startTimestamp = DateTime.UtcNow;
-            var ref1Context = Substitute.For<IJaegerCoreSpanContext>();
-            var tags = new Dictionary<string, object> { { "key", "something"} };
-            var references = new List<Reference> {
-                new Reference("type1", ref1Context)
+            Assert.Equal(1, metricsFactory.GetCounter("jaeger:started_spans", "sampled=y"));
+            Assert.Equal(1, metricsFactory.GetCounter("jaeger:traces", "sampled=y,state=started"));
+        }
+
+        [Fact]
+        public void TestSetAndGetBaggageItem()
+        {
+            string service = "SamplerTest";
+            IBaggageRestrictionManager mgr = Substitute.ForPartsOf<DefaultBaggageRestrictionManager>();
+            tracer = new Tracer.Builder(service)
+                    .WithReporter(reporter)
+                    .WithSampler(new ConstSampler(true))
+                    .WithClock(clock)
+                    .WithBaggageRestrictionManager(mgr)
+                    .Build();
+            span = (Span)tracer.BuildSpan("some-operation").Start();
+
+            string key = "key";
+            string value = "value";
+            mgr.GetRestriction(service, key).Returns(new Restriction(true, 10));
+            span.SetBaggageItem(key, "value");
+            mgr.Received(1).GetRestriction(service, key);
+            Assert.Equal(value, span.GetBaggageItem(key));
+        }
+
+        [Fact]
+        public void TestSetBooleanTag()
+        {
+            bool expected = true;
+            string key = "tag.key";
+
+            span.SetTag(key, expected);
+            Assert.Equal(expected, span.GetTags()[key]);
+        }
+
+        [Fact]
+        public void TestSetOperationName()
+        {
+            string expected = "modified.operation";
+
+            Assert.Equal("some-operation", span.OperationName);
+            span.SetOperationName(expected);
+            Assert.Equal(expected, span.OperationName);
+        }
+
+        [Fact]
+        public void TestSetStringTag()
+        {
+            string expected = "expected.value";
+            string key = "tag.key";
+
+            span.SetTag(key, expected);
+            Assert.Equal(expected, span.GetTags()[key]);
+        }
+
+        [Fact]
+        public void TestSetNumberTag()
+        {
+            int expected = 5;
+            string key = "tag.key";
+
+            span.SetTag(key, expected);
+            Assert.Equal(expected, span.GetTags()[key]);
+        }
+
+        [Fact]
+        public void TestWithTimestamp()
+        {
+            DateTimeOffset start = new DateTimeOffset(2018, 4, 12, 14, 0, 1, TimeSpan.Zero);
+            DateTimeOffset finish = new DateTimeOffset(2018, 4, 12, 14, 0, 3, TimeSpan.Zero);
+
+            clock.UtcNow().Returns(_ => throw new InvalidOperationException("UtcNow() called"));
+
+            Span span = (Span)tracer.BuildSpan("test-service-name").WithStartTimestamp(start).Start();
+            span.Finish(finish);
+
+            Assert.Single(reporter.GetSpans());
+            Assert.Equal(start.UtcDateTime, span.StartTimestampUtc);
+            Assert.Equal(finish.UtcDateTime, span.FinishTimestampUtc);
+        }
+
+        [Fact]
+        public void TestMultipleSpanFinishDoesNotCauseMultipleReportCalls()
+        {
+            Span span = (Span)tracer.BuildSpan("test-service-name").Start();
+            span.Finish();
+
+            Assert.Single(reporter.GetSpans());
+
+            Span reportedSpan = reporter.GetSpans()[0];
+
+            // new finish calls will not affect size of reporter.GetSpans()
+            span.Finish();
+
+            Assert.Single(reporter.GetSpans());
+            Assert.Equal(reportedSpan, reporter.GetSpans()[0]);
+        }
+
+        [Fact]
+        public void TestWithoutTimestamps()
+        {
+            DateTime start = new DateTime(2018, 4, 12, 14, 0, 1, DateTimeKind.Utc);
+            DateTime finish = new DateTime(2018, 4, 12, 14, 0, 3, DateTimeKind.Utc);
+            clock.UtcNow().Returns(start, finish);
+
+            Span span = (Span)tracer.BuildSpan("test-service-name").Start();
+            span.Finish();
+
+            Assert.Single(reporter.GetSpans());
+            Assert.Equal(start, span.StartTimestampUtc);
+            Assert.Equal(finish, span.FinishTimestampUtc);
+        }
+
+        [Fact]
+        public void TestSpanToString()
+        {
+            Span span = (Span)tracer.BuildSpan("test-operation").Start();
+            SpanContext expectedContext = span.Context;
+            SpanContext actualContext = SpanContext.ContextFromString(span.Context.ContextAsString());
+
+            Assert.Equal(expectedContext.TraceId, actualContext.TraceId);
+            Assert.Equal(expectedContext.SpanId, actualContext.SpanId);
+            Assert.Equal(expectedContext.ParentId, actualContext.ParentId);
+            Assert.Equal(expectedContext.Flags, actualContext.Flags);
+        }
+
+        [Fact]
+        public void TestOperationName()
+        {
+            string expectedOperation = "leela";
+            Span span = (Span)tracer.BuildSpan(expectedOperation).Start();
+            Assert.Equal(expectedOperation, span.OperationName);
+        }
+
+        [Fact]
+        public void TestLogWithTimestamp()
+        {
+            DateTime expectedTimestamp = new DateTime(2018, 4, 12, 14, 0, 0, DateTimeKind.Utc);
+            string expectedLog = "some-log";
+            string expectedEvent = "event";
+            var expectedFields = new Dictionary<string, object>()
+            {
+                { expectedEvent, expectedLog }
             };
 
-            var s = new Span(tracer, operationName, spanContext, startTimestamp, tags, references);
-            Assert.Equal(operationName, s.OperationName);
-            Assert.Equal(spanContext, s.Context);
-            Assert.Equal(startTimestamp, s.StartTimestampUtc);
-            Assert.Equal(tags, s.Tags);
-            Assert.Equal(references, s.References);
+            span.Log(expectedTimestamp, expectedEvent);
+            span.Log(expectedTimestamp, expectedFields);
+            span.Log(expectedTimestamp, (string)null);
+            span.Log(expectedTimestamp, (Dictionary<string, object>)null);
+
+            LogData actualLogData = span.GetLogs()[0];
+
+            Assert.Equal(expectedTimestamp, actualLogData.TimestampUtc);
+            Assert.Equal(expectedEvent, actualLogData.Message);
+
+            actualLogData = span.GetLogs()[1];
+
+            Assert.Equal(expectedTimestamp, actualLogData.TimestampUtc);
+            Assert.Null(actualLogData.Message);
+            Assert.Equal(expectedFields, actualLogData.Fields);
         }
 
         [Fact]
-        public void Span_Constructor_ShouldThrowIfTracerIsNull()
+        public void TestLog()
         {
-            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
+            DateTime expectedTimestamp = new DateTime(2018, 4, 12, 14, 0, 0, DateTimeKind.Utc);
+            string expectedLog = "some-log";
+            string expectedEvent = "expectedEvent";
 
-            var ex = Assert.Throws<ArgumentNullException>(() => new Span(null, "", spanContext));
-            Assert.Equal("tracer", ex.ParamName);
-        }
+            clock.UtcNow().Returns(expectedTimestamp);
 
-        [Fact]
-        public void Span_Constructor_ShouldThrowIfOperationNameIsNullOrEmpty()
-        {
-            var tracer = Substitute.For<IJaegerCoreTracer>();
-            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
+            span.Log(expectedEvent);
 
-            var ex1 = Assert.Throws<ArgumentException>(() => new Span(tracer, "", spanContext));
-            Assert.StartsWith("Argument is empty", ex1.Message);
-
-            var ex2 = Assert.Throws<ArgumentException>(() => new Span(tracer, null, spanContext));
-            Assert.StartsWith("Argument is null", ex2.Message);
-        }
-
-        [Fact]
-        public void Span_Constructor_ShouldThrowIfContextIsNull()
-        {
-            var tracer = Substitute.For<IJaegerCoreTracer>();
-
-            var ex = Assert.Throws<ArgumentNullException>(() => new Span(tracer, "testing", null));
-            Assert.Equal("context", ex.ParamName);
-        }
-
-        [Fact]
-        public void Span_Constructor_ShouldDefaultStartTimestampTagsAndReferencesIfNull()
-        {
-            var tracer = Substitute.For<IJaegerCoreTracer>();
-            var operationName = "testing";
-            var clock = Substitute.For<IClock>();
-            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
-            var startTimestamp = DateTime.UtcNow;
-
-            tracer.Clock.Returns(clock);
-            clock.UtcNow().Returns(startTimestamp);
-
-            var s = new Span(tracer, operationName, spanContext, null, null, null);
-
-            clock.Received(1).UtcNow();
-            Assert.Equal(operationName, s.OperationName);
-            Assert.Equal(spanContext, s.Context);
-            Assert.Equal(startTimestamp, s.StartTimestampUtc);
-            Assert.Equal(new Dictionary<string, object>(), s.Tags);
-            Assert.Equal(new List<Reference>(), s.References);
-        }
-
-        [Fact]
-        public void Span_Finish_ShouldReportTheSpanToTheTracerOnce()
-        {
-            var tracer = Substitute.For<IJaegerCoreTracer>();
-            var clock = Substitute.For<IClock>();
-            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
-            var startTimestamp = DateTime.UtcNow;
-            var currentTime = DateTime.UtcNow.AddSeconds(1);
-
-            tracer.Clock.Returns(clock);
-            clock.UtcNow().Returns(currentTime);
-
-            var span = new Span(tracer, "testing", spanContext, startTimestamp);
-            span.Finish();
-            span.Finish();
-            span.Finish();
-
-            clock.Received(3).UtcNow();
-            tracer.Received(1).ReportSpan(Arg.Is<IJaegerCoreSpan>(s => s == span));
-            Assert.Equal(currentTime, span.FinishTimestampUtc);
-        }
-
-        [Fact]
-        public void Span_Finish_WithFinishTimestamp_ShouldReportTheSpanToTheTracerOnce()
-        {
-            var tracer = Substitute.For<IJaegerCoreTracer>();
-            var clock = Substitute.For<IClock>();
-            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
-            var startTimestamp = DateTime.UtcNow;
-            var currentTime = DateTime.UtcNow.AddSeconds(1);
-
-            tracer.Clock.Returns(clock);
-
-            var span = new Span(tracer, "testing", spanContext, startTimestamp);
-            span.Finish(currentTime);
-            span.Finish(currentTime);
-            span.Finish(currentTime);
-
-            clock.Received(0).UtcNow();
-            tracer.Received(1).ReportSpan(Arg.Is<IJaegerCoreSpan>(s => s == span));
-            Assert.Equal(currentTime, span.FinishTimestampUtc);
-        }
-
-        [Fact]
-        public void Span_Dispose_ShouldReportTheSpanToTheTracerOnce()
-        {
-            var tracer = Substitute.For<IJaegerCoreTracer>();
-            var clock = Substitute.For<IClock>();
-            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
-            var startTimestamp = DateTime.UtcNow;
-            var currentTime = DateTime.UtcNow.AddSeconds(1);
-
-            tracer.Clock.Returns(clock);
-            clock.UtcNow().Returns(currentTime);
-
-            var span = new Span(tracer, "testing", spanContext, startTimestamp);
-            span.Dispose();
-            span.Dispose();
-            span.Dispose();
-
-            clock.Received(3).UtcNow();
-            tracer.Received(1).ReportSpan(Arg.Is<IJaegerCoreSpan>(s => s == span));
-            Assert.Equal(currentTime, span.FinishTimestampUtc);
-        }
-
-        [Fact]
-        public void Span_GetBaggageItem_ShouldUseTheContextBaggage()
-        {
-            var tracer = Substitute.For<IJaegerCoreTracer>();
-            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
-            var startTimestamp = DateTime.UtcNow;
-            var baggage = new Dictionary<string, string> { { "key1", "value1" }, { "key2", "value2" } };
-
-            spanContext.GetBaggageItems().Returns(baggage);
-
-            var span = new Span(tracer, "testing", spanContext, startTimestamp);
-            var value = span.GetBaggageItem("key2");
-
-            Assert.Equal(baggage["key2"], value);
-        }
-
-        [Fact]
-        public void Span_GetBaggageItem_ShouldReturnNull_WhenKeyDoesNotExist()
-        {
-            var tracer = Substitute.For<IJaegerCoreTracer>();
-            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
-            var startTimestamp = DateTime.UtcNow;
-            var baggage = new Dictionary<string, string> { { "key1", "value1" }, { "key2", "value2" } };
-
-            spanContext.GetBaggageItems().Returns(baggage);
-
-            var span = new Span(tracer, "testing", spanContext, startTimestamp);
-            var value = span.GetBaggageItem("key3");
-
-            Assert.Null(value);
-        }
-
-        [Fact]
-        public void Span_SetBaggageItem_ShouldOffLoadToTracer()
-        {
-            var tracer = Substitute.For<IJaegerCoreTracer>();
-            var operationName = "testing";
-            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
-            var startTimestamp = DateTime.UtcNow;
-            var key = "key";
-            var value = "value";
-
-            tracer.SetBaggageItem(
-                Arg.Is<IJaegerCoreSpan>(s => s.OperationName == operationName),
-                Arg.Is<string>(k => k == key),
-                Arg.Is<string>(v => v == value)
-            );
-
-            var span = new Span(tracer, operationName, spanContext, startTimestamp);
-            span.SetBaggageItem(key, value);
-
-            tracer.Received(1).SetBaggageItem(Arg.Any<IJaegerCoreSpan>(), Arg.Any<string>(), Arg.Any<string>());
-        }
-
-        [Fact]
-        public void Span_Log_Fields_ShouldLogAllFields()
-        {
-            var fields = new Dictionary<string, object> {
-                { "log1", "message1" },
-                { "log2", false },
-                { "log3", new Dictionary<string, string> { { "key", "value" } } },
-                { "log4", new Clock() }
+            var expectedFields = new Dictionary<string, object>()
+            {
+                { expectedEvent, expectedLog }
             };
+            span.Log(expectedFields);
+            span.Log((string)null);
+            span.Log((Dictionary<string, object>)null);
 
-            var tracer = Substitute.For<IJaegerCoreTracer>();
-            var operationName = "testing";
-            var clock = Substitute.For<IClock>();
-            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
-            var startTimestamp = DateTime.UtcNow;
-            var currentTime = DateTime.UtcNow.AddSeconds(1);
+            LogData actualLogData = span.GetLogs()[0];
 
-            tracer.Clock.Returns(clock);
-            clock.UtcNow().Returns(currentTime);
+            Assert.Equal(expectedTimestamp, actualLogData.TimestampUtc);
+            Assert.Equal(expectedEvent, actualLogData.Message);
 
-            var span = new Span(tracer, operationName, spanContext, startTimestamp);
-            span.Log(fields);
+            actualLogData = span.GetLogs()[1];
 
-            clock.Received(1).UtcNow();
-            Assert.True(span.Logs[0].Fields["log1"] is string);
-            Assert.True(span.Logs[0].Fields["log2"] is bool);
-            Assert.True(span.Logs[0].Fields["log3"] is Dictionary<string, string>); // TODO Where do we check/restrict the types?
-            Assert.True(span.Logs[0].Fields["log4"] is Clock); // TODO Where do we check/restrict the types?
-            Assert.Equal(currentTime, span.Logs[0].TimestampUtc);
+            Assert.Equal(expectedTimestamp, actualLogData.TimestampUtc);
+            Assert.Null(actualLogData.Message);
+            Assert.Equal(expectedFields, actualLogData.Fields);
         }
 
         [Fact]
-        public void Span_Log_Fields_WithTimestamp_ShouldLogAllFields()
+        public void TestSpanDetectsSamplingPriorityGreaterThanZero()
         {
-            var fields = new Dictionary<string, object> {
-                { "log1", new byte[] { 0x20, 0x20 } },
-                { "log2", 15m }
-            };
+            Span span = (Span)tracer.BuildSpan("test-service-operation").Start();
+            Tags.SamplingPriority.Set(span, 1);
 
-            var tracer = Substitute.For<IJaegerCoreTracer>();
-            var operationName = "testing";
-            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
-            var startTimestamp = DateTime.UtcNow;
-            var logTimestamp = DateTime.UtcNow.AddMilliseconds(150);
-
-            var span = new Span(tracer, operationName, spanContext, startTimestamp);
-            span.Log(logTimestamp, fields);
-
-            Assert.True(span.Logs[0].Fields["log1"] is byte[]);
-            Assert.True(span.Logs[0].Fields["log2"] is decimal);
-            Assert.Equal(logTimestamp, span.Logs[0].TimestampUtc);
+            Assert.Equal(SpanContextFlags.Sampled, span.Context.Flags & SpanContextFlags.Sampled);
+            Assert.Equal(SpanContextFlags.Debug, span.Context.Flags & SpanContextFlags.Debug);
         }
 
         [Fact]
-        public void Span_Log_EventName_ShouldLogEventName()
+        public void TestSpanDetectsSamplingPriorityLessThanZero()
         {
-            var eventName = "event, yo";
+            Span span = (Span)tracer.BuildSpan("test-service-operation").Start();
 
-            var tracer = Substitute.For<IJaegerCoreTracer>();
-            var operationName = "testing";
-            var clock = Substitute.For<IClock>();
-            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
-            var startTimestamp = DateTime.UtcNow;
-            var currentTime = DateTime.UtcNow.AddSeconds(1);
-
-            tracer.Clock.Returns(clock);
-            clock.UtcNow().Returns(currentTime);
-
-            var span = new Span(tracer, operationName, spanContext, startTimestamp);
-            span.Log(eventName);
-
-            clock.Received(1).UtcNow();
-            Assert.Equal(eventName, span.Logs[0].Fields[LogFields.Event]);
-            Assert.Equal(currentTime, span.Logs[0].TimestampUtc);
+            Assert.Equal(SpanContextFlags.Sampled, span.Context.Flags & SpanContextFlags.Sampled);
+            Tags.SamplingPriority.Set(span, -1);
+            Assert.False(span.Context.Flags.HasFlag(SpanContextFlags.Sampled));
         }
 
         [Fact]
-        public void Span_Log_EventName_WithTimestamp_ShouldLogAllFields()
+        public void TestBaggageOneReference()
         {
-            var eventName = "event, yo";
+            ISpan parent = tracer.BuildSpan("foo").Start();
+            parent.SetBaggageItem("foo", "bar");
 
-            var tracer = Substitute.For<IJaegerCoreTracer>();
-            var operationName = "testing";
-            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
-            var startTimestamp = DateTime.UtcNow;
-            var logTimestamp = DateTime.UtcNow.AddMilliseconds(150);
+            ISpan child = tracer.BuildSpan("foo")
+                .AsChildOf(parent)
+                .Start();
 
-            var span = new Span(tracer, operationName, spanContext, startTimestamp);
-            span.Log(logTimestamp, eventName);
+            child.SetBaggageItem("a", "a");
 
-            Assert.Equal(eventName, span.Logs[0].Fields[LogFields.Event]);
-            Assert.Equal(logTimestamp, span.Logs[0].TimestampUtc);
+            Assert.Null(parent.GetBaggageItem("a"));
+            Assert.Equal("a", child.GetBaggageItem("a"));
+            Assert.Equal("bar", child.GetBaggageItem("foo"));
         }
 
         [Fact]
-        public void Span_SetOperationName()
+        public void TestBaggageMultipleReferences()
         {
-            var tracer = Substitute.For<IJaegerCoreTracer>();
-            var operationName = "testing";
-            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
-            var startTimestamp = DateTime.UtcNow;
-            var logTimestamp = DateTime.UtcNow.AddMilliseconds(150);
+            ISpan parent1 = tracer.BuildSpan("foo").Start();
+            parent1.SetBaggageItem("foo", "bar");
+            ISpan parent2 = tracer.BuildSpan("foo").Start();
+            parent2.SetBaggageItem("foo2", "bar");
 
-            var span = new Span(tracer, operationName, spanContext, startTimestamp);
+            ISpan child = tracer.BuildSpan("foo")
+                .AsChildOf(parent1)
+                .AddReference(References.FollowsFrom, parent2.Context)
+                .Start();
 
-            Assert.Equal(operationName, span.OperationName);
+            child.SetBaggageItem("a", "a");
+            child.SetBaggageItem("foo2", "b");
 
-            var newOperationName = "testing2";
-            span.SetOperationName(newOperationName);
-
-            Assert.Equal(newOperationName, span.OperationName);
+            Assert.Null(parent1.GetBaggageItem("a"));
+            Assert.Null(parent2.GetBaggageItem("a"));
+            Assert.Equal("a", child.GetBaggageItem("a"));
+            Assert.Equal("bar", child.GetBaggageItem("foo"));
+            Assert.Equal("b", child.GetBaggageItem("foo2"));
         }
 
         [Fact]
-        public void Span_SetTag_Bool_ShouldSetTag()
+        public void TestImmutableBaggage()
         {
-            var tracer = Substitute.For<IJaegerCoreTracer>();
-            var operationName = "testing";
-            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
-            var startTimestamp = DateTime.UtcNow;
-            var tagName = "testing.tag";
-            var value = true;
+            ISpan span = tracer.BuildSpan("foo").Start();
+            span.SetBaggageItem("foo", "bar");
+            Assert.Single(span.Context.GetBaggageItems());
 
-            var span = new Span(tracer, operationName, spanContext, startTimestamp);
-            span.SetTag(tagName, value);
-
-            Assert.Equal(value, span.Tags[tagName]);
+            span.SetBaggageItem("foo", null);
+            Assert.Empty(span.Context.GetBaggageItems());
         }
 
         [Fact]
-        public void Span_SetTag_Double_ShouldSetTag()
+        public void TestExpandExceptionLogs()
         {
-            var tracer = Substitute.For<IJaegerCoreTracer>();
-            var operationName = "testing";
-            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
-            var startTimestamp = DateTime.UtcNow;
-            var tagName = "testing.tag";
-            var value = 3D;
+            Exception ex = new Exception("foo");
+            var logs = new Dictionary<string, object>();
+            logs[LogFields.ErrorObject] = ex;
+            Span span = (Span)tracer.BuildSpan("foo").Start();
+            span.Log(logs);
 
-            var span = new Span(tracer, operationName, spanContext, startTimestamp);
-            span.SetTag(tagName, value);
+            var logData = span.GetLogs();
+            Assert.Single(logData);
+            Assert.Equal(4, logData[0].Fields.Count);
 
-            Assert.Equal(value, span.Tags[tagName]);
+            Assert.Equal(ex, logData[0].Fields[LogFields.ErrorObject]);
+            Assert.Equal(ex.Message, logData[0].Fields[LogFields.Message]);
+            Assert.Equal(ex.GetType().FullName, logData[0].Fields[LogFields.ErrorKind]);
+            Assert.Equal(ex.StackTrace, logData[0].Fields[LogFields.Stack]);
         }
 
         [Fact]
-        public void Span_SetTag_Int_ShouldSetTag()
+        public void TestExpandExceptionLogsExpanded()
         {
-            var tracer = Substitute.For<IJaegerCoreTracer>();
-            var operationName = "testing";
-            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
-            var startTimestamp = DateTime.UtcNow;
-            var tagName = "testing.tag";
-            var value = 55;
+            Exception ex = new Exception("foo");
+            var logs = new Dictionary<string, object>();
+            logs[LogFields.ErrorObject] = ex;
+            logs[LogFields.Message] = ex.Message;
+            logs[LogFields.ErrorKind] = ex.GetType().FullName;
+            logs[LogFields.Stack] = ex.StackTrace;
+            Span span = (Span)tracer.BuildSpan("foo").Start();
+            span.Log(logs);
 
-            var span = new Span(tracer, operationName, spanContext, startTimestamp);
-            span.SetTag(tagName, value);
+            var logData = span.GetLogs();
+            Assert.Single(logData);
+            Assert.Equal(4, logData[0].Fields.Count);
 
-            Assert.Equal(value, span.Tags[tagName]);
+            Assert.Equal(ex, logData[0].Fields[LogFields.ErrorObject]);
+            Assert.Equal(ex.Message, logData[0].Fields[LogFields.Message]);
+            Assert.Equal(ex.GetType().FullName, logData[0].Fields[LogFields.ErrorKind]);
+            Assert.Equal(ex.StackTrace, logData[0].Fields[LogFields.Stack]);
         }
 
         [Fact]
-        public void Span_SetTag_String_ShouldSetTag()
+        public void TestExpandExceptionLogsLoggedNoException()
         {
-            var tracer = Substitute.For<IJaegerCoreTracer>();
-            var operationName = "testing";
-            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
-            var startTimestamp = DateTime.UtcNow;
-            var tagName = "testing.tag";
-            var value = "testing, yo";
+            Span span = (Span)tracer.BuildSpan("foo").Start();
 
-            var span = new Span(tracer, operationName, spanContext, startTimestamp);
-            span.SetTag(tagName, value);
+            object obj = new object();
+            var logs = new Dictionary<string, object>();
+            logs[LogFields.ErrorObject] = obj;
+            span.Log(logs);
 
-            Assert.Equal(value, span.Tags[tagName]);
+            var logData = span.GetLogs();
+            Assert.Single(logData);
+            Assert.Single(logData[0].Fields);
+            Assert.Equal(obj, logData[0].Fields[LogFields.ErrorObject]);
         }
 
         [Fact]
-        public void Span_SetTag_ShouldOverwriteTag()
+        public void TestNoExpandExceptionLogs()
         {
-            var tracer = Substitute.For<IJaegerCoreTracer>();
-            var operationName = "testing";
-            var spanContext = Substitute.For<IJaegerCoreSpanContext>();
-            var startTimestamp = DateTime.UtcNow;
-            var tagName = "testing.tag";
-            var value = "testing, yo";
+            Tracer tracer = new Tracer.Builder("fo")
+                .WithReporter(reporter)
+                .WithSampler(new ConstSampler(true))
+                .Build();
 
-            var span = new Span(tracer, operationName, spanContext, startTimestamp);
-            span.SetTag(tagName, value);
+            Span span = (Span)tracer.BuildSpan("foo").Start();
 
-            Assert.Equal(value, span.Tags[tagName]);
+            Exception ex = new Exception("ex");
+            var logs = new Dictionary<string, object>();
+            logs[LogFields.ErrorObject] = ex;
+            span.Log(logs);
 
-            var newValue = 56;
-            span.SetTag(tagName, newValue);
+            var logData = span.GetLogs();
+            Assert.Single(logData);
+            Assert.Single(logData[0].Fields);
+            Assert.Equal(ex, logData[0].Fields[LogFields.ErrorObject]);
+        }
 
-            Assert.Equal(newValue, span.Tags[tagName]);
+        [Fact]
+        public void TestSpanNotSampled()
+        {
+            Tracer tracer = new Tracer.Builder("fo")
+                .WithReporter(reporter)
+                .WithSampler(new ConstSampler(false))
+                .Build();
+            ISpan foo = tracer.BuildSpan("foo")
+                .Start();
+            foo.Log(new Dictionary<string, object>())
+                .Finish();
+            Assert.Empty(reporter.GetSpans());
         }
     }
 }

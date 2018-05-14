@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Jaeger.Core.Samplers;
 using Xunit;
 
@@ -8,51 +7,48 @@ namespace Jaeger.Core.Tests.Samplers
     public class ProbabilisticSamplerTests
     {
         [Fact]
-        public void ProbabilisticSampler_Constructor_ShouldThrowIfArgumentIsBelowRange()
+        public void TestSamplingBoundariesPositive()
         {
-            var ex = Assert.Throws<ArgumentOutOfRangeException>(() => new ProbabilisticSampler(-1));
-            Assert.Equal((double)-1, ex.ActualValue);
-            Assert.Equal("samplingRate", ex.ParamName);
-            Assert.Contains("sampling rate must be between 0.0 and 1.0", ex.Message);
+            double samplingRate = 0.5;
+
+            long halfwayBoundary = 0x3fffffffffffffffL;
+            ISampler sampler = new ProbabilisticSampler(samplingRate);
+            Assert.True(sampler.Sample("", new TraceId(halfwayBoundary)).IsSampled);
+
+            Assert.False(sampler.Sample("", new TraceId(halfwayBoundary + 2)).IsSampled);
         }
 
         [Fact]
-        public void ProbabilisticSampler_Constructor_ShouldThrowIfArgumentIsAboveRange()
+        public void TestSamplingBoundariesNegative()
         {
-            var ex = Assert.Throws<ArgumentOutOfRangeException>(() => new ProbabilisticSampler(1.1));
-            Assert.Equal(1.1, ex.ActualValue);
-            Assert.Equal("samplingRate", ex.ParamName);
-            Assert.Contains("sampling rate must be between 0.0 and 1.0", ex.Message);
+            double samplingRate = 0.5;
+
+            long halfwayBoundary = -0x4000000000000000L;
+            ISampler sampler = new ProbabilisticSampler(samplingRate);
+            Assert.True(sampler.Sample("", new TraceId(halfwayBoundary)).IsSampled);
+
+            Assert.False(sampler.Sample("", new TraceId(halfwayBoundary - 1)).IsSampled);
         }
 
         [Fact]
-        public void ProbabilisticSampler_Constructor_ShouldSetSamplingRate()
+        public void TestSamplerThrowsInvalidSamplingRangeExceptionUnder()
         {
-            var samplingRate = 0.5;
-            var sampler = new ProbabilisticSampler(samplingRate);
-            Assert.Equal(samplingRate, sampler.SamplingRate);
-            sampler.Dispose();
+            Assert.Throws<ArgumentOutOfRangeException>(() => new ProbabilisticSampler(-0.1));
         }
 
         [Fact]
-        public void ProbabilisticSampler_IsSampled()
+        public void TestSamplerThrowsInvalidSamplingRangeExceptionOver()
         {
-            var middleId = 9223372036854775807;
+            Assert.Throws<ArgumentOutOfRangeException>(() => new ProbabilisticSampler(1.1));
+        }
 
-            var samplingRate = 0.5;
-            var expectedTags = new Dictionary<string, object> {
-                { SamplerConstants.SamplerTypeTagKey, SamplerConstants.SamplerTypeProbabilistic },
-                { SamplerConstants.SamplerParamTagKey, samplingRate }
-            };
-            var sampler = new ProbabilisticSampler(samplingRate);
-            var isSampled = sampler.IsSampled(new TraceId((ulong)(middleId + 10)), "op");
-
-            Assert.Equal(expectedTags, isSampled.Tags);
-            Assert.False(isSampled.Sampled);
-
-            isSampled = sampler.IsSampled(new TraceId((ulong)(middleId - 20)), "op");
-            Assert.Equal(expectedTags, isSampled.Tags);
-            Assert.True(isSampled.Sampled);
+        [Fact]
+        public void TestTags()
+        {
+            ProbabilisticSampler sampler = new ProbabilisticSampler(0.1);
+            var tags = sampler.Sample("vadacurry", new TraceId(20L)).Tags;
+            Assert.Equal("probabilistic", tags["sampler.type"]);
+            Assert.Equal(0.1, tags["sampler.param"]);
         }
     }
 }

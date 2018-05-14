@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Jaeger.Core.Reporters
 {
@@ -11,19 +13,19 @@ namespace Jaeger.Core.Reporters
             _reporters = new List<IReporter>(reporters);
         }
 
-        public void Dispose()
+        public void Report(Span span)
         {
-            foreach(var reporter in _reporters)
+            foreach (var reporter in _reporters)
             {
-                reporter.Dispose();
+                reporter.Report(span);
             }
         }
 
-        public void Report(IJaegerCoreSpan span)
+        public async Task CloseAsync(CancellationToken cancellationToken)
         {
-            foreach(var reporter in _reporters)
+            foreach (var reporter in _reporters)
             {
-                reporter.Report(span);
+                await reporter.CloseAsync(cancellationToken).ConfigureAwait(false);
             }
         }
     }
