@@ -1,114 +1,228 @@
 using System;
+using System.Collections.Concurrent;
 using System.Threading;
+using System.Threading.Tasks;
 using Jaeger.Core.Exceptions;
 using Jaeger.Core.Metrics;
-using Jaeger.Core.Transport;
+using Jaeger.Core.Senders;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Jaeger.Core.Reporters
 {
-    // TODO: use this to load up spans into a processing queue that will be taken care of by a thread
+    /// <summary>
+    /// <see cref="RemoteReporter"/> buffers spans in memory and sends them out of process using <see cref="ISender"/>.
+    /// </summary>
     public class RemoteReporter : IReporter
     {
-        internal readonly ITransport _transport;
-        internal readonly IMetrics _metrics;
+        public const int DefaultMaxQueueSize = 100;
+        public static readonly TimeSpan DefaultFlushInterval = TimeSpan.FromSeconds(1);
 
+        private readonly BlockingCollection<ICommand> _commandQueue;
+        private readonly Task _queueProcessorTask;
+        private readonly TimeSpan _flushInterval;
+        private readonly Task _flushTask;
+        private readonly ISender _sender;
+        private readonly IMetrics _metrics;
         private readonly ILogger _logger;
 
-        private RemoteReporter(ITransport transport, ILoggerFactory loggerFactory, IMetrics metrics)
+        internal RemoteReporter(ISender sender, TimeSpan flushInterval, int maxQueueSize,
+            IMetrics metrics, ILoggerFactory loggerFactory)
         {
-            _transport = transport;
-            _logger = loggerFactory.CreateLogger<RemoteReporter>();
+            _sender = sender;
             _metrics = metrics;
+            _logger = loggerFactory.CreateLogger<RemoteReporter>();
+            _commandQueue = new BlockingCollection<ICommand>(maxQueueSize);
+
+            // start a thread to append spans
+            _queueProcessorTask = Task.Factory.StartNew(ProcessQueueLoop, TaskCreationOptions.LongRunning);
+
+            _flushInterval = flushInterval;
+            _flushTask = Task.Factory.StartNew(FlushLoop, TaskCreationOptions.LongRunning);
         }
 
-        public async void Dispose()
+        public void Report(Span span)
         {
+            bool added = false;
             try
             {
-                int n = await _transport.CloseAsync(CancellationToken.None).ConfigureAwait(false);
-                _metrics.ReporterSuccess.Inc(n);
+                // It's better to drop spans, than to block here
+                added = _commandQueue.TryAdd(new AppendCommand(this, span));
             }
-            catch (SenderException e)
+            catch (InvalidOperationException)
             {
-                _logger.LogError(e, "Unable to cleanly close RemoteReporter");
-                _metrics.ReporterFailure.Inc(e.DroppedSpans);
+                // The queue has been marked as IsAddingCompleted -> no-op.
             }
-        }
 
-        // TODO: Make async!
-        public async void Report(IJaegerCoreSpan span)
-        {
-            try
+            if (!added)
             {
-                // TODO: This Task should be queued and be processed in a separate thread
-                await _transport.AppendAsync(span, CancellationToken.None).ConfigureAwait(false);
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "Unable to report span in RemoteReporter");
                 _metrics.ReporterDropped.Inc(1);
             }
         }
 
-        // TODO: Make async!
-        private async void Flush()
+        public async Task CloseAsync(CancellationToken cancellationToken)
         {
+            // Note: Java creates a CloseCommand but we have CompleteAdding() in C# so we don't need the command.
+            // (This also stops the FlushLoop)
+            _commandQueue.CompleteAdding();
+
             try
             {
-                // TODO: Not exposed, this should be the list of unprocessed Report calls
-                //_metrics.ReporterQueueLength.Update(_commandQueue.Count);
-                int n = await _transport.FlushAsync(CancellationToken.None).ConfigureAwait(false);
-                _metrics.ReporterSuccess.Inc(n);
+                // Give processor some time to process any queued commands.
+
+                var cts = CancellationTokenSource.CreateLinkedTokenSource(
+                    cancellationToken,
+                    new CancellationTokenSource(10000).Token);
+                var cancellationTask = Task.Delay(Timeout.Infinite, cts.Token);
+
+                await Task.WhenAny(_queueProcessorTask, cancellationTask);
             }
-            catch (SenderException e)
+            catch (OperationCanceledException ex)
             {
-                _logger.LogError(e, "Unable to flush RemoteReporter");
-                _metrics.ReporterFailure.Inc(e.DroppedSpans);
+                _logger.LogError(ex, "Dispose interrupted");
+            }
+            finally
+            {
+                try
+                {
+                    int n = await _sender.CloseAsync(cancellationToken).ConfigureAwait(false);
+                    _metrics.ReporterSuccess.Inc(n);
+                }
+                catch (SenderException ex)
+                {
+                    _metrics.ReporterFailure.Inc(ex.DroppedSpanCount);
+                }
             }
         }
 
-        public class Builder
+        internal void Flush()
         {
-            private readonly ITransport _transport;
-            private ILoggerFactory _loggerFactory;
-            //private TimeSpan _flushInterval = REMOTE_REPORTER_DEFAULT_FLUSH_INTERVAL_MS;
-            //private int _maxQueueSize = REMOTE_REPORTER_DEFAULT_MAX_QUEUE_SIZE;
-            private IMetrics _metrics;
+            // to reduce the number of updateGauge stats, we only emit queue length on flush
+            _metrics.ReporterQueueLength.Update(_commandQueue.Count);
 
-            public Builder(ITransport transport)
+            try
             {
-                this._transport = transport ?? throw new ArgumentNullException(nameof(transport));
+                // We can safely drop FlushCommand when the queue is full - sender should take care of flushing
+                // in such case
+                _commandQueue.TryAdd(new FlushCommand(this));
+            }
+            catch (InvalidOperationException)
+            {
+                // The queue has been marked as IsAddingCompleted -> no-op.
+            }
+        }
+
+        private async Task FlushLoop()
+        {
+            // First flush should happen later so we start with the delay
+            do
+            {
+                await Task.Delay(_flushInterval).ConfigureAwait(false);
+                Flush();
+            }
+            while (!_commandQueue.IsAddingCompleted);
+        }
+
+        private async Task ProcessQueueLoop()
+        {
+            // This blocks until a command is available or IsCompleted=true
+            foreach (ICommand command in _commandQueue.GetConsumingEnumerable())
+            {
+                try
+                {
+                    await command.ExecuteAsync().ConfigureAwait(false);
+                }
+                catch (SenderException ex)
+                {
+                    _metrics.ReporterFailure.Inc(ex.DroppedSpanCount);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "QueueProcessor error");
+                    // Do nothing, and try again on next command.
+                }
+            }
+        }
+
+        /*
+         * The code below implements the command pattern. This pattern is useful for
+         * situations where multiple threads would need to synchronize on a resource,
+         * but are fine with executing sequentially. The advantage is simplified code where
+         * tasks are put onto a blocking queue and processed sequentially by another thread.
+         */
+        public interface ICommand
+        {
+            Task ExecuteAsync();
+        }
+
+        class AppendCommand : ICommand
+        {
+            private readonly RemoteReporter _reporter;
+            private readonly Span _span;
+
+            public AppendCommand(RemoteReporter reporter, Span span)
+            {
+                _reporter = reporter;
+                _span = span;
+            }
+
+            public Task ExecuteAsync()
+            {
+                return _reporter._sender.AppendAsync(_span, CancellationToken.None);
+            }
+        }
+
+        class FlushCommand : ICommand
+        {
+            private readonly RemoteReporter _reporter;
+
+            public FlushCommand(RemoteReporter reporter)
+            {
+                _reporter = reporter;
+            }
+
+            public async Task ExecuteAsync()
+            {
+                int n = await _reporter._sender.FlushAsync(CancellationToken.None).ConfigureAwait(false);
+                _reporter._metrics.ReporterSuccess.Inc(n);
+            }
+        }
+
+        public sealed class Builder
+        {
+            private ISender _sender;
+            private IMetrics _metrics;
+            private ILoggerFactory _loggerFactory;
+            private TimeSpan _flushInterval = DefaultFlushInterval;
+            private int _maxQueueSize = DefaultMaxQueueSize;
+
+            public Builder WithFlushInterval(TimeSpan flushInterval)
+            {
+                _flushInterval = flushInterval;
+                return this;
+            }
+
+            public Builder WithMaxQueueSize(int maxQueueSize)
+            {
+                _maxQueueSize = maxQueueSize;
+                return this;
+            }
+
+            public Builder WithMetrics(IMetrics metrics)
+            {
+                _metrics = metrics;
+                return this;
+            }
+
+            public Builder WithSender(ISender sender)
+            {
+                _sender = sender;
+                return this;
             }
 
             public Builder WithLoggerFactory(ILoggerFactory loggerFactory)
             {
-                this._loggerFactory = loggerFactory;
-                return this;
-            }
-
-            //public Builder WithFlushInterval(TimeSpan flushInterval)
-            //{
-            //    this._flushInterval = flushInterval;
-            //    return this;
-            //}
-
-            //public Builder WithMaxQueueSize(int maxQueueSize)
-            //{
-            //    this._maxQueueSize = maxQueueSize;
-            //    return this;
-            //}
-
-            public Builder WithMetrics(IMetrics metrics)
-            {
-                this._metrics = metrics;
-                return this;
-            }
-
-            public Builder WithMetricsFactory(IMetricsFactory metricsFactory)
-            {
-                this._metrics = metricsFactory.CreateMetrics();
+                _loggerFactory = loggerFactory;
                 return this;
             }
 
@@ -118,11 +232,15 @@ namespace Jaeger.Core.Reporters
                 {
                     _loggerFactory = NullLoggerFactory.Instance;
                 }
+                if (_sender == null)
+                {
+                    _sender = new UdpSender();
+                }
                 if (_metrics == null)
                 {
-                    _metrics = NoopMetricsFactory.Instance.CreateMetrics();
+                    _metrics = new MetricsImpl(NoopMetricsFactory.Instance);
                 }
-                return new RemoteReporter(_transport, _loggerFactory/*, _flushInterval, _maxQueueSize*/, _metrics);
+                return new RemoteReporter(_sender, _flushInterval, _maxQueueSize, _metrics, _loggerFactory);
             }
         }
     }

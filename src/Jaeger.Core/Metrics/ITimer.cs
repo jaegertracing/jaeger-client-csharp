@@ -1,10 +1,10 @@
 ﻿namespace Jaeger.Core.Metrics
 {
-    // TODO: Not used now, but ported from java implementation
-    public interface ITimer : IMetricValue
+    public interface ITimer
     {
-        long MillisecondsTotal { get; }
-
-        void DurationMicros(long time);
+        /// <remarks>
+        /// This is called "durationMicros" in Java but since everything is done via ticks in C# we use this name.
+        /// </remarks>
+        void DurationTicks(long ticks);
     }
 }

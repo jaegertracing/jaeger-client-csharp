@@ -1,45 +1,68 @@
 using System;
 using System.Collections.Generic;
+using Jaeger.Core.Util;
 
 namespace Jaeger.Core.Samplers
 {
     /// <summary>
-    /// Only used for unit testing
+    /// <see cref="ProbabilisticSampler"/> creates a sampler that randomly samples a certain percentage of traces specified by the
+    /// samplingRate, in the range between 0.0 and 1.0.
     /// </summary>
-    internal interface IProbabilisticSampler : ISampler
+    public class ProbabilisticSampler : ValueObject, ISampler
     {
-        double SamplingRate { get; }
-    }
+        public const double DefaultSamplingProbability = 0.001;
+        public const string Type = "probabilistic";
 
-    // ProbabilisticSampler creates a sampler that randomly samples a certain percentage of traces specified by the
-    // samplingRate, in the range between 0.0 and 1.0.
-    public class ProbabilisticSampler : IProbabilisticSampler
-    {
-        private readonly ulong _samplingBoundary;
-        private readonly Dictionary<string, object> _tags;
+        private readonly long _positiveSamplingBoundary;
+        private readonly long _negativeSamplingBoundary;
+        private readonly IReadOnlyDictionary<string, object> _tags;
 
-        public double SamplingRate { get; }
+        public virtual double SamplingRate { get; }
 
-        public ProbabilisticSampler(double samplingRate = SamplerConstants.DefaultSamplingProbability)
+        public ProbabilisticSampler(double samplingRate = DefaultSamplingProbability)
         {
-            if (samplingRate < 0.0 || samplingRate > 1.0) throw new ArgumentOutOfRangeException(nameof(samplingRate), samplingRate, "sampling rate must be between 0.0 and 1.0");
+            if (samplingRate < 0.0 || samplingRate > 1.0)
+                throw new ArgumentOutOfRangeException(nameof(samplingRate), samplingRate, "sampling rate must be greater than 0.0 and less than 1.0");
+
             SamplingRate = samplingRate;
 
-            _samplingBoundary = (ulong) (ulong.MaxValue * samplingRate);
+            // Note: Java uses bit shifting but that code results in a compiler warning in C#.
+            // We could enclose it in an `unchecked` block but we're using this code
+            // as it's more readable.
+            _positiveSamplingBoundary = (long)(long.MaxValue * samplingRate);
+            _negativeSamplingBoundary = (long)(long.MinValue * samplingRate);
+
             _tags = new Dictionary<string, object> {
-                { SamplerConstants.SamplerTypeTagKey, SamplerConstants.SamplerTypeProbabilistic },
-                { SamplerConstants.SamplerParamTagKey, samplingRate }
+                { Constants.SamplerTypeTagKey, Type },
+                { Constants.SamplerParamTagKey, samplingRate }
             };
         }
 
-        public void Dispose()
+        public virtual SamplingStatus Sample(string operation, TraceId id)
+        {
+            if (id.Low > 0)
+            {
+                return new SamplingStatus(id.Low <= _positiveSamplingBoundary, _tags);
+            }
+            else
+            {
+                return new SamplingStatus(id.Low >= _negativeSamplingBoundary, _tags);
+            }
+        }
+
+        public override string ToString()
+        {
+            return $"{nameof(ProbabilisticSampler)}({SamplingRate})";
+        }
+
+        public void Close()
         {
             // nothing to do
         }
 
-        public (bool Sampled, Dictionary<string, object> Tags) IsSampled(TraceId id, string operation)
+        protected override IEnumerable<object> GetAtomicValues()
         {
-            return (_samplingBoundary >= id.Low , _tags);
+            yield return SamplingRate;
         }
     }
 }

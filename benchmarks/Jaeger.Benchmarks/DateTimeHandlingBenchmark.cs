@@ -1,6 +1,8 @@
 using System;
 using BenchmarkDotNet.Attributes;
 using Jaeger.Core;
+using Jaeger.Core.Reporters;
+using Jaeger.Core.Samplers;
 
 namespace Jaeger.Benchmarks
 {
@@ -11,7 +13,10 @@ namespace Jaeger.Benchmarks
 
         public DateTimeHandlingBenchmark()
         {
-            _tracer = new Tracer.Builder("service").Build();
+            _tracer = new Tracer.Builder("service")
+                .WithReporter(new NoopReporter())
+                .WithSampler(new ConstSampler(sample: true))
+                .Build();
         }
 
         [Benchmark]

@@ -10,8 +10,8 @@ namespace Jaeger.Core.Tests
         {
             var traceId = new TraceId(42);
 
-            Assert.Equal((ulong)0, traceId.High);
-            Assert.Equal((ulong)42, traceId.Low);
+            Assert.Equal(0, traceId.High);
+            Assert.Equal(42, traceId.Low);
         }
 
         [Fact]
@@ -19,48 +19,8 @@ namespace Jaeger.Core.Tests
         {
             var traceId = new TraceId(42, 21);
 
-            Assert.Equal((ulong)42, traceId.High);
-            Assert.Equal((ulong)21, traceId.Low);
-        }
-
-        [Fact]
-        public void TraceId_InitLow_ShouldBeInvalidOnAllZero()
-        {
-            var traceId = new TraceId(0);
-
-            Assert.False(traceId.IsValid);
-        }
-
-        [Fact]
-        public void TraceId_InitHighLow_ShouldBeInvalidOnAllZero()
-        {
-            var traceId = new TraceId(0, 0);
-
-            Assert.False(traceId.IsValid);
-        }
-
-        [Fact]
-        public void TraceId_InitLow_ShouldBeValidOnNonZeroLow()
-        {
-            var traceId = new TraceId(1);
-
-            Assert.True(traceId.IsValid);
-        }
-
-        [Fact]
-        public void TraceId_InitHighLow_ShouldBeValidOnNonZeroHigh()
-        {
-            var traceId = new TraceId(1, 0);
-
-            Assert.True(traceId.IsValid);
-        }
-
-        [Fact]
-        public void TraceId_InitHighLow_ShouldBeValidOnAllNonZero()
-        {
-            var traceId = new TraceId(1, 1);
-
-            Assert.True(traceId.IsValid);
+            Assert.Equal(42, traceId.High);
+            Assert.Equal(21, traceId.Low);
         }
 
         [Fact]
@@ -99,7 +59,7 @@ namespace Jaeger.Core.Tests
             var badLowTraceId = "0123456789abcdeffedcba_876543210";
             ex = Assert.Throws<Exception>(() => TraceId.FromString(badLowTraceId));
             Assert.Equal("Cannot parse Low TraceId from string: fedcba_876543210", ex.Message);
-            
+
             traceId = TraceId.FromString("10000000000000001");
             Assert.Equal("1", traceId.High.ToString());
             Assert.Equal("1", traceId.Low.ToString());

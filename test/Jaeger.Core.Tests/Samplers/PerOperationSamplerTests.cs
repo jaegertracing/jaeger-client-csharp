@@ -1,272 +1,162 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using Jaeger.Core.Samplers;
 using Jaeger.Core.Samplers.HTTP;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Xunit;
 
 namespace Jaeger.Core.Tests.Samplers
 {
-    public class PerOperationSamplerTests
+    public class PerOperationSamplerTests : IDisposable
     {
-        private readonly double _samplingRate;
-        private readonly double _lowerBound;
-        private readonly int _maxOperations;
+        private const double SamplingRate = 0.31415;
+        private const double DefaultSamplingProbability = 0.512;
+        private const double DefaultLowerBoundTracesPerSecond = 2.0;
+        private const int MaxOperations = 100;
+        private const int DoublePrecision = 2;
+        private const string operation = "some OPERATION";
+        private static readonly TraceId TraceId = new TraceId(1L);
 
-        private readonly IGuaranteedThroughputProbabilisticSampler _mockGtpSampler;
-        private readonly ILoggerFactory _mockLoggerFactory;
-        private readonly ILogger<PerOperationSampler> _mockLogger;
-        private readonly IProbabilisticSampler _mockDefaultSampler;
-        private readonly ISamplerFactory _mockSamplerFactory;
+        private static readonly IReadOnlyDictionary<string, object> EmptyTags = new ReadOnlyDictionary<string, object>(new Dictionary<string, object>());
 
-        private PerOperationSampler _testingSampler;
+        private readonly ILoggerFactory _loggerFactory;
+        private readonly ProbabilisticSampler _defaultProbabilisticSampler;
+        private readonly Dictionary<string, GuaranteedThroughputSampler> _operationToSamplers = new Dictionary<string, GuaranteedThroughputSampler>();
+        private PerOperationSampler _undertest;
 
         public PerOperationSamplerTests()
         {
-            _samplingRate = 1.0;
-            _lowerBound = 0.5;
-            _maxOperations = 3;
+            _loggerFactory = new NullLoggerFactory();
+            _defaultProbabilisticSampler = Substitute.ForPartsOf<ProbabilisticSampler>(0);
 
-            _mockGtpSampler = Substitute.For<IGuaranteedThroughputProbabilisticSampler>();
-            _mockLoggerFactory = Substitute.For<ILoggerFactory>();
-            _mockLogger = Substitute.For<ILogger<PerOperationSampler>>();
-            _mockDefaultSampler = Substitute.For<IProbabilisticSampler>();
-            _mockSamplerFactory = Substitute.For<ISamplerFactory>();
+            _undertest = new PerOperationSampler(MaxOperations, _operationToSamplers, _defaultProbabilisticSampler,
+                DefaultLowerBoundTracesPerSecond, _loggerFactory);
 
-            _mockSamplerFactory.NewGuaranteedThroughputProbabilisticSampler(
-                Arg.Is<double>(x => x == _samplingRate),
-                Arg.Is<double>(x => x == _lowerBound)
-            ).Returns(_mockGtpSampler);
-            _mockSamplerFactory.NewProbabilisticSampler(
-                Arg.Is<double>(x => x == _samplingRate)
-            ).Returns(_mockDefaultSampler);
-            _mockLoggerFactory.CreateLogger<PerOperationSampler>().Returns(_mockLogger);
+            _defaultProbabilisticSampler.Sample(operation, TraceId)
+                .Returns(new SamplingStatus(true, EmptyTags));
 
-            _testingSampler = new PerOperationSampler(_maxOperations, _samplingRate, _lowerBound, _mockLoggerFactory, _mockSamplerFactory);
+            _defaultProbabilisticSampler.SamplingRate.Returns(DefaultSamplingProbability);
+        }
+
+        public void Dispose()
+        {
+            _undertest.Close();
         }
 
         [Fact]
-        public void PerOperationSampler_Constructor_ThrowsIfLoggerFactoryIsNull()
+        public void TestFallbackToDefaultProbabilisticSampler()
         {
-            var ex = Assert.Throws<ArgumentNullException>(() => new PerOperationSampler(10, 1.0, 1.0, null, null));
-            Assert.Equal("loggerFactory", ex.ParamName);
+            _undertest = new PerOperationSampler(0, _operationToSamplers, _defaultProbabilisticSampler,
+                DefaultLowerBoundTracesPerSecond, _loggerFactory);
+            SamplingStatus samplingStatus = _undertest.Sample(operation, TraceId);
+            Assert.True(samplingStatus.IsSampled);
+
+            _defaultProbabilisticSampler.Received(1).Sample(operation, TraceId);
         }
 
         [Fact]
-        public void PerOperationSampler_Constructor_ThrowsIfSamplerFactoryIsNull()
+        public void TestCreateGuaranteedSamplerOnUnseenOperation()
         {
-            var loggerFactory = Substitute.For<ILoggerFactory>();
-
-            var ex = Assert.Throws<ArgumentNullException>(() => new PerOperationSampler(10, 1.0, 1.0, loggerFactory, null));
-            Assert.Equal("samplerFactory", ex.ParamName);
+            string newOperation = "new OPERATION";
+            _undertest.Sample(newOperation, TraceId);
+            Assert.Equal(new GuaranteedThroughputSampler(DefaultSamplingProbability,
+                                                         DefaultLowerBoundTracesPerSecond),
+                         _operationToSamplers[newOperation]);
         }
 
         [Fact]
-        public void PerOperationSampler_Dispose()
+        public void TestPerOperationSamplerWithKnownOperation()
         {
-            _testingSampler.IsSampled(new TraceId(1), "op1");
-            _testingSampler.IsSampled(new TraceId(1), "op2");
+            GuaranteedThroughputSampler sampler = Substitute.ForPartsOf<GuaranteedThroughputSampler>(0, 0);
+            _operationToSamplers.Add(operation, sampler);
 
-            _testingSampler.Dispose();
+            sampler.Sample(operation, TraceId)
+                .Returns(new SamplingStatus(true, EmptyTags));
 
-            _mockSamplerFactory.Received(2).NewGuaranteedThroughputProbabilisticSampler(Arg.Any<double>(), Arg.Any<double>());
-            _mockGtpSampler.Received(2).Dispose();
-            _mockDefaultSampler.Received(1).Dispose();
+            SamplingStatus samplingStatus = _undertest.Sample(operation, TraceId);
+            Assert.True(samplingStatus.IsSampled);
+            sampler.Received(1).Sample(operation, TraceId);
+            //verifyNoMoreInteractions(_defaultProbabilisticSampler);
         }
 
         [Fact]
-        public void PerOperationSampler_IsSampled_CreatesAnReusesSamplersForOperations()
+        public void TestUpdate()
         {
-            var operationName = "op";
-            var traceId = new TraceId(1);
+            GuaranteedThroughputSampler guaranteedThroughputSampler = Substitute.ForPartsOf<GuaranteedThroughputSampler>(0, 0);
+            _operationToSamplers.Add(operation, guaranteedThroughputSampler);
 
-            _testingSampler.IsSampled(traceId, operationName);
-            _testingSampler.IsSampled(traceId, operationName);
-            _testingSampler.IsSampled(traceId, operationName);
+            var perOperationSamplingParameters = new PerOperationSamplingParameters(operation, new ProbabilisticSamplingStrategy(SamplingRate));
+            var parametersList = new List<PerOperationSamplingParameters>();
+            parametersList.Add(perOperationSamplingParameters);
 
-            _mockSamplerFactory.Received(1).NewProbabilisticSampler(Arg.Any<double>());
-            _mockSamplerFactory.Received(1).NewGuaranteedThroughputProbabilisticSampler(Arg.Any<double>(), Arg.Any<double>());
-            _mockGtpSampler.Received(3).IsSampled(Arg.Any<TraceId>(), Arg.Any<string>());
-            _mockDefaultSampler.Received(0).IsSampled(Arg.Any<TraceId>(), Arg.Any<string>());
+            var parameters = new OperationSamplingParameters(DefaultSamplingProbability, DefaultLowerBoundTracesPerSecond, parametersList);
+
+            Assert.True(_undertest.Update(parameters));
+            guaranteedThroughputSampler.Received(1).Update(SamplingRate, DefaultLowerBoundTracesPerSecond);
+            //verifyNoMoreInteractions(guaranteedThroughputSampler);
         }
 
         [Fact]
-        public void PerOperationSampler_IsSampled_UsesDefaultSampler_WhenOverMax()
+        public void TestNoopUpdate()
         {
-            var traceId = new TraceId(1);
+            ProbabilisticSampler defaultProbabilisticSampler = new ProbabilisticSampler(DefaultSamplingProbability);
+            double operationSamplingRate = 0.23;
+            _operationToSamplers.Add(operation, new GuaranteedThroughputSampler(operationSamplingRate,
+                DefaultLowerBoundTracesPerSecond));
+            _undertest = new PerOperationSampler(MaxOperations, _operationToSamplers, defaultProbabilisticSampler,
+                DefaultLowerBoundTracesPerSecond, _loggerFactory);
 
-            _testingSampler.IsSampled(traceId, "1");
-            _testingSampler.IsSampled(traceId, "2");
-            _testingSampler.IsSampled(traceId, "3");
-            _testingSampler.IsSampled(traceId, "4");
+            var parametersList = new List<PerOperationSamplingParameters>();
+            parametersList.Add(new PerOperationSamplingParameters(operation, new ProbabilisticSamplingStrategy(operationSamplingRate)));
 
-            _mockSamplerFactory.Received(1).NewProbabilisticSampler(Arg.Any<double>());
-            _mockSamplerFactory.Received(3).NewGuaranteedThroughputProbabilisticSampler(Arg.Any<double>(), Arg.Any<double>());
-            _mockGtpSampler.Received(3).IsSampled(Arg.Any<TraceId>(), Arg.Any<string>());
-            _mockDefaultSampler.Received(1).IsSampled(Arg.Any<TraceId>(), Arg.Any<string>());
+            var parameters = new OperationSamplingParameters(DefaultSamplingProbability, DefaultLowerBoundTracesPerSecond, parametersList);
+
+            Assert.False(_undertest.Update(parameters));
+            Assert.Equal(_operationToSamplers, _undertest.OperationNameToSampler);
+            Assert.Equal(DefaultLowerBoundTracesPerSecond, _undertest.LowerBound, DoublePrecision);
+            Assert.Equal(DefaultSamplingProbability, _undertest.DefaultSampler.SamplingRate, DoublePrecision);
         }
 
         [Fact]
-        public void PerOperationSampler_Update_ShouldUpdateTheDefaultSampler()
+        public void TestUpdateIgnoreGreaterThanMax()
         {
-            var strat = new PerOperationSamplingStrategies
-            {
-                DefaultSamplingProbability = 0.75,
-                PerOperationStrategies = new List<OperationSamplingStrategy>()
-            };
-            var newMockDefaultSampler = Substitute.For<ISampler>();
-            _mockSamplerFactory.NewProbabilisticSampler(Arg.Is<double>(v => v == strat.DefaultSamplingProbability)).Returns(newMockDefaultSampler);
+            GuaranteedThroughputSampler guaranteedThroughputSampler = Substitute.ForPartsOf<GuaranteedThroughputSampler>(0, 0);
+            _operationToSamplers.Add(operation, guaranteedThroughputSampler);
 
-            var updated = _testingSampler.Update(strat);
+            PerOperationSampler undertest = new PerOperationSampler(1, _operationToSamplers,
+                _defaultProbabilisticSampler, DefaultLowerBoundTracesPerSecond, _loggerFactory);
 
-            Assert.True(updated);
-            _mockSamplerFactory.Received(1).NewProbabilisticSampler(Arg.Is<double>(v => v == strat.DefaultSamplingProbability));
+            var perOperationSamplingParameters1 = new PerOperationSamplingParameters(operation, new ProbabilisticSamplingStrategy(SamplingRate));
+            var perOperationSamplingParameters2 = new PerOperationSamplingParameters("second OPERATION", new ProbabilisticSamplingStrategy(SamplingRate));
+            var parametersList = new List<PerOperationSamplingParameters>();
+            parametersList.Add(perOperationSamplingParameters1);
+            parametersList.Add(perOperationSamplingParameters2);
+
+            undertest.Update(new OperationSamplingParameters(DefaultSamplingProbability,
+                                                             DefaultLowerBoundTracesPerSecond, parametersList));
+
+            Assert.Single(_operationToSamplers);
+            Assert.NotNull(_operationToSamplers[operation]);
         }
 
         [Fact]
-        public void PerOperationSampler_Update_ShouldNotUpdateTheDefaultSamplerWhenAlreadySame()
+        public void TestUpdateAddOperation()
         {
-            var strat = new PerOperationSamplingStrategies
-            {
-                DefaultSamplingProbability = _samplingRate,
-                PerOperationStrategies = new List<OperationSamplingStrategy>()
-            };
+            var perOperationSamplingParameters1 = new PerOperationSamplingParameters(operation, new ProbabilisticSamplingStrategy(SamplingRate));
+            var parametersList = new List<PerOperationSamplingParameters>();
+            parametersList.Add(perOperationSamplingParameters1);
 
-            var updated = _testingSampler.Update(strat);
+            _undertest.Update(new OperationSamplingParameters(DefaultSamplingProbability,
+                                                             DefaultLowerBoundTracesPerSecond,
+                                                             parametersList));
 
-            Assert.False(updated);
-            _mockSamplerFactory.Received(2).NewProbabilisticSampler(Arg.Is<double>(v => v == strat.DefaultSamplingProbability));
-        }
-
-
-        [Fact]
-        public void PerOperationSampler_Update_ShouldReplaceOperationSamplersThatAlreadyExist()
-        {
-            var strat = new PerOperationSamplingStrategies
-            {
-                DefaultSamplingProbability = _samplingRate,
-                DefaultLowerBoundTracesPerSecond = 0.7,
-                PerOperationStrategies = new List<OperationSamplingStrategy>
-                {
-                    new OperationSamplingStrategy
-                    {
-                        Operation = "op1",
-                        ProbabilisticSampling = new ProbabilisticSamplingStrategy
-                        {
-                            SamplingRate = 0.25
-                        }
-                    },
-                    new OperationSamplingStrategy
-                    {
-                        Operation = "op2",
-                        ProbabilisticSampling = new ProbabilisticSamplingStrategy
-                        {
-                            SamplingRate = 0.35
-                        }
-                    }
-                }
-            };
-
-            _testingSampler.IsSampled(new TraceId(1), strat.PerOperationStrategies[0].Operation);
-            _testingSampler.IsSampled(new TraceId(1), strat.PerOperationStrategies[1].Operation);
-            _mockGtpSampler.Update(Arg.Any<double>(), Arg.Any<double>()).Returns(true);
-
-            var updated = _testingSampler.Update(strat);
-
-            Assert.True(updated);
-            _mockSamplerFactory.Received(2).NewGuaranteedThroughputProbabilisticSampler(Arg.Any<double>(), Arg.Any<double>());
-            _mockGtpSampler.Received(1).Update(Arg.Is(strat.PerOperationStrategies[0].ProbabilisticSampling.SamplingRate), Arg.Is(strat.DefaultLowerBoundTracesPerSecond));
-            _mockGtpSampler.Received(1).Update(Arg.Is(strat.PerOperationStrategies[1].ProbabilisticSampling.SamplingRate), Arg.Is(strat.DefaultLowerBoundTracesPerSecond));
-        }
-
-        [Fact]
-        public void PerOperationSampler_Update_ShouldAddSamplerToOperationThatDoesntHaveOneYet()
-        {
-            var samplingRate2 = 0.35;
-
-            var strat = new PerOperationSamplingStrategies
-            {
-                DefaultSamplingProbability = _samplingRate,
-                DefaultLowerBoundTracesPerSecond = 0.7,
-                PerOperationStrategies = new List<OperationSamplingStrategy>
-                {
-                    new OperationSamplingStrategy
-                    {
-                        Operation = "op1",
-                        ProbabilisticSampling = new ProbabilisticSamplingStrategy
-                        {
-                            SamplingRate = _samplingRate
-                        }
-                    },
-                    new OperationSamplingStrategy
-                    {
-                        Operation = "op2",
-                        ProbabilisticSampling = new ProbabilisticSamplingStrategy
-                        {
-                            SamplingRate = samplingRate2
-                        }
-                    }
-                }
-            };
-
-            _mockSamplerFactory.NewGuaranteedThroughputProbabilisticSampler(
-                Arg.Is<double>(x => x == _samplingRate),
-                Arg.Is<double>(x => x == strat.DefaultLowerBoundTracesPerSecond)
-            ).Returns(_mockGtpSampler);
-            _mockSamplerFactory.NewGuaranteedThroughputProbabilisticSampler(
-                Arg.Is<double>(x => x == samplingRate2),
-                Arg.Is<double>(x => x == strat.DefaultLowerBoundTracesPerSecond)
-            ).Returns(_mockGtpSampler);
-
-            var updated = _testingSampler.Update(strat);
-
-            Assert.True(updated);
-            _mockSamplerFactory.Received(1).NewGuaranteedThroughputProbabilisticSampler(Arg.Is(_samplingRate), Arg.Is(strat.DefaultLowerBoundTracesPerSecond));
-            _mockSamplerFactory.Received(1).NewGuaranteedThroughputProbabilisticSampler(Arg.Is(samplingRate2), Arg.Is(strat.DefaultLowerBoundTracesPerSecond));
-            _mockGtpSampler.Received(0).Update(Arg.Any<double>(), Arg.Any<double>());
-        }
-
-        [Fact]
-        public void PerOperationSampler_Update_ShouldLogAndNotAddSamplerWhenWeHitTheMaxOps()
-        {
-            var expectedLogMessage = $"Exceeded the maximum number of operations ({_maxOperations}) for per operations sampling";
-            var strat = new PerOperationSamplingStrategies
-            {
-                DefaultSamplingProbability = _samplingRate,
-                DefaultLowerBoundTracesPerSecond = 0.7,
-                PerOperationStrategies = new List<OperationSamplingStrategy>
-                {
-                    new OperationSamplingStrategy
-                    {
-                        Operation = "op4",
-                        ProbabilisticSampling = new ProbabilisticSamplingStrategy
-                        {
-                            SamplingRate = 0.25
-                        }
-                    },
-                    new OperationSamplingStrategy
-                    {
-                        Operation = "op5",
-                        ProbabilisticSampling = new ProbabilisticSamplingStrategy
-                        {
-                            SamplingRate = 0.35
-                        }
-                    }
-                }
-            };
-
-            _testingSampler.IsSampled(new TraceId(1), "op1");
-            _testingSampler.IsSampled(new TraceId(1), "op2");
-            _testingSampler.IsSampled(new TraceId(1), "op3");
-
-            var updated = _testingSampler.Update(strat);
-
-            Assert.False(updated);
-            _mockSamplerFactory.Received(3).NewGuaranteedThroughputProbabilisticSampler(Arg.Is(_samplingRate), Arg.Is(_lowerBound));
-            _mockGtpSampler.Received(0).Update(Arg.Any<double>(), Arg.Any<double>());
-            // cannot mock extension methods :/ _mockLogger.Received(1).LogError(Arg.Is<string>(lm => lm == expectedLogMessage));
-            //_mockLogger.Received(1).Log(Arg.Any<LogLevel>(), Arg.Any<EventId>(), Arg.Any<string>(), Arg.Any<Exception>(), Arg.Any<Func<object, Exception, string>>());
+            Assert.Single(_operationToSamplers);
+            Assert.Equal(new GuaranteedThroughputSampler(SamplingRate,
+                                                         DefaultLowerBoundTracesPerSecond),
+                         _operationToSamplers[operation]);
         }
     }
 }

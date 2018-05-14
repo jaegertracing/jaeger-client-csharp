@@ -1,156 +1,54 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using Jaeger.Core.Metrics;
-using Jaeger.Core.Samplers;
-using Jaeger.Core.Util;
 using OpenTracing;
+using OpenTracing.Tag;
 
 namespace Jaeger.Core
 {
-    public class SpanBuilder : ISpanBuilder
+    internal class SpanBuilder : ISpanBuilder
     {
-        private readonly IJaegerCoreTracer _tracer;
+        private readonly Tracer _tracer;
         private readonly string _operationName;
-        private readonly ISampler _sampler;
-        private readonly IMetrics _metrics;
         private readonly Dictionary<string, object> _tags;
 
+        private DateTime? _startTimestampUtc;
         private List<Reference> _references;
         private bool _ignoreActiveSpan;
-        private DateTime? _startTimestampUtc;
 
-        public SpanBuilder(IJaegerCoreTracer tracer, string operationName, ISampler sampler, IMetrics metrics)
+        internal SpanBuilder(Tracer tracer, string operationName)
         {
             _tracer = tracer ?? throw new ArgumentNullException(nameof(tracer));
             _operationName = operationName ?? throw new ArgumentNullException(nameof(operationName));
-            _sampler = sampler ?? throw new ArgumentNullException(nameof(sampler));
-            _metrics = metrics ?? throw new ArgumentNullException(nameof(metrics));
 
             // There will be tags in most cases so it should be fine to always initiate this variable.
             _tags = new Dictionary<string, object>();
-        }
-
-        public ISpanBuilder AddReference(string referenceType, ISpanContext referencedContext)
-        {
-            if (referencedContext != null)
-            {
-                if (_references == null)
-                {
-                    // Adding an item to a new list normally creates an array with 4 items.
-                    // Since we'll either have zero or one reference in 99% of all cases, we can optimize this
-                    // and provide better performance for zero/one references with slightly worse perf for multiple references.
-                    _references = new List<Reference>(1);
-                }
-
-                _references.Add(new Reference(referenceType, referencedContext));
-            }
-            return this;
-        }
-
-        public ISpanBuilder IgnoreActiveSpan()
-        {
-            _ignoreActiveSpan = true;
-            return this;
         }
 
         public ISpanBuilder AsChildOf(ISpan parent) => AsChildOf(parent?.Context);
 
         public ISpanBuilder AsChildOf(ISpanContext parent) => AddReference(References.ChildOf, parent);
 
-        public IScope StartActive(bool finishSpanOnDispose)
+        public ISpanBuilder AddReference(string referenceType, ISpanContext referencedContext)
         {
-            return _tracer.ScopeManager.Activate(Start(), finishSpanOnDispose);
-        }
+            if (!(referencedContext is SpanContext typedReferencedContext))
+                return this;
 
-        public ISpan Start()
-        {
-            if (!_ignoreActiveSpan && _references == null)
+            // Jaeger thrift currently does not support other reference types
+            if (!string.Equals(References.ChildOf, referenceType, StringComparison.Ordinal)
+                && !string.Equals(References.FollowsFrom, referenceType, StringComparison.Ordinal))
             {
-                AsChildOf(_tracer.ActiveSpan);
+                return this;
             }
 
-            SpanContext parent = null;
-            if (_references != null)
+            if (_references == null)
             {
-                foreach (var reference in _references)
-                {
-                    if (reference.Type == References.ChildOf)
-                    {
-                        parent = reference.Context as SpanContext;
-                        break;
-                    }
-                }
+                // Adding an item to a new list normally creates an array with 4 items.
+                // Since we'll either have zero or one reference in 99% of all cases, we can optimize this
+                // and provide better performance for zero/one references with slightly worse perf for multiple references.
+                _references = new List<Reference>(1);
             }
 
-            var spanContext = parent != null
-                ? CreateRootSpanContext(parent)
-                : CreateChildSpanContext();
-
-            var span = new Span(_tracer, _operationName, spanContext, _startTimestampUtc, _tags, _references);
-            if (spanContext.IsSampled)
-            {
-                _metrics.SpansStartedSampled.Inc(1);
-            }
-            else
-            {
-                _metrics.SpansStartedNotSampled.Inc(1);
-            }
-            return span;
-        }
-
-        private SpanContext CreateRootSpanContext(SpanContext parent)
-        {
-            var traceId = parent.TraceId;
-            var parentId = parent.SpanId;
-            var spanId = new SpanId(RandomGenerator.RandomId());
-            var baggage = parent.GetBaggageItems().ToDictionary(x => x.Key, x => x.Value);
-            var flags = parent.Flags;
-
-            if (parent.IsSampled)
-            {
-                _metrics.TracesJoinedSampled.Inc(1);
-            }
-            else
-            {
-                _metrics.TracesJoinedNotSampled.Inc(1);
-            }
-
-            var spanContext = new SpanContext(traceId, spanId, parentId, baggage, flags);
-            return spanContext;
-        }
-
-        private SpanContext CreateChildSpanContext()
-        {
-            var traceId = new TraceId(RandomGenerator.RandomId(), RandomGenerator.RandomId());
-            var parentId = new SpanId(0);
-            var spanId = new SpanId(traceId.Low);
-            var baggage = new Dictionary<string, string>();
-            var flags = ContextFlags.None;
-
-            var (isSampled, samplerTags) = _sampler.IsSampled(traceId, _operationName);
-            if (isSampled)
-            {
-                foreach (var samplingTag in samplerTags)
-                {
-                    _tags[samplingTag.Key] = samplingTag.Value;
-                }
-
-                flags |= ContextFlags.Sampled;
-                _metrics.TraceStartedSampled.Inc(1);
-            }
-            else
-            {
-                _metrics.TraceStartedNotSampled.Inc(1);
-            }
-
-            var spanContext = new SpanContext(traceId, spanId, parentId, baggage, flags);
-            return spanContext;
-        }
-
-        public ISpanBuilder WithStartTimestamp(DateTimeOffset startTimestamp)
-        {
-            _startTimestampUtc = startTimestamp.UtcDateTime;
+            _references.Add(new Reference(typedReferencedContext, referenceType));
             return this;
         }
 
@@ -176,6 +74,204 @@ namespace Jaeger.Core
         {
             _tags[key] = value;
             return this;
+        }
+
+        public ISpanBuilder WithStartTimestamp(DateTimeOffset startTimestamp)
+        {
+            _startTimestampUtc = startTimestamp.UtcDateTime;
+            return this;
+        }
+
+        public ISpanBuilder IgnoreActiveSpan()
+        {
+            _ignoreActiveSpan = true;
+            return this;
+        }
+
+        public IScope StartActive(bool finishSpanOnDispose)
+        {
+            return _tracer.ScopeManager.Activate(Start(), finishSpanOnDispose);
+        }
+
+        public ISpan Start()
+        {
+            // Check if active span should be established as ChildOf relationship
+            if (!_ignoreActiveSpan && _references == null)
+            {
+                AsChildOf(_tracer.ActiveSpan);
+            }
+
+            SpanContext context = null;
+            string debugId = DebugId();
+            if (_references == null)
+            {
+                context = CreateNewContext(null);
+            }
+            else if (debugId != null)
+            {
+                context = CreateNewContext(debugId);
+            }
+            else
+            {
+                context = CreateChildContext();
+            }
+
+            if (_startTimestampUtc == null)
+            {
+                _startTimestampUtc = _tracer.Clock.UtcNow();
+            }
+
+            var span = new Span(_tracer, _operationName, context, _startTimestampUtc.Value, _tags, _references);
+            if (context.IsSampled)
+            {
+                _tracer.Metrics.SpansStartedSampled.Inc(1);
+            }
+            else
+            {
+                _tracer.Metrics.SpansStartedNotSampled.Inc(1);
+            }
+            return span;
+        }
+
+        private SpanContext CreateNewContext(string debugId)
+        {
+            TraceId traceId = TraceId.NewUniqueId();
+            SpanId spanId = new SpanId(traceId);
+
+            var flags = SpanContextFlags.None;
+            if (debugId != null)
+            {
+                flags |= SpanContextFlags.Sampled | SpanContextFlags.Debug;
+                _tags[Constants.DebugIdHeaderKey] = debugId;
+                _tracer.Metrics.TraceStartedSampled.Inc(1);
+            }
+            else
+            {
+                var samplingStatus = _tracer.Sampler.Sample(_operationName, traceId);
+                if (samplingStatus.IsSampled)
+                {
+                    flags |= SpanContextFlags.Sampled;
+                    foreach (var samplingTag in samplingStatus.Tags)
+                    {
+                        _tags[samplingTag.Key] = samplingTag.Value;
+                    }
+                    _tracer.Metrics.TraceStartedSampled.Inc(1);
+                }
+                else
+                {
+                    _tracer.Metrics.TraceStartedNotSampled.Inc(1);
+                }
+            }
+
+            return new SpanContext(traceId, spanId, new SpanId(0), flags);
+        }
+
+        private IReadOnlyDictionary<string, string> CreateChildBaggage()
+        {
+            Dictionary<string, string> baggage = null;
+
+            if (_references != null)
+            {
+                // optimization for 99% use cases, when there is only one parent
+                if (_references.Count == 1)
+                {
+                    return _references[0].Context.Baggage;
+                }
+
+                foreach (Reference reference in _references)
+                {
+                    foreach (var baggageItem in reference.Context.GetBaggageItems())
+                    {
+                        if (baggage == null)
+                        {
+                            baggage = new Dictionary<string, string>();
+                        }
+                        baggage[baggageItem.Key] = baggageItem.Value;
+                    }
+                }
+            }
+
+            return baggage ?? SpanContext.EmptyBaggage;
+        }
+
+        private SpanContext CreateChildContext()
+        {
+            SpanContext preferredReference = PreferredReference();
+
+            if (IsRpcServer())
+            {
+                if (IsSampled())
+                {
+                    _tracer.Metrics.TracesJoinedSampled.Inc(1);
+                }
+                else
+                {
+                    _tracer.Metrics.TracesJoinedNotSampled.Inc(1);
+                }
+
+                // Zipkin server compatibility
+                if (_tracer.ZipkinSharedRpcSpan)
+                {
+                    return preferredReference;
+                }
+            }
+
+            return new SpanContext(
+                preferredReference.TraceId,
+                SpanId.NewUniqueId(),
+                preferredReference.SpanId,
+                // should we do OR across passed references?
+                preferredReference.Flags,
+                CreateChildBaggage(),
+                null);
+        }
+
+        //Visible for testing
+        internal bool IsRpcServer()
+        {
+            return _tags.TryGetValue(Tags.SpanKind.Key, out object value)
+                && value is string spanKind
+                && string.Equals(Tags.SpanKindServer, spanKind, StringComparison.Ordinal);
+        }
+
+        private SpanContext PreferredReference()
+        {
+            Reference preferredReference = _references[0];
+            foreach (Reference reference in _references)
+            {
+                // child_of takes precedence as a preferred parent
+                if (string.Equals(References.ChildOf, reference.Type, StringComparison.Ordinal)
+                    && !string.Equals(References.ChildOf, preferredReference.Type, StringComparison.Ordinal))
+                {
+                    preferredReference = reference;
+                    break;
+                }
+            }
+            return preferredReference.Context;
+        }
+
+        private bool IsSampled()
+        {
+            if (_references != null)
+            {
+                foreach (Reference reference in _references)
+                {
+                    if (reference.Context.IsSampled)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        private string DebugId()
+        {
+            if (_references?.Count == 1 && _references[0].Context.IsDebugIdContainerOnly())
+            {
+                return _references[0].Context.DebugId;
+            }
+            return null;
         }
     }
 }

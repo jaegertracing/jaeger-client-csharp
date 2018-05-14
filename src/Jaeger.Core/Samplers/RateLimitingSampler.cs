@@ -5,47 +5,49 @@ using Jaeger.Core.Util;
 namespace Jaeger.Core.Samplers
 {
     /// <summary>
-    /// Only used for unit testing
+    /// <see cref="RateLimitingSampler"/> creates a sampler that samples at most maxTracesPerSecond. The distribution of sampled
+    /// traces follows burstiness of the service, i.e. a service with uniformly distributed requests will have those
+    /// requests sampled uniformly as well, but if requests are bursty, especially sub-second, then a number of
+    /// sequential requests can be sampled each second.
     /// </summary>
-    internal interface IRateLimitingSampler : ISampler
+    public class RateLimitingSampler : ValueObject, ISampler
     {
-        double MaxTracesPerSecond { get; }
-    }
+        public const string Type = "ratelimiting";
 
-    // RateLimitingSampler creates a sampler that samples at most maxTracesPerSecond. The distribution of sampled
-    // traces follows burstiness of the service, i.e. a service with uniformly distributed requests will have those
-    // requests sampled uniformly as well, but if requests are bursty, especially sub-second, then a number of
-    // sequential requests can be sampled each second.
-    public class RateLimitingSampler : IRateLimitingSampler
-    {
-        internal readonly IRateLimiter _rateLimiter;
-        private readonly Dictionary<string, object> _tags;
+        private readonly RateLimiter _rateLimiter;
+        private readonly IReadOnlyDictionary<string, object> _tags;
 
         public double MaxTracesPerSecond { get; }
 
         public RateLimitingSampler(double maxTracesPerSecond)
-            : this(maxTracesPerSecond, new RateLimiter(maxTracesPerSecond, Math.Max(maxTracesPerSecond, 1.0)))
-        {}
-
-        public RateLimitingSampler(double maxTracesPerSecond, IRateLimiter rateLimiter)
         {
             MaxTracesPerSecond = maxTracesPerSecond;
+            _rateLimiter = new RateLimiter(maxTracesPerSecond, Math.Max(maxTracesPerSecond, 1.0));
 
-            _rateLimiter = rateLimiter ?? throw new ArgumentNullException(nameof(rateLimiter));
             _tags = new Dictionary<string, object> {
-                { SamplerConstants.SamplerTypeTagKey, SamplerConstants.SamplerTypeRateLimiting },
-                { SamplerConstants.SamplerParamTagKey, maxTracesPerSecond }
+                { Constants.SamplerTypeTagKey, Type },
+                { Constants.SamplerParamTagKey, maxTracesPerSecond }
             };
         }
 
-        public void Dispose()
+        public SamplingStatus Sample(string operation, TraceId id)
+        {
+            return new SamplingStatus(_rateLimiter.CheckCredit(1.0), _tags);
+        }
+
+        public override string ToString()
+        {
+            return $"{nameof(RateLimitingSampler)}({MaxTracesPerSecond})";
+        }
+
+        public void Close()
         {
             // nothing to do
         }
 
-        public (bool Sampled, Dictionary<string, object> Tags) IsSampled(TraceId id, string operation)
+        protected override IEnumerable<object> GetAtomicValues()
         {
-            return (_rateLimiter.CheckCredit(1.0), _tags);
+            yield return MaxTracesPerSecond;
         }
     }
 }

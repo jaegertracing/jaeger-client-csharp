@@ -1,31 +1,42 @@
 using System.Collections.Generic;
+using Jaeger.Core.Util;
 
 namespace Jaeger.Core.Samplers
 {
-    // ConstSampler is a sampler that always makes the same decision.
-    public class ConstSampler : ISampler
+    public class ConstSampler : ValueObject, ISampler
     {
-        public bool Decision { get; }
+        public const string Type = "const";
 
-        private readonly Dictionary<string, object> _tags;
+        private readonly bool _decision;
+        private readonly IReadOnlyDictionary<string, object> _tags;
 
         public ConstSampler(bool sample)
         {
-            Decision = sample;
+            _decision = sample;
             _tags = new Dictionary<string, object> {
-                { SamplerConstants.SamplerTypeTagKey, SamplerConstants.SamplerTypeConst },
-                { SamplerConstants.SamplerParamTagKey, sample }
+                { Constants.SamplerTypeTagKey, Type },
+                { Constants.SamplerParamTagKey, sample }
             };
         }
 
-        public void Dispose()
+        public SamplingStatus Sample(string operation, TraceId id)
+        {
+            return new SamplingStatus(_decision, _tags);
+        }
+
+        public void Close()
         {
             // nothing to do
         }
 
-        public (bool Sampled, Dictionary<string, object> Tags) IsSampled(TraceId id, string operation)
+        public override string ToString()
         {
-            return (Decision, _tags);
+            return $"{nameof(ConstSampler)}({_decision})";
+        }
+
+        protected override IEnumerable<object> GetAtomicValues()
+        {
+            yield return _decision;
         }
     }
 }

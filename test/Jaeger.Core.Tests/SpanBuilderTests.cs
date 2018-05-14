@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Jaeger.Core.Reporters;
 using Jaeger.Core.Samplers;
 using NSubstitute;
 using OpenTracing;
@@ -11,13 +12,16 @@ namespace Jaeger.Core.Tests
     {
         private Tracer GetTracer()
         {
-            return new Tracer.Builder("service").Build();
+            return new Tracer.Builder("service")
+                .WithReporter(new InMemoryReporter())
+                .WithSampler(new ConstSampler(true))
+                .Build();
         }
 
         [Fact]
         public void SpanBuilder_Constructor_ShouldThrowIfTracerIsNull()
         {
-            var ex = Assert.Throws<ArgumentNullException>(() => new SpanBuilder(null, null, null, null));
+            var ex = Assert.Throws<ArgumentNullException>(() => new SpanBuilder(null, null));
             Assert.Equal("tracer", ex.ParamName);
         }
 
@@ -26,27 +30,8 @@ namespace Jaeger.Core.Tests
         {
             var tracer = GetTracer();
 
-            var ex = Assert.Throws<ArgumentNullException>(() => new SpanBuilder(tracer, null, null, null));
+            var ex = Assert.Throws<ArgumentNullException>(() => new SpanBuilder(tracer, null));
             Assert.Equal("operationName", ex.ParamName);
-        }
-
-        [Fact]
-        public void SpanBuilder_Constructor_ShouldThrowIfSamplerIsNull()
-        {
-            var tracer = GetTracer();
-
-            var ex = Assert.Throws<ArgumentNullException>(() => new SpanBuilder(tracer, "op", null, null));
-            Assert.Equal("sampler", ex.ParamName);
-        }
-
-        [Fact]
-        public void SpanBuilder_Constructor_ShouldThrowIfMetricsIsNull()
-        {
-            var tracer = Substitute.For<IJaegerCoreTracer>();
-            var sampler = Substitute.For<ISampler>();
-
-            var ex = Assert.Throws<ArgumentNullException>(() => new SpanBuilder(tracer, "op", sampler, null));
-            Assert.Equal("metrics", ex.ParamName);
         }
 
         [Fact]
@@ -54,11 +39,11 @@ namespace Jaeger.Core.Tests
         {
             var tracer = GetTracer();
 
-            var span = (IJaegerCoreSpan)tracer.BuildSpan("testing")
+            var span = (Span)tracer.BuildSpan("testing")
                 .AddReference(References.ChildOf, null)
                 .Start();
 
-            Assert.Empty(span.References);
+            Assert.Empty(span.GetReferences());
         }
 
         [Fact]
@@ -67,15 +52,15 @@ namespace Jaeger.Core.Tests
             var tracer = GetTracer();
 
             // Reference
-            var referencedSpan = (IJaegerCoreSpan)tracer.BuildSpan("parent").Start();
-            Assert.Empty(referencedSpan.References);
+            var referencedSpan = (Span)tracer.BuildSpan("parent").Start();
+            Assert.Empty(referencedSpan.GetReferences());
 
             // Child
-            var span = (IJaegerCoreSpan)tracer.BuildSpan("child")
+            var span = (Span)tracer.BuildSpan("child")
                 .AddReference(References.FollowsFrom, referencedSpan.Context)
                 .Start();
 
-            Assert.Collection(span.References, item =>
+            Assert.Collection(span.GetReferences(), item =>
             {
                 Assert.Equal(References.FollowsFrom, item.Type);
                 Assert.Same(referencedSpan.Context, item.Context);
@@ -88,20 +73,20 @@ namespace Jaeger.Core.Tests
             var tracer = GetTracer();
 
             // Reference
-            var referencedSpan = (IJaegerCoreSpan)tracer.BuildSpan("parent")
+            var referencedSpan = (Span)tracer.BuildSpan("parent")
                 .Start()
                 .SetBaggageItem("key", "value");
 
-            Assert.Empty(referencedSpan.References);
+            Assert.Empty(referencedSpan.GetReferences());
 
             // Child
-            var span = (IJaegerCoreSpan)tracer.BuildSpan("child")
+            var span = (Span)tracer.BuildSpan("child")
                 .AddReference(References.ChildOf, referencedSpan.Context)
                 .Start();
 
-            var builtContext = (IJaegerCoreSpanContext)span.Context;
+            var builtContext = (SpanContext)span.Context;
 
-            Assert.Single(span.References);
+            Assert.Single(span.GetReferences());
             Assert.Equal(referencedSpan.Context.TraceId, span.Context.TraceId);
             Assert.Equal(referencedSpan.Context.SpanId, span.Context.ParentId);
             Assert.Collection(builtContext.GetBaggageItems(), kvp =>
@@ -117,7 +102,7 @@ namespace Jaeger.Core.Tests
             var tracer = GetTracer();
 
             var timestamp = new DateTimeOffset(2018, 2, 12, 17, 49, 19, TimeSpan.Zero);
-            var span = (IJaegerCoreSpan)tracer.BuildSpan("foo")
+            var span = (Span)tracer.BuildSpan("foo")
                 .WithStartTimestamp(timestamp)
                 .Start();
 
@@ -129,17 +114,18 @@ namespace Jaeger.Core.Tests
         {
             var tracer = GetTracer();
 
-            var builtSpan = (IJaegerCoreSpan)tracer.BuildSpan("foo")
+            var builtSpan = (Span)tracer.BuildSpan("foo")
                 .WithTag("boolkey", true)
                 .WithTag("doublekey", 3d)
                 .WithTag("intkey", 2)
                 .WithTag("stringkey", "string, yo")
                 .Start();
 
-            Assert.True((bool)builtSpan.Tags["boolkey"]);
-            Assert.Equal(3d, builtSpan.Tags["doublekey"]);
-            Assert.Equal(2, builtSpan.Tags["intkey"]);
-            Assert.Equal("string, yo", builtSpan.Tags["stringkey"]);
+            var tags = builtSpan.GetTags();
+            Assert.True((bool)tags["boolkey"]);
+            Assert.Equal(3d, tags["doublekey"]);
+            Assert.Equal(2, tags["intkey"]);
+            Assert.Equal("string, yo", tags["stringkey"]);
         }
 
         [Fact]
@@ -147,11 +133,11 @@ namespace Jaeger.Core.Tests
         {
             var tracer = GetTracer();
 
-            var builtSpan = (IJaegerCoreSpan)tracer.BuildSpan("foo")
+            var builtSpan = (Span)tracer.BuildSpan("foo")
                 .AsChildOf((ISpan)null)
                 .Start();
 
-            Assert.Empty(builtSpan.References);
+            Assert.Empty(builtSpan.GetReferences());
         }
 
         [Fact]
@@ -159,11 +145,11 @@ namespace Jaeger.Core.Tests
         {
             var tracer = GetTracer();
 
-            var builtSpan = (IJaegerCoreSpan)tracer.BuildSpan("foo")
+            var builtSpan = (Span)tracer.BuildSpan("foo")
                 .AsChildOf((ISpanContext)null)
                 .Start();
 
-            Assert.Empty(builtSpan.References);
+            Assert.Empty(builtSpan.GetReferences());
         }
 
         [Fact]
@@ -172,15 +158,15 @@ namespace Jaeger.Core.Tests
             var tracer = GetTracer();
 
             // Reference
-            var parentSpan = (IJaegerCoreSpan)tracer.BuildSpan("parent").Start();
-            Assert.Empty(parentSpan.References);
+            var parentSpan = (Span)tracer.BuildSpan("parent").Start();
+            Assert.Empty(parentSpan.GetReferences());
 
             // Child
-            var span = (IJaegerCoreSpan)tracer.BuildSpan("child")
+            var span = (Span)tracer.BuildSpan("child")
                 .AsChildOf(parentSpan)
                 .Start();
 
-            Assert.Collection(span.References, item =>
+            Assert.Collection(span.GetReferences(), item =>
             {
                 Assert.Equal(References.ChildOf, item.Type);
                 Assert.Same(parentSpan.Context, item.Context);
@@ -193,15 +179,15 @@ namespace Jaeger.Core.Tests
             var tracer = GetTracer();
 
             // Reference
-            var parentSpan = (IJaegerCoreSpan)tracer.BuildSpan("parent").Start();
-            Assert.Empty(parentSpan.References);
+            var parentSpan = (Span)tracer.BuildSpan("parent").Start();
+            Assert.Empty(parentSpan.GetReferences());
 
             // Child
-            var span = (IJaegerCoreSpan)tracer.BuildSpan("child")
+            var span = (Span)tracer.BuildSpan("child")
                 .AsChildOf(parentSpan.Context)
                 .Start();
 
-            Assert.Collection(span.References, item =>
+            Assert.Collection(span.GetReferences(), item =>
             {
                 Assert.Equal(References.ChildOf, item.Type);
                 Assert.Same(parentSpan.Context, item.Context);
@@ -215,10 +201,10 @@ namespace Jaeger.Core.Tests
                 .WithSampler(new ConstSampler(true))
                 .Build();
 
-            var parentSpan = (IJaegerCoreSpan)tracer.BuildSpan("parent").Start();
-            Assert.True(parentSpan.Context.Flags.HasFlag(ContextFlags.Sampled));
+            var parentSpan = (Span)tracer.BuildSpan("parent").Start();
+            Assert.True(parentSpan.Context.Flags.HasFlag(SpanContextFlags.Sampled));
 
-            var childSpan = (IJaegerCoreSpan)tracer.BuildSpan("child").AsChildOf(parentSpan).Start();
+            var childSpan = (Span)tracer.BuildSpan("child").AsChildOf(parentSpan).Start();
             Assert.Equal(parentSpan.Context.Flags, childSpan.Context.Flags);
         }
 
@@ -230,17 +216,17 @@ namespace Jaeger.Core.Tests
                 { "tag.1", "value1" },
                 { "tag.2", "value2" }
             };
-            sampler.IsSampled(Arg.Any<TraceId>(), Arg.Any<string>())
-                .Returns((true, samplerTags));
+            sampler.Sample(Arg.Any<string>(), Arg.Any<TraceId>())
+                .Returns(new SamplingStatus(true, samplerTags));
 
             var tracer = new Tracer.Builder("service")
                 .WithSampler(sampler)
                 .Build();
 
-            var builtSpan = (IJaegerCoreSpan)tracer.BuildSpan("foo").Start();
+            var builtSpan = (Span)tracer.BuildSpan("foo").Start();
 
-            Assert.Equal(ContextFlags.Sampled, builtSpan.Context.Flags);
-            Assert.Equal(samplerTags, builtSpan.Tags);
+            Assert.Equal(SpanContextFlags.Sampled, builtSpan.Context.Flags);
+            Assert.Equal(samplerTags, builtSpan.GetTags());
         }
 
         [Fact]
@@ -250,9 +236,9 @@ namespace Jaeger.Core.Tests
                 .WithSampler(new ConstSampler(false))
                 .Build();
 
-            var builtSpan = (IJaegerCoreSpan)tracer.BuildSpan("foo").Start();
+            var builtSpan = (Span)tracer.BuildSpan("foo").Start();
 
-            Assert.Equal(ContextFlags.None, builtSpan.Context.Flags);
+            Assert.Equal(SpanContextFlags.None, builtSpan.Context.Flags);
         }
 
         [Fact]
@@ -276,10 +262,10 @@ namespace Jaeger.Core.Tests
 
             using (var parentScope = tracer.BuildSpan("parent").StartActive(finishSpanOnDispose: true))
             {
-                var parentSpan = (IJaegerCoreSpan)parentScope.Span;
-                var newSpan = (IJaegerCoreSpan)tracer.BuildSpan("child").Start();
+                var parentSpan = (Span)parentScope.Span;
+                var newSpan = (Span)tracer.BuildSpan("child").Start();
 
-                Assert.Single(newSpan.References);
+                Assert.Single(newSpan.GetReferences());
                 Assert.Equal(parentSpan.Context.TraceId, newSpan.Context.TraceId);
                 Assert.Equal(parentSpan.Context.SpanId, newSpan.Context.ParentId);
             }
@@ -292,12 +278,12 @@ namespace Jaeger.Core.Tests
 
             using (var parentScope = tracer.BuildSpan("parent").StartActive(finishSpanOnDispose: true))
             {
-                var parentSpan = (IJaegerCoreSpan)parentScope.Span;
-                var newSpan = (IJaegerCoreSpan)tracer.BuildSpan("child")
+                var parentSpan = (Span)parentScope.Span;
+                var newSpan = (Span)tracer.BuildSpan("child")
                     .IgnoreActiveSpan()
                     .Start();
 
-                Assert.Empty(newSpan.References);
+                Assert.Empty(newSpan.GetReferences());
                 Assert.Equal(new SpanId(0).ToString(), newSpan.Context.ParentId.ToString()); // TODO SpanId should implement Equals()
                 Assert.NotEqual(parentSpan.Context.TraceId, newSpan.Context.TraceId);
             }
@@ -308,15 +294,15 @@ namespace Jaeger.Core.Tests
         {
             var tracer = GetTracer();
 
-            var otherReference = (IJaegerCoreSpan)tracer.BuildSpan("reference").Start();
+            var otherReference = (Span)tracer.BuildSpan("reference").Start();
 
             using (var parentScope = tracer.BuildSpan("parent").StartActive(finishSpanOnDispose: true))
             {
-                var newSpan = (IJaegerCoreSpan)tracer.BuildSpan("child")
+                var newSpan = (Span)tracer.BuildSpan("child")
                     .AsChildOf(otherReference)
                     .Start();
 
-                Assert.Collection(newSpan.References, item =>
+                Assert.Collection(newSpan.GetReferences(), item =>
                 {
                     Assert.Equal(References.ChildOf, item.Type);
                     Assert.Same(otherReference.Context, item.Context);
