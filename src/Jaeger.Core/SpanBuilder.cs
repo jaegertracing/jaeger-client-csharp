@@ -14,6 +14,7 @@ namespace Jaeger.Core
         private DateTime? _startTimestampUtc;
         private List<Reference> _references;
         private bool _ignoreActiveSpan;
+        private TraceId? _traceId;
 
         internal SpanBuilder(Tracer tracer, string operationName)
         {
@@ -82,6 +83,12 @@ namespace Jaeger.Core
             return this;
         }
 
+        public ISpanBuilder WithTraceId(TraceId traceId)
+        {
+            _traceId = traceId;
+            return this;
+        }
+
         public ISpanBuilder IgnoreActiveSpan()
         {
             _ignoreActiveSpan = true;
@@ -135,7 +142,7 @@ namespace Jaeger.Core
 
         private SpanContext CreateNewContext(string debugId)
         {
-            TraceId traceId = TraceId.NewUniqueId();
+            TraceId traceId = _traceId ?? TraceId.NewUniqueId();
             SpanId spanId = new SpanId(traceId);
 
             var flags = SpanContextFlags.None;
