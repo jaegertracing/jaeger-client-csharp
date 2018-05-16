@@ -129,6 +129,21 @@ namespace Jaeger.Core.Tests
         }
 
         [Fact]
+        public void SpanBuilder_WithTraceId_ShouldSetTraceId()
+        {
+            var tracer = GetTracer();
+            var providedTraceId = new TraceId(42, 33);
+
+            var builder = (SpanBuilder)tracer.BuildSpan("foo");
+            var span = (Span)builder
+                .WithTraceId(providedTraceId)
+                .Start();
+
+            var usedTraceId = span.Context.TraceId;
+            Assert.Equal(providedTraceId, usedTraceId);
+        }
+
+        [Fact]
         public void SpanBuilder_AsChildOf_IgnoresNullSpan()
         {
             var tracer = GetTracer();
