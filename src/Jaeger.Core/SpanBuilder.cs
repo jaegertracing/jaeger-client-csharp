@@ -13,8 +13,8 @@ namespace Jaeger.Core
 
         private DateTime? _startTimestampUtc;
         private List<Reference> _references;
-        private bool _ignoreActiveSpan;
         private TraceId? _traceId;
+        private bool _ignoreActiveSpan;
 
         internal SpanBuilder(Tracer tracer, string operationName)
         {
