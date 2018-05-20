@@ -138,6 +138,14 @@ namespace Jaeger
 
         public ISpan SetTag(string key, string value) => SetTagAsObject(key, value);
 
+        public ISpan SetTag(BooleanTag tag, bool value) => SetTagAsObject(tag.Key, value);
+
+        public ISpan SetTag(IntOrStringTag tag, string value) => SetTagAsObject(tag.Key, value);
+
+        public ISpan SetTag(IntTag tag, int value) => SetTagAsObject(tag.Key, value);
+
+        public ISpan SetTag(StringTag tag, string value) => SetTagAsObject(tag.Key, value);
+
         private ISpan SetTagAsObject(string key, object value)
         {
             lock (_lock)
@@ -165,17 +173,17 @@ namespace Jaeger
             return this;
         }
 
-        public ISpan Log(IDictionary<string, object> fields)
+        public ISpan Log(IEnumerable<KeyValuePair<string, object>> fields)
         {
             return LogInternal(Tracer.Clock.UtcNow(), fields);
         }
 
-        public ISpan Log(DateTimeOffset timestamp, IDictionary<string, object> fields)
+        public ISpan Log(DateTimeOffset timestamp, IEnumerable<KeyValuePair<string, object>> fields)
         {
             return LogInternal(timestamp.UtcDateTime, fields);
         }
 
-        private ISpan LogInternal(DateTime timestampUtc, IDictionary<string, object> fields)
+        private ISpan LogInternal(DateTime timestampUtc, IEnumerable<KeyValuePair<string, object>> fields)
         {
             if (fields == null)
                 return this;
@@ -230,22 +238,26 @@ namespace Jaeger
         /// <summary>
         /// Creates logs related to logged exception.
         /// </summary>
-        /// <param name="fields">Dictionary containing exception logs which are not present in fields.</param>
+        /// <param name="fields">Current logging fields.</param>
         /// <returns>Logged fields.</returns>
-        private static IDictionary<string, object> AddExceptionLogs(IDictionary<string, object> fields)
+        private static IEnumerable<KeyValuePair<string, object>> AddExceptionLogs(IEnumerable<KeyValuePair<string, object>> fields)
         {
-            if (!fields.TryGetValue(LogFields.ErrorObject, out object value) || !(value is Exception ex))
+            var errorFields = new Dictionary<string, object>();
+            foreach (var kvp in fields)
+            {
+                errorFields[kvp.Key] = kvp.Value;
+            }
+
+            if (!errorFields.TryGetValue(LogFields.ErrorObject, out object value) || !(value is Exception ex))
             {
                 return fields;
             }
 
-            var errorFields = new Dictionary<string, object>(fields);
-
-            if (!fields.ContainsKey(LogFields.ErrorKind))
+            if (!errorFields.ContainsKey(LogFields.ErrorKind))
             {
                 errorFields[LogFields.ErrorKind] = ex.GetType().FullName;
             }
-            if (!fields.ContainsKey(LogFields.Message))
+            if (!errorFields.ContainsKey(LogFields.Message))
             {
                 string message = ex.Message;
                 if (message != null)
@@ -253,7 +265,7 @@ namespace Jaeger
                     errorFields[LogFields.Message] = message;
                 }
             }
-            if (!fields.ContainsKey(LogFields.Stack))
+            if (!errorFields.ContainsKey(LogFields.Stack))
             {
                 errorFields[LogFields.Stack] = ex.StackTrace;
             }

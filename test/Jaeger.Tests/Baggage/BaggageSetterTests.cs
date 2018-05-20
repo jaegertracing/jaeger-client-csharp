@@ -140,21 +140,21 @@ namespace Jaeger.Tests.Baggage
         {
             var logs = span.GetLogs();
             Assert.NotEmpty(logs);
-            IDictionary<string, object> fields = logs[logs.Count - 1].Fields;
-            Assert.Equal("baggage", fields["event"]);
-            Assert.Equal(key, fields["key"]);
-            Assert.Equal(value, fields["value"]);
+            LogData log = logs[logs.Count - 1];
+            Assert.Equal("baggage", log.GetFieldValue("event"));
+            Assert.Equal(key, log.GetFieldValue("key"));
+            Assert.Equal(value, log.GetFieldValue("value"));
             if (truncate)
             {
-                Assert.True((bool)fields["truncated"]);
+                Assert.True((bool)log.GetFieldValue("truncated"));
             }
             if (@override)
             {
-                Assert.True((bool)fields["override"]);
+                Assert.True((bool)log.GetFieldValue("override"));
             }
             if (invalid)
             {
-                Assert.True((bool)fields["invalid"]);
+                Assert.True((bool)log.GetFieldValue("invalid"));
             }
         }
     }
