@@ -150,10 +150,8 @@ namespace Jaeger
         /// </summary>
         public static Configuration FromEnv(ILoggerFactory loggerFactory)
         {
-            ILogger logger = loggerFactory.CreateLogger<Configuration>();
-
             return new Configuration(GetProperty(JaegerServiceName), loggerFactory)
-                .WithTracerTags(TracerTagsFromEnv(logger))
+                .WithTracerTags(TracerTagsFromEnv(loggerFactory))
                 .WithReporter(ReporterConfiguration.FromEnv(loggerFactory))
                 .WithSampler(SamplerConfiguration.FromEnv(loggerFactory))
                 .WithCodec(CodecConfiguration.FromEnv(loggerFactory));
@@ -647,7 +645,7 @@ namespace Jaeger
             return value != null && value.Length > 0 ? value : defaultValue;
         }
 
-        private static string GetProperty(string name)
+        public static string GetProperty(string name)
         {
             return Environment.GetEnvironmentVariable(name);
         }
@@ -726,8 +724,10 @@ namespace Jaeger
             return null;
         }
 
-        private static Dictionary<string, string> TracerTagsFromEnv(ILogger logger)
+        public static Dictionary<string, string> TracerTagsFromEnv(ILoggerFactory loggerFactory)
         {
+            ILogger logger = loggerFactory.CreateLogger<Configuration>();
+
             Dictionary<string, string> tracerTagMaps = null;
             string tracerTags = GetProperty(JaegerTags);
             if (!string.IsNullOrEmpty(tracerTags))

@@ -27,20 +27,14 @@ namespace Jaeger.Example.WebApi
             // See https://github.com/opentracing-contrib/csharp-netcore for details.
             services.AddOpenTracing();
 
-            // Adds the Jaeger Tracer.
-            services.AddSingleton<ITracer>(serviceProvider =>
+            // Adds the Jaeger tracer.
+            services.AddJaeger(jaeger =>
             {
-                string serviceName = serviceProvider.GetRequiredService<IHostingEnvironment>().ApplicationName;
+                // For demo purposes, we want to trace every request.
+                jaeger.WithSampler(new ConstSampler(sample: true));
 
-                // This will log to a default localhost installation of Jaeger.
-                var tracer = new Tracer.Builder(serviceName)
-                    .WithSampler(new ConstSampler(true))
-                    .Build();
-
-                // Allows code that can't use DI to also access the tracer.
-                GlobalTracer.Register(tracer);
-
-                return tracer;
+                // Tracer tags will be added to every span.
+                jaeger.WithTag("tracer.tag", "foo");
             });
         }
 
