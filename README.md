@@ -15,9 +15,9 @@ This package contains everything you need to get up and running. If you want to 
 The following will give you a tracer that reports spans to the `ILogger` from `ILoggerFactory`.
 
 ```C#
-using Jaeger.Core;
-using Jaeger.Core.Reporters;
-using Jaeger.Core.Samplers;
+using Jaeger;
+using Jaeger.Reporters;
+using Jaeger.Samplers;
 
 var loggerFactory = ; // get Microsoft.Extensions.Logging ILoggerFactory
 
@@ -32,7 +32,7 @@ var tracer = new Tracer.Builder(serviceName)
 ```
 
 #### Sampling
-For more information on sampling see the sampling [README](src/Jaeger.Core/Samplers/README.md)
+For more information on sampling see the sampling [README](src/Jaeger/Samplers/README.md)
 
 #### Extracting Span Information
 When your code is called you might want to pull current trace information out of calling information before building and starting a span. This allows you to link your span into a current trace and track its relation to other spans. By default text map and http headers are supported. More support is planned for the future as well as allowing custom extractors.
@@ -63,8 +63,6 @@ You can then pass along the headers and as along as what you are calling knows h
 Before you start a span you will want to build it out. You can do this using the span builder. You would build a span for each operation you wanted to trace.
 
 ```C#
-using Jaeger.Core;
-
 var operationName = "Get::api/values/";
 var builder = tracer.BuildSpan(operationName);
 ```
