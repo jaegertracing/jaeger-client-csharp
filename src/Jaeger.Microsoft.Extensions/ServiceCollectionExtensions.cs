@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Reflection;
-using Jaeger.Core;
-using Jaeger.Core.Baggage;
-using Jaeger.Core.Metrics;
-using Jaeger.Core.Reporters;
-using Jaeger.Core.Samplers;
-using Jaeger.Core.Util;
+using Jaeger;
+using Jaeger.Baggage;
+using Jaeger.Metrics;
+using Jaeger.Reporters;
+using Jaeger.Samplers;
+using Jaeger.Util;
 using Microsoft.Extensions.Logging;
 using OpenTracing;
 using OpenTracing.Util;
-using JaegerConfiguration = Jaeger.Core.Configuration;
+using JaegerConfiguration = Jaeger.Configuration;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
