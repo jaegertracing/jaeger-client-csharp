@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Jaeger.Baggage;
 using Jaeger.Metrics;
 using Jaeger.Reporters;
@@ -316,12 +317,12 @@ namespace Jaeger.Tests
 
             var logData = span.GetLogs();
             Assert.Single(logData);
-            Assert.Equal(4, logData[0].Fields.Count);
+            Assert.Equal(4, logData[0].Fields.Count());
 
-            Assert.Equal(ex, logData[0].Fields[LogFields.ErrorObject]);
-            Assert.Equal(ex.Message, logData[0].Fields[LogFields.Message]);
-            Assert.Equal(ex.GetType().FullName, logData[0].Fields[LogFields.ErrorKind]);
-            Assert.Equal(ex.StackTrace, logData[0].Fields[LogFields.Stack]);
+            Assert.Equal(ex, logData[0].GetFieldValue(LogFields.ErrorObject));
+            Assert.Equal(ex.Message, logData[0].GetFieldValue(LogFields.Message));
+            Assert.Equal(ex.GetType().FullName, logData[0].GetFieldValue(LogFields.ErrorKind));
+            Assert.Equal(ex.StackTrace, logData[0].GetFieldValue(LogFields.Stack));
         }
 
         [Fact]
@@ -338,12 +339,12 @@ namespace Jaeger.Tests
 
             var logData = span.GetLogs();
             Assert.Single(logData);
-            Assert.Equal(4, logData[0].Fields.Count);
+            Assert.Equal(4, logData[0].Fields.Count());
 
-            Assert.Equal(ex, logData[0].Fields[LogFields.ErrorObject]);
-            Assert.Equal(ex.Message, logData[0].Fields[LogFields.Message]);
-            Assert.Equal(ex.GetType().FullName, logData[0].Fields[LogFields.ErrorKind]);
-            Assert.Equal(ex.StackTrace, logData[0].Fields[LogFields.Stack]);
+            Assert.Equal(ex, logData[0].GetFieldValue(LogFields.ErrorObject));
+            Assert.Equal(ex.Message, logData[0].GetFieldValue(LogFields.Message));
+            Assert.Equal(ex.GetType().FullName, logData[0].GetFieldValue(LogFields.ErrorKind));
+            Assert.Equal(ex.StackTrace, logData[0].GetFieldValue(LogFields.Stack));
         }
 
         [Fact]
@@ -359,7 +360,7 @@ namespace Jaeger.Tests
             var logData = span.GetLogs();
             Assert.Single(logData);
             Assert.Single(logData[0].Fields);
-            Assert.Equal(obj, logData[0].Fields[LogFields.ErrorObject]);
+            Assert.Equal(obj, logData[0].GetFieldValue(LogFields.ErrorObject));
         }
 
         [Fact]
@@ -380,7 +381,7 @@ namespace Jaeger.Tests
             var logData = span.GetLogs();
             Assert.Single(logData);
             Assert.Single(logData[0].Fields);
-            Assert.Equal(ex, logData[0].Fields[LogFields.ErrorObject]);
+            Assert.Equal(ex, logData[0].GetFieldValue(LogFields.ErrorObject));
         }
 
         [Fact]

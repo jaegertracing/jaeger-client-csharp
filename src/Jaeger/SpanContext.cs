@@ -10,6 +10,9 @@ namespace Jaeger
     {
         internal static readonly IReadOnlyDictionary<string, string> EmptyBaggage = new ReadOnlyDictionary<string, string>(new Dictionary<string, string>());
 
+        private string _cachedTraceIdToString;
+        private string _cachedSpanIdToString;
+
         public TraceId TraceId { get; }
         public SpanId SpanId { get; }
         public SpanId ParentId { get; }
@@ -20,6 +23,32 @@ namespace Jaeger
         public bool IsSampled => Flags.HasFlag(SpanContextFlags.Sampled);
 
         public bool IsDebug => Flags.HasFlag(SpanContextFlags.Debug);
+
+        string ISpanContext.TraceId
+        {
+            get
+            {
+                if (_cachedTraceIdToString == null)
+                {
+                    _cachedTraceIdToString = TraceId.ToString();
+                }
+
+                return _cachedTraceIdToString;
+            }
+        }
+
+        string ISpanContext.SpanId
+        {
+            get
+            {
+                if (_cachedSpanIdToString == null)
+                {
+                    _cachedSpanIdToString = SpanId.ToString();
+                }
+
+                return _cachedSpanIdToString;
+            }
+        }
 
         public SpanContext(TraceId traceId, SpanId spanId, SpanId parentId, SpanContextFlags flags)
             : this(traceId, spanId, parentId, flags, EmptyBaggage, debugId: null)

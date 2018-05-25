@@ -76,6 +76,30 @@ namespace Jaeger
             return this;
         }
 
+        public ISpanBuilder WithTag(BooleanTag tag, bool value)
+        {
+            _tags[tag.Key] = value;
+            return this;
+        }
+
+        public ISpanBuilder WithTag(IntOrStringTag tag, string value)
+        {
+            _tags[tag.Key] = value;
+            return this;
+        }
+
+        public ISpanBuilder WithTag(IntTag tag, int value)
+        {
+            _tags[tag.Key] = value;
+            return this;
+        }
+
+        public ISpanBuilder WithTag(StringTag tag, string value)
+        {
+            _tags[tag.Key] = value;
+            return this;
+        }
+
         public ISpanBuilder WithStartTimestamp(DateTimeOffset startTimestamp)
         {
             _startTimestampUtc = startTimestamp.UtcDateTime;
@@ -86,6 +110,11 @@ namespace Jaeger
         {
             _ignoreActiveSpan = true;
             return this;
+        }
+
+        public IScope StartActive()
+        {
+            return StartActive(finishSpanOnDispose: true);
         }
 
         public IScope StartActive(bool finishSpanOnDispose)
