@@ -1,12 +1,11 @@
 <Project>
+  <Import Project="version.props" />
   <PropertyGroup>
-    <VersionPrefix>0.0.10</VersionPrefix>
-
     <Authors>Chatham Financial Corp. and The Jaeger Authors</Authors>
     <Copyright>Copyright 2018 (c) The Jaeger Authors. Copyright 2018 (c) Chatham Financial Corp.</Copyright>
     <PackageProjectUrl>https://github.com/jaegertracing/jaeger-client-csharp</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/jaegertracing/jaeger-client-csharp/blob/master/LICENSE</PackageLicenseUrl>
-    <PackageReleaseNotes>https://github.com/jaegertracing/jaeger-client-csharp/releases</PackageReleaseNotes>
+    <PackageReleaseNotes Condition="'$(APPVEYOR_REPO_TAG_NAME)' != ''">https://github.com/jaegertracing/jaeger-client-csharp/releases/tag/$(APPVEYOR_REPO_TAG_NAME)</PackageReleaseNotes>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>git://github.com/jaegertracing/jaeger-client-csharp</RepositoryUrl>
 
@@ -15,6 +14,9 @@
 
     <LangVersion>latest</LangVersion>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)SignKey.snk</AssemblyOriginatorKeyFile>
+    <PublicSign Condition=" '$(OS)' != 'Windows_NT' ">true</PublicSign>
   </PropertyGroup>
 
 </Project>
