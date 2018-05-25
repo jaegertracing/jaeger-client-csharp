@@ -2,7 +2,7 @@
 
 # C# Client for Jaeger (https://jaegertracing.io)
 
-- Implements C# [OpenTracing API](https://github.com/opentracing/opentracing-csharp) v. 0.12
+- Implements C# [OpenTracing API](https://github.com/opentracing/opentracing-csharp)
 - Supports netstandard 2.0
 
 ## Status
