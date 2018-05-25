@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Jaeger.Baggage;
 using Jaeger.Metrics;
 using Jaeger.Reporters;
