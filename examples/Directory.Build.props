@@ -1,0 +1,7 @@
+<Project>
+  <Import Project="..\Directory.Build.props" />
+  <PropertyGroup>
+    <!-- OpenTracing.Contrib.NetCore v0.4.0 isn't signed so we can't sign the examples right now -->
+    <SignAssembly>false</SignAssembly>
+  </PropertyGroup>
+</Project>

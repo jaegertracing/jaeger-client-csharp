@@ -1,0 +1,27 @@
+# AppVeyor Build number is incremental and not related to actual version number of the product
+version: '{build}'
+
+image: Visual Studio 2017
+
+init:
+  - cmd: git config --global core.autocrlf true
+
+environment:
+  global:
+    DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+    DOTNET_CLI_TELEMETRY_OPTOUT: 1
+
+build_script:
+  - ps: .\build.ps1
+
+test: off
+
+artifacts:
+  - path: artifacts\nuget\*.nupkg
+    name: NuGet
+
+# Deploy every successful build (except PRs) to development feed
+nuget:
+  account_feed: true
+  project_feed: true
+  disable_publish_on_pr: true
