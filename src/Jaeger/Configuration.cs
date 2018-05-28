@@ -102,6 +102,11 @@ namespace Jaeger
         public const string JaegerTraceId128Bit = JaegerPrefix + "TRACEID_128BIT";
 
         /// <summary>
+        /// Whether the tracer should expand exception logs.
+        /// </summary>
+        public const string JaegerExpandExceptionLogs = JaegerPrefix + "EXPAND_EXCEPTION_LOGS";
+
+        /// <summary>
         /// Comma separated list of formats to use for propagating the trace context. Default will the
         /// standard Jaeger format. Valid values are jaeger and b3.
         /// </summary>
@@ -135,6 +140,7 @@ namespace Jaeger
         private IMetricsFactory _metricsFactory;
         private Dictionary<string, string> _tracerTags;
         private bool _useTraceId128Bit;
+        private bool _expandExceptionLogs;
 
         /// <summary>
         /// Lazy singleton <see cref="Tracer"/> initialized in <see cref="GetTracer()"/> method.
@@ -161,6 +167,7 @@ namespace Jaeger
             return new Configuration(GetProperty(JaegerServiceName), loggerFactory)
                 .WithTracerTags(TracerTagsFromEnv(logger))
                 .WithTraceId128Bit(GetPropertyAsBool(JaegerTraceId128Bit, logger).GetValueOrDefault(false))
+                .WithExpandExceptionLogs(GetPropertyAsBool(JaegerExpandExceptionLogs, logger).GetValueOrDefault(false))
                 .WithReporter(ReporterConfiguration.FromEnv(loggerFactory))
                 .WithSampler(SamplerConfiguration.FromEnv(loggerFactory))
                 .WithCodec(CodecConfiguration.FromEnv(loggerFactory));
@@ -198,6 +205,11 @@ namespace Jaeger
             {
                 builder = builder.WithTraceId128Bit();
             }
+
+            if (_expandExceptionLogs)
+			{
+				builder = builder.WithExpandExceptionLogs();
+			}
 
             _codecConfig.Apply(builder);
 
@@ -269,6 +281,12 @@ namespace Jaeger
             {
                 _tracerTags = new Dictionary<string, string>(tracerTags);
             }
+            return this;
+        }
+
+        public Configuration WithExpandExceptionLogs(bool expandExceptionLogs=true)
+        {
+            _expandExceptionLogs = expandExceptionLogs;
             return this;
         }
 
