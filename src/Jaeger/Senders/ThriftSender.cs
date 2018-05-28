@@ -125,5 +125,10 @@ namespace Jaeger.Senders
         {
             return FlushAsync(cancellationToken);
         }
+
+        public override string ToString()
+        {
+            return $"{nameof(ThriftSender)}(ProcessBytesSize={_processBytesSize}, ByteBufferSize={_byteBufferSize})";
+        }
     }
 }

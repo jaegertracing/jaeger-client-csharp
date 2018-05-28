@@ -26,5 +26,10 @@ namespace Jaeger.Reporters
         {
             return Task.CompletedTask;
         }
+
+        public override string ToString()
+        {
+            return $"{nameof(LoggingReporter)}(Logger={Logger})";
+        }
     }
 }

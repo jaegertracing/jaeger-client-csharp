@@ -36,5 +36,10 @@ namespace Jaeger.Samplers
 
             return ParseJson(jsonString);
         }
+
+        public override string ToString()
+        {
+            return $"{nameof(HttpSamplingManager)}(HostPort={_hostPort})";
+        }
     }
 }

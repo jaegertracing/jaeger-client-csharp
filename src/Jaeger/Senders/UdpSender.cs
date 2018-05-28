@@ -79,5 +79,10 @@ namespace Jaeger.Senders
                 _udpTransport.Close();
             }
         }
+
+        public override string ToString()
+        {
+            return $"{nameof(UdpSender)}(UdpTransport={_udpTransport})";
+        }
     }
 }

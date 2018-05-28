@@ -94,7 +94,8 @@ namespace Jaeger.Samplers
         {
             lock (_lock)
             {
-                return $"{nameof(GuaranteedThroughputSampler)}({_probabilisticSampler}/{_lowerBoundSampler})";
+                return $"{nameof(GuaranteedThroughputSampler)}(ProbabilisticSampler={_probabilisticSampler}, " 
+                       + $"LowerBoundSampler={_lowerBoundSampler}, Tags={string.Join(", ", _tags)})";
             }
         }
 
