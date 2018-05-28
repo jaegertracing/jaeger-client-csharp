@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Jaeger.Util;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
@@ -14,11 +13,6 @@ namespace Jaeger.Reporters
     {
         private ILogger Logger { get; }
 
-        private static readonly JsonSerializerSettings JsonSerializerSettings = new JsonSerializerSettings
-        {
-            ContractResolver = new JaegerSpanContractResolver()
-        };
-
         public LoggingReporter(ILoggerFactory loggerFactory)
         {
             Logger = loggerFactory?.CreateLogger<LoggingReporter>() ?? throw new ArgumentNullException(nameof(loggerFactory));
@@ -26,7 +20,7 @@ namespace Jaeger.Reporters
 
         public void Report(Span span)
         {
-            Logger.LogInformation("Span reported: {span}", JsonConvert.SerializeObject(span, JsonSerializerSettings));
+            Logger.LogInformation("Span reported: {span}", JsonConvert.SerializeObject(span));
         }
 
         public Task CloseAsync(CancellationToken cancellationToken)
