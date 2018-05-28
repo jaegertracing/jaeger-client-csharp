@@ -1,7 +1,6 @@
 using System;
 using System.Globalization;
 using Jaeger.Util;
-using Newtonsoft.Json;
 
 namespace Jaeger
 {
@@ -12,8 +11,6 @@ namespace Jaeger
     {
         public long High { get; }
         public long Low { get; }
-
-        [JsonIgnore]
         public bool IsZero => Low == 0 && High == 0;
 
         public static TraceId NewUniqueId()

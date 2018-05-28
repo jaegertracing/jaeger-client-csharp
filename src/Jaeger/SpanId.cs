@@ -9,7 +9,7 @@ namespace Jaeger
     /// </summary>
     public readonly struct SpanId
     {
-        public long Id { get; }
+        private long Id { get; }
 
         public static SpanId NewUniqueId()
         {

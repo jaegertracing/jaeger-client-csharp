@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using OpenTracing;
 using OpenTracing.Tag;
 
@@ -20,7 +19,6 @@ namespace Jaeger
         // We don't allocate if there's no logs.
         private List<LogData> _logs;
 
-        [JsonIgnore]
         public Tracer Tracer { get; }
         public DateTime StartTimestampUtc { get; }
         public string OperationName { get; private set; }
