@@ -45,7 +45,7 @@ var loggerFactory = ; // get Microsoft.Extensions.Logging ILoggerFactory
 var serviceName = "initExampleService";
 
 Configuration config = new Configuration("myServiceName")
-	.WithSampler(...)	// optional, defaults to RemoteControlledSampler with HttpSamplingManager on localhost:5778
+	.WithSampler(...)   // optional, defaults to RemoteControlledSampler with HttpSamplingManager on localhost:5778
 	.WithReporter(...); // optional, defaults to RemoteReporter with UdpSender on localhost:6831
 ```
 
