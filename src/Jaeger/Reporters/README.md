@@ -39,7 +39,7 @@ var reporter = new RemoteReporter.Builder()
     .Build();
 ```
 
-## CompositeReporter
+## Combined Reporter
 A reporter that combines multiple reporters for usage with the tracer. This is mostly used for debugging, when an output to the Console logger is wanted.
 
 ```C#
@@ -54,6 +54,7 @@ var reporter = new CompositeReporter(reporterLogging, reporterInMemory, reporter
 var spans = reporterInMemory.GetSpans();
 ```
 
+# Notice
 Most of the time, configuration will happen through usage of the `Configuration` helper. A common example for getting a combined `LoggingReporter` and `RemoteReporter` can be achieved by using
 
 ```C#
@@ -69,3 +70,5 @@ var tracer = new Configuration(serviceName, loggerFactory)
     .WithReporter(reporterConfiguration) // optional, defaults to RemoteReporter with UdpSender at localhost:6831
     .GetTracer();
 ```
+
+See general [README](../../../README.md) for more information on `Configuration` on getting configuration from the environment.
