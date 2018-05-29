@@ -12,17 +12,18 @@ This library is still under construction and needs to be peer reviewed as well a
 This package contains everything you need to get up and running. If you want to report to a system such as Jaeger or Zipkin you will need to use their NuGet packages.
 
 ### The Tracer
-The following will give you a tracer that reports spans to the `ILogger` from `ILoggerFactory`.
+The following will give you a tracer that reports spans to an `ILogger` instance from `ILoggerFactory`.
 
 ```C#
 using Jaeger;
 using Jaeger.Reporters;
 using Jaeger.Samplers;
+using Microsoft.Extensions.Logging;
 
 var loggerFactory = ; // get Microsoft.Extensions.Logging ILoggerFactory
-
 var serviceName = "initExampleService";
-var reporter = new LoggingReporter(logger);
+
+var reporter = new LoggingReporter(loggerFactory);
 var sampler = new ConstSampler(true);
 var tracer = new Tracer.Builder(serviceName)
     .WithLoggerFactory(loggerFactory)
@@ -30,6 +31,70 @@ var tracer = new Tracer.Builder(serviceName)
     .WithSampler(sampler)
     .Build();
 ```
+
+This works well if you only want to log to a logging framework. As soon as you want to also get metrics and use a real remote tracer, manually building will get hard pretty fast.
+
+`Configuration` holds only primitive values and it is designed to be used with configuration files or when configuration is provided in environmental variables.
+
+```C#
+using Jaeger;
+using Jaeger.Samplers;
+using Microsoft.Extensions.Logging;
+
+var loggerFactory = ; // get Microsoft.Extensions.Logging ILoggerFactory
+var serviceName = "initExampleService";
+
+Configuration config = new Configuration("myServiceName")
+	.WithSampler(...)	// optional, defaults to RemoteControlledSampler with HttpSamplingManager on localhost:5778
+	.WithReporter(...); // optional, defaults to RemoteReporter with UdpSender on localhost:6831
+```
+
+ITracer tracer = config.GetTracer();
+
+The config objects lazily builds and configures Jaeger Tracer. Multiple calls to GetTracer() return the same instance.
+
+#### Configuration via Environment
+
+It is also possible to obtain a `Jaeger.Configuration` object configured using properties specified
+as environment variables or system properties. A value specified as a system property will override a value
+specified as an environment variable for the same property name.
+
+```C#
+Configuration config = Configuration.FromEnv();
+```
+
+The property names are:
+
+Property | Required | Description
+--- | --- | ---
+JAEGER_SERVICE_NAME | yes | The service name
+JAEGER_AGENT_HOST | no | The hostname for communicating with agent via UDP
+JAEGER_AGENT_PORT | no | The port for communicating with agent via UDP
+JAEGER_ENDPOINT | no | The traces endpoint, in case the client should connect directly to the Collector, like http://jaeger-collector:14268/api/traces
+JAEGER_AUTH_TOKEN | no | Authentication Token to send as "Bearer" to the endpoint
+JAEGER_USER | no | Username to send as part of "Basic" authentication to the endpoint
+JAEGER_PASSWORD | no | Password to send as part of "Basic" authentication to the endpoint
+JAEGER_PROPAGATION | no | Comma separated list of formats to use for propagating the trace context. Defaults to the standard Jaeger format. Valid values are **jaeger** and **b3**
+JAEGER_REPORTER_LOG_SPANS | no | Whether the reporter should also log the spans
+JAEGER_REPORTER_MAX_QUEUE_SIZE | no | The reporter's maximum queue size
+JAEGER_REPORTER_FLUSH_INTERVAL | no | The reporter's flush interval (ms)
+JAEGER_SAMPLER_TYPE | no | The sampler type
+JAEGER_SAMPLER_PARAM | no | The sampler parameter (number)
+JAEGER_SAMPLER_MANAGER_HOST_PORT | no | The host name and port when using the remote controlled sampler
+JAEGER_TAGS | no | A comma separated list of `name = value` tracer level tags, which get added to all reported spans. The value can also refer to an environment variable using the format `${envVarName:default}`, where the `:default` is optional, and identifies a value to be used if the environment variable cannot be found
+
+Setting `JAEGER_AGENT_HOST`/`JAEGER_AGENT_PORT` will make the client send traces to the agent via `UdpSender`.
+If the `JAEGER_ENDPOINT` environment variable is also set, the traces are sent to the endpoint, effectively making
+the `JAEGER_AGENT_*` vars ineffective.
+
+When the `JAEGER_ENDPOINT` is set, the `HttpSender` is used when submitting traces to a remote
+endpoint, usually served by a Jaeger Collector. If the endpoint is secured, a HTTP Basic Authentication
+can be performed by setting the related environment vars. Similarly, if the endpoint expects an authentication
+token, like a JWT, set the `JAEGER_AUTH_TOKEN` environment variable. If the Basic Authentication environment
+variables *and* the Auth Token environment variable are set, Basic Authentication is used.
+
+#### Reporting
+For more information on reporting see the reporting [README](src/Jaeger/Reporters/README.md)
 
 #### Sampling
 For more information on sampling see the sampling [README](src/Jaeger/Samplers/README.md)
@@ -40,9 +105,9 @@ When your code is called you might want to pull current trace information out of
 ```C#
 using OpenTracing.Propagation; // where you get Format from
 
-DictionaryTextMap callingHeaders = ; // get the calling headers
+var callingHeaders = new TextMapExtractAdapter(...); // get the calling headers
 
-var callingSpanContext = tracer.Extract(Format.HttpHeaders, callingHeaders)
+var callingSpanContext = tracer.Extract(BuiltinFormats.HttpHeaders, callingHeaders);
 ```
 You can then use the callingSpanContext when [adding references](#adding-references) with the SpanBuilder.
 
@@ -50,12 +115,12 @@ You can then use the callingSpanContext when [adding references](#adding-referen
 In order to pass along the trace information in calls so others can extract it you need to inject it into the carrier.
 
 ```C#
-using OpenTracing.Propagation; // where you get Format from
+using OpenTracing.Propagation; // where you get BuiltinFormats from
 
 var spanContext = span.Context; // pulled from your current span
-DictionaryTextMap newCallHeaders; // get the calling headers
+var newCallHeaders = new TextMapInjectAdapter(null); // get the calling headers
 
-var callingSpanContext = tracer.Inject(spanContext, Format.HttpHeaders, newCallHeaders)
+tracer.Inject(spanContext, BuiltinFormats.HttpHeaders, newCallHeaders);
 ```
 You can then pass along the headers and as along as what you are calling knows how to extract that format you are good to go.
 
@@ -68,17 +133,25 @@ var builder = tracer.BuildSpan(operationName);
 ```
 
 #### Adding Tags
-Any tags you add to the span builder will be added to the span on start and reported to the reporting system you have setup when the span is reported. The following types are supported as tags: bool, double, int, string.
+Any tags you add to the span builder will be added to the span on start and reported to the reporting system you have setup when the span is reported. The following types are supported as tags: `bool`, `double`, `int`, `string`.
 
 ```C#
 builder.WithTag("machine.name", "machine1").WithTag("cpu.cores", 8);
+```
+
+Some well-known tags are defined in `OpenTracing.Tag` and can be used as follows:
+
+```C#
+using OpenTracing.Tag;
+
+builder.WithTag(Tags.SpanKind, Tags.SpanKindClient).WithTag(Tags.DbType, "sql");
 ```
 
 #### Adding References
 References allow you to show how this span relates to another span. You need the `SpanContext` of the span you want to reference. If you add a `child_of` reference the SpanBuilder will use that as the parent of the span being built.
 
 ```C#
-builder.AddReference("follows_from", spanContext);
+builder.AddReference(References.FollowsFrom, spanContext);
 ```
 There also exist helper methods to simplify adding child of references.
 
@@ -103,8 +176,19 @@ var startTime = DateTimeOffset.Now;
 var span = builder.WithStartTimestamp(startTime).Start();
 ```
 
+If you want to start a span and use it as an active span, you can use a scoped span.
+```C#
+using (var scope = builder.StartActive(true))
+{
+	var span = scope.Span;
+}
+```
+
+This will automatically define the newly created span as child of the span that was active at that time. If no span was active, it will be created as root span. 
+In addition will the scope span be automatically finished when the scope ends, even if the `using`-Block throws an exception.
+
 ### Spans
-After creating a span and before finishing it you can add and change some information on a span.
+After creating a span and before finishing it, you can add and change some information on a span.
 
 #### Baggage Items
 Baggage is key/value data that is passed along the wire and shared with other spans. You can get and set baggage data from the span object.
@@ -122,8 +206,8 @@ You can log structured data which allows you to tie information from what's happ
 
 ```C#
 var logData = new List<KeyValuePair<string, object>> {
-    new KeyValuePair<string, object>("handling number of events", 6),
-    new KeyValuePair<string, object>("using legacy system", false)
+    { "handling number of events", 6 },
+    { "using legacy system", false }
 };
 
 span.Log(DateTimeOffset.Now, logData);
