@@ -52,7 +52,8 @@ namespace Jaeger.Samplers
 
         public override string ToString()
         {
-            return $"{nameof(ProbabilisticSampler)}({SamplingRate})";
+            return $"{nameof(ProbabilisticSampler)}(PositiveSamplingBoundary={_positiveSamplingBoundary}, " 
+                   + $"NegativeSamplingBoundary={_negativeSamplingBoundary}, SamplingRate={SamplingRate})";
         }
 
         public void Close()

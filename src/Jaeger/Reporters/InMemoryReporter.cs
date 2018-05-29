@@ -37,5 +37,13 @@ namespace Jaeger.Reporters
         {
             return Task.CompletedTask;
         }
+
+        public override string ToString()
+        {
+            lock (_lock)
+            {
+                return $"{nameof(InMemoryReporter)}(Spans={string.Join(", ", _spans)})";
+            }
+        }
     }
 }

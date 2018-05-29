@@ -144,6 +144,11 @@ namespace Jaeger.Reporters
             }
         }
 
+        public override string ToString()
+        {
+            return $"{nameof(RemoteReporter)}(Sender={_sender})";
+        }
+
         /*
          * The code below implements the command pattern. This pattern is useful for
          * situations where multiple threads would need to synchronize on a resource,

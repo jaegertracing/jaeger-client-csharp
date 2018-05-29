@@ -28,5 +28,10 @@ namespace Jaeger.Reporters
                 await reporter.CloseAsync(cancellationToken).ConfigureAwait(false);
             }
         }
+
+        public override string ToString()
+        {
+            return $"{nameof(CompositeReporter)}(Reporters={string.Join(", ", _reporters)})";
+        }
     }
 }

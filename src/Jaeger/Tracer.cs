@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Jaeger.Baggage;
@@ -106,6 +107,23 @@ namespace Jaeger
             }
 
             Tags = tags;
+        }
+
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            sb.Append(nameof(Tracer));
+            sb.Append('(');
+            sb.Append($"ServiceName={ServiceName}, ");
+            sb.Append($"Version={Version}, ");
+            sb.Append($"Reporter={Reporter}, ");
+            sb.Append($"Sampler={Sampler}, ");
+            sb.Append($"IPv4={IPv4}, ");
+            sb.Append($"Tags={string.Join(", ", Tags)}, ");
+            sb.Append($"ZipkinSharedRpcSpan={ZipkinSharedRpcSpan}, ");
+            sb.Append($"ExpandExceptionLogs={ExpandExceptionLogs}");
+            sb.Append(')');
+            return sb.ToString();
         }
 
         public void ReportSpan(Span span)

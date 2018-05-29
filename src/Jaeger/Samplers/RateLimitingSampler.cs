@@ -37,7 +37,7 @@ namespace Jaeger.Samplers
 
         public override string ToString()
         {
-            return $"{nameof(RateLimitingSampler)}({MaxTracesPerSecond})";
+            return $"{nameof(RateLimitingSampler)}(MaxTracesPerSecond={MaxTracesPerSecond}, Tags={string.Join(", ", _tags)})";
         }
 
         public void Close()

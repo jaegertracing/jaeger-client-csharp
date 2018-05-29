@@ -73,6 +73,11 @@ namespace Jaeger.Senders
             }
         }
 
+        public override string ToString()
+        {
+            return $"{nameof(HttpSender)}";
+        }
+
         public sealed class Builder
         {
             internal string Endpoint { get; }

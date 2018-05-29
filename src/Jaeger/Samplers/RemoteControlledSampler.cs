@@ -132,7 +132,7 @@ namespace Jaeger.Samplers
         {
             lock (_lock)
             {
-                return $"{nameof(RemoteControlledSampler)}({Sampler})";
+                return $"{nameof(RemoteControlledSampler)}(Sampler={Sampler})";
             }
         }
 

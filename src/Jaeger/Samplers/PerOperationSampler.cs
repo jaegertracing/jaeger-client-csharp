@@ -117,7 +117,7 @@ namespace Jaeger.Samplers
         {
             lock (_lock)
             {
-                return $"{nameof(PerOperationSampler)}({LowerBound}/{MaxOperations})";
+                return $"{nameof(PerOperationSampler)}(LowerBound={LowerBound}, MaxOperations={MaxOperations})";
             }
         }
 

@@ -105,5 +105,10 @@ namespace Jaeger.Thrift.Senders.Internal
             }
             _isDisposed = true;
         }
+
+        public override string ToString()
+        {
+            return $"{nameof(ThriftUdpClientTransport)}(Client={_client.Client.RemoteEndPoint})";
+        }
     }
 }
