@@ -15,7 +15,8 @@ namespace Jaeger
 
         public static TraceId NewUniqueId()
         {
-            return new TraceId(Utils.UniqueId(), Utils.UniqueId());
+            // TODO: Only using 64bit for compatability. Make it configurable to use 128bit TraceIds.
+            return new TraceId(Utils.UniqueId());
         }
 
         public TraceId(long low) : this(0, low)
