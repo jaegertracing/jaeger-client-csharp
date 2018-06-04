@@ -54,8 +54,8 @@ namespace Jaeger.Senders
             try
             {
                 var batch = new ThriftBatch(process, spans);
-                await batch.WriteAsync(_protocol, cancellationToken);
-                await _protocol.Transport.FlushAsync(cancellationToken);
+                await batch.WriteAsync(_protocol, cancellationToken).ConfigureAwait(false);
+                await _protocol.Transport.FlushAsync(cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
