@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Jaeger.Exceptions;
 using Jaeger.Thrift.Agent;
+using Thrift.Protocols;
 using Thrift.Transports.Client;
 using ThriftBatch = Jaeger.Thrift.Batch;
 using ThriftProcess = Jaeger.Thrift.Process;
@@ -18,7 +19,7 @@ namespace Jaeger.Senders
         private const string HttpCollectorJaegerThriftFormatParam = "format=jaeger.thrift";
         private const int OneMbInBytes = 1048576;
 
-        private readonly Agent.Client _agentClient;
+        private readonly TProtocol _protocol;
         private readonly THttpClientTransport _transport;
 
         /// <summary>
@@ -45,7 +46,7 @@ namespace Jaeger.Senders
             }
 
             _transport = new THttpClientTransport(collectorUri, customHeaders);
-            _agentClient = new Agent.Client(ProtocolFactory.GetProtocol(_transport));
+            _protocol = ProtocolFactory.GetProtocol(_transport);
         }
 
         protected override async Task SendAsync(ThriftProcess process, List<ThriftSpan> spans, CancellationToken cancellationToken)
@@ -53,7 +54,8 @@ namespace Jaeger.Senders
             try
             {
                 var batch = new ThriftBatch(process, spans);
-                await _agentClient.emitBatchAsync(batch, cancellationToken).ConfigureAwait(false);
+                await batch.WriteAsync(_protocol, cancellationToken);
+                await _protocol.Transport.FlushAsync(cancellationToken);
             }
             catch (Exception ex)
             {
