@@ -10,13 +10,13 @@ namespace Jaeger.Tests.Util
         public void DateTimeMicroseconds()
         {
             var time = DateTime.UtcNow;
-            Assert.Equal(time.ToUnixTimeMilliseconds() * 1000, time.ToUnixTimeMicroseconds());
+            Assert.Equal(time.ToUnixTimeMilliseconds(), time.ToUnixTimeMicroseconds() / 1000);
 
             var past = time.Subtract(TimeSpan.FromDays(-60));
-            Assert.Equal(past.ToUnixTimeMilliseconds() * 1000, past.ToUnixTimeMicroseconds());
+            Assert.Equal(past.ToUnixTimeMilliseconds(), past.ToUnixTimeMicroseconds() / 1000);
 
             var future = time.Subtract(TimeSpan.FromDays(+60));
-            Assert.Equal(future.ToUnixTimeMilliseconds() * 1000, future.ToUnixTimeMicroseconds());
+            Assert.Equal(future.ToUnixTimeMilliseconds(), future.ToUnixTimeMicroseconds() / 1000);
         }
     }
 }
