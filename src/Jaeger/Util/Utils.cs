@@ -43,7 +43,10 @@ namespace Jaeger.Util
             while (value == 0)
             {
                 var bytes = new byte[8];
-                Random.NextBytes(bytes);
+                lock (Random)
+                {
+                    Random.NextBytes(bytes);
+                }
                 value = BitConverter.ToInt64(bytes, 0);
             }
             return value;
