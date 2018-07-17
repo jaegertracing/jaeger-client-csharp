@@ -36,7 +36,7 @@ namespace Jaeger.Tests.Propagation
 
         private ITextMap ValidHeaders()
         {
-            ITextMap maliciousCarrier = new B3TextMapCodecTest.DelegatingTextMap();
+            ITextMap maliciousCarrier = new TestTextMap();
             string validInput = "ffffffffffffffffffffffffffffffff";
             maliciousCarrier.Set(B3TextMapCodec.TraceIdName, validInput);
             maliciousCarrier.Set(B3TextMapCodec.SpanIdName, validInput);

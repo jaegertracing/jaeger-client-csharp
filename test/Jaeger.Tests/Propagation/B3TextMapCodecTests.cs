@@ -23,7 +23,7 @@ namespace Jaeger.Tests.Propagation
             string hex128Bits = "463ac35c9f6413ad48485a3953bb6124";
             string lower64Bits = "48485a3953bb6124";
 
-            DelegatingTextMap textMap = new DelegatingTextMap();
+            var textMap = new TestTextMap();
             textMap.Set(B3TextMapCodec.TraceIdName, hex128Bits);
             textMap.Set(B3TextMapCodec.SpanIdName, lower64Bits);
             textMap.Set(B3TextMapCodec.ParentSpanIdName, "0");
@@ -43,36 +43,11 @@ namespace Jaeger.Tests.Propagation
         [Fact]
         public void TestInject()
         {
-            DelegatingTextMap textMap = new DelegatingTextMap();
+            var textMap = new TestTextMap();
             b3Codec.Inject(new SpanContext(new TraceId(1), new SpanId(1), new SpanId(1), SpanContextFlags.Sampled), textMap);
 
             Assert.True(textMap.ContainsKey(B3TextMapCodec.TraceIdName));
             Assert.True(textMap.ContainsKey(B3TextMapCodec.SpanIdName));
         }
-
-        internal class DelegatingTextMap : ITextMap
-        {
-            private readonly Dictionary<string, string> _delegate = new Dictionary<string, string>();
-
-            public void Set(string key, string value)
-            {
-                _delegate[key] = value;
-            }
-
-            public bool ContainsKey(string key)
-            {
-                return _delegate.ContainsKey(key);
-            }
-
-            public IEnumerator<KeyValuePair<string, string>> GetEnumerator()
-            {
-                return _delegate.GetEnumerator();
-            }
-
-            IEnumerator IEnumerable.GetEnumerator()
-            {
-                return _delegate.GetEnumerator();
-            }
-        }
-}
+    }
 }

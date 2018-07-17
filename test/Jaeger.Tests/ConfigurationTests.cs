@@ -378,31 +378,6 @@ namespace Jaeger.Tests
             Assert.True(sampler is RateLimitingSampler);
         }
 
-        internal class TestTextMap : ITextMap
-        {
-            private Dictionary<string, string> _values = new Dictionary<string, string>();
-
-            public void Set(String key, String value)
-            {
-                _values[key] = value;
-            }
-
-            public String Get(String key)
-            {
-                return _values.TryGetValue(key, out var value) ? value : null;
-            }
-
-            public IEnumerator<KeyValuePair<string, string>> GetEnumerator()
-            {
-                return _values.GetEnumerator();
-            }
-
-            IEnumerator IEnumerable.GetEnumerator()
-            {
-                return _values.GetEnumerator();
-            }
-        }
-
         private class CustomSender : HttpSender
         {
             public string Endpoint { get; }
