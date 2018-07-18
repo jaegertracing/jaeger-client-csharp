@@ -20,17 +20,17 @@ namespace Jaeger.Util
         private const int DaysTo1970 = DaysPer400Years * 4 + DaysPer100Years * 3 + DaysPer4Years * 17 + DaysPerYear; // 719,162
 
         private const long UnixEpochTicks = DaysTo1970 * TimeSpan.TicksPerDay;
-        private const long UnixEpochMilliseconds = UnixEpochTicks / TimeSpan.TicksPerMillisecond; // 62,135,596,800,000
+        private const long TicksPerMicrosecond = TimeSpan.TicksPerMillisecond / 1000;
+        private const long UnixEpochMicroseconds = UnixEpochTicks / TicksPerMicrosecond; // 62,135,596,800,000,000
 
-        // a microsecond is 1000 milliseconds
-        public static long ToUnixTimeMicroseconds(this DateTime utcTimestamp) => utcTimestamp.ToUnixTimeMilliseconds() * 1000;
-
-        public static long ToUnixTimeMilliseconds(this DateTime utcTimestamp)
+        public static long ToUnixTimeMicroseconds(this DateTime utcTimestamp)
         {
-            // Truncate sub-millisecond precision before offsetting by the Unix Epoch to avoid
+            // Truncate sub-microsecond precision before offsetting by the Unix Epoch to avoid
             // the last digit being off by one for dates that result in negative Unix times
-            long milliseconds = utcTimestamp.Ticks / TimeSpan.TicksPerMillisecond;
-            return milliseconds - UnixEpochMilliseconds;
+            long microseconds = utcTimestamp.Ticks / TicksPerMicrosecond;
+            return microseconds - UnixEpochMicroseconds;
         }
+
+        public static long ToUnixTimeMilliseconds(this DateTime utcTimestamp) => utcTimestamp.ToUnixTimeMicroseconds() / 1000;
     }
 }

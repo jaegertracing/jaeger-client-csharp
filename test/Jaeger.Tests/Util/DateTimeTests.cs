@@ -9,14 +9,22 @@ namespace Jaeger.Tests.Util
         [Fact]
         public void DateTimeMicroseconds()
         {
-            var time = DateTime.UtcNow;
-            Assert.Equal(time.ToUnixTimeMilliseconds() * 1000, time.ToUnixTimeMicroseconds());
+            var time = new DateTime(1988, 12, 29, 0, 0, 0, DateTimeKind.Utc);
+            var timestamp = 599356800000L;
+            const long millisecondsPerDay = 86400000L;
 
-            var past = time.Subtract(TimeSpan.FromDays(-60));
-            Assert.Equal(past.ToUnixTimeMilliseconds() * 1000, past.ToUnixTimeMicroseconds());
+            Assert.Equal(time.ToUnixTimeMilliseconds(), timestamp);
+            Assert.Equal(time.ToUnixTimeMicroseconds(), timestamp * 1000);
 
-            var future = time.Subtract(TimeSpan.FromDays(+60));
-            Assert.Equal(future.ToUnixTimeMilliseconds() * 1000, future.ToUnixTimeMicroseconds());
+            var past = time.Subtract(TimeSpan.FromDays(60));
+            var paststamp = timestamp - (60 * millisecondsPerDay);
+            Assert.Equal(past.ToUnixTimeMilliseconds(), paststamp);
+            Assert.Equal(past.ToUnixTimeMicroseconds(), paststamp * 1000);
+
+            var future = time.Add(TimeSpan.FromDays(60));
+            var futurestamp = timestamp + (60 * millisecondsPerDay);
+            Assert.Equal(future.ToUnixTimeMilliseconds(), futurestamp);
+            Assert.Equal(future.ToUnixTimeMicroseconds(), futurestamp * 1000);
         }
     }
 }
