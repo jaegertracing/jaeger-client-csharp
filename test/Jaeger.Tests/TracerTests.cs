@@ -38,6 +38,25 @@ namespace Jaeger.Tests
         }
 
         [Fact]
+        public void TestTraceId64Bit()
+        {
+            var tracer = new Tracer.Builder("name")
+                .Build();
+            
+            Assert.False(tracer.UseTraceId128Bit);
+        }
+
+        [Fact]
+        public void TestTraceId128Bit()
+        {
+            var tracer = new Tracer.Builder("name")
+                .WithTraceId128Bit()
+                .Build();
+
+            Assert.True(tracer.UseTraceId128Bit);
+        }
+
+        [Fact]
         public void TestBuildSpan()
         {
             string expectedOperation = "fry";

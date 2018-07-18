@@ -164,7 +164,7 @@ namespace Jaeger
 
         private SpanContext CreateNewContext(string debugId)
         {
-            TraceId traceId = TraceId.NewUniqueId();
+            TraceId traceId = TraceId.NewUniqueId(_tracer.UseTraceId128Bit);
             SpanId spanId = new SpanId(traceId);
 
             var flags = SpanContextFlags.None;

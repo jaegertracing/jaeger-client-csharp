@@ -42,6 +42,7 @@ namespace Jaeger
         public string Version { get; }
         public bool ZipkinSharedRpcSpan { get; }
         public bool ExpandExceptionLogs { get; }
+        public bool UseTraceId128Bit { get; }
         public long IPv4 { get; }
 
         private Tracer(
@@ -56,7 +57,8 @@ namespace Jaeger
             bool zipkinSharedRpcSpan,
             IScopeManager scopeManager,
             IBaggageRestrictionManager baggageRestrictionManager,
-            bool expandExceptionLogs)
+            bool expandExceptionLogs,
+            bool useTraceId128Bit)
         {
             ServiceName = serviceName;
             Reporter = reporter;
@@ -69,6 +71,7 @@ namespace Jaeger
             ScopeManager = scopeManager;
             _baggageSetter = new BaggageSetter(baggageRestrictionManager, metrics);
             ExpandExceptionLogs = expandExceptionLogs;
+            UseTraceId128Bit = useTraceId128Bit;
 
             Version = LoadVersion();
             tags[Constants.JaegerClientVersionTagKey] = Version;
@@ -122,6 +125,7 @@ namespace Jaeger
             sb.Append($"Tags={string.Join(", ", Tags)}, ");
             sb.Append($"ZipkinSharedRpcSpan={ZipkinSharedRpcSpan}, ");
             sb.Append($"ExpandExceptionLogs={ExpandExceptionLogs}");
+            sb.Append($"UseTraceId128Bit={UseTraceId128Bit}");
             sb.Append(')');
             return sb.ToString();
         }
@@ -207,6 +211,7 @@ namespace Jaeger
             private IScopeManager _scopeManager = new AsyncLocalScopeManager();
             private IBaggageRestrictionManager _baggageRestrictionManager = new DefaultBaggageRestrictionManager();
             private bool _expandExceptionLogs;
+            private bool _useTraceId128Bit;
 
             // We need the loggerFactory for the PropagationRegistry so we have to defer these invocations.
             private readonly List<Action<PropagationRegistry>> _registryActions = new List<Action<PropagationRegistry>>();
@@ -293,6 +298,12 @@ namespace Jaeger
                 return this;
             }
 
+            public Builder WithTraceId128Bit()
+            {
+                _useTraceId128Bit = true;
+                return this;
+            }
+
             public Builder WithTag(string key, bool value)
             {
                 _tags[key] = value;
@@ -369,7 +380,7 @@ namespace Jaeger
                 }
 
                 return new Tracer(_serviceName, _reporter, _sampler, _registry, _clock, _metrics, _loggerFactory,
-                    _tags, _zipkinSharedRpcSpan, _scopeManager, _baggageRestrictionManager, _expandExceptionLogs);
+                    _tags, _zipkinSharedRpcSpan, _scopeManager, _baggageRestrictionManager, _expandExceptionLogs, _useTraceId128Bit);
             }
 
             public static String CheckValidServiceName(String serviceName)
