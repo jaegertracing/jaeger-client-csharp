@@ -26,7 +26,7 @@ namespace Jaeger.Propagation
 
         protected override void Inject(SpanContext spanContext, ITextMap carrier)
         {
-            var commonFormat = $"{ W3CSpecVersion.ToString("X2") }-{ HexCodec.ToLowerHex(spanContext.TraceId.High, spanContext.TraceId.Low) }-{ HexCodec.ToLowerHex(spanContext.SpanId) }-{ ((byte)spanContext.Flags).ToString("X2") }";
+            var commonFormat = $"{W3CSpecVersion:x2}-{spanContext.TraceId}-{spanContext.SpanId}-{((byte)spanContext.Flags):x2}";
             carrier.Set(TraceParentName, commonFormat);
             
             var traceState = GetTraceStateValue(carrier);
