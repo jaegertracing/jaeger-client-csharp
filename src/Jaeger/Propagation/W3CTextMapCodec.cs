@@ -44,23 +44,21 @@ namespace Jaeger.Propagation
         // GetTraceStateValue extracts the trace state item from the text map passed in
         private static Dictionary<string, string> GetTraceStateValue(ITextMap textMap)
         {
-            var traceStateValue = new Dictionary<string, string>();
+            // we operate under the assumption that whatever has implemented ITextMap
+            // combines multiple header values into one item similarly to how 
+            // System.Net.WebHeaderCollection operates
+            foreach (var item in textMap)
+            {
+                if (item.Key.ToLower() == TraceStateName) {
+                    if (!item.Value.Contains('=')) { break; } 
 
-            textMap
-                .Where(kv => kv.Key.ToLower() == TraceStateName && kv.Value.IndexOf('=') > -1)
-                .ToList()
-                .ForEach(kv => 
-                    kv.Value.Split(',')
-                    .ToList()
-                    .ForEach(x => 
-                        {
-                            var xSplit = x.Split(new char[] { '=' }, 2);
-                            traceStateValue.Add(xSplit[0], xSplit[1]);
-                        }
-                    )
-                );
-                
-            return traceStateValue;
+                    return item.Value
+                    .Split(',')
+                    .ToDictionary(x => x.Split('=')[0], x => x.Split('=')[1],  StringComparer.OrdinalIgnoreCase);
+                }
+            }
+
+            return new Dictionary<string, string>();
         }
 
         // GetSpanContextFromTraceParent creates a new span context using trace and span
