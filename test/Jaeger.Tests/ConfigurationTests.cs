@@ -50,6 +50,7 @@ namespace Jaeger.Tests
             ClearProperty(Configuration.JaegerSamplerManagerHostPort);
             ClearProperty(Configuration.JaegerServiceName);
             ClearProperty(Configuration.JaegerTags);
+            ClearProperty(Configuration.JaegerTraceId128Bit);
             ClearProperty(Configuration.JaegerEndpoint);
             ClearProperty(Configuration.JaegerAuthToken);
             ClearProperty(Configuration.JaegerUser);
@@ -131,6 +132,24 @@ namespace Jaeger.Tests
             SetProperty(Configuration.JaegerReporterLogSpans, "X");
             ReporterConfiguration reporterConfig = ReporterConfiguration.FromEnv(_loggerFactory);
             Assert.False(reporterConfig.LogSpans);
+        }
+
+        [Fact]
+        public void TestTracerUseTraceIdHigh()
+        {
+            SetProperty(Configuration.JaegerServiceName, "Test");
+            SetProperty(Configuration.JaegerTraceId128Bit, "1");
+            Tracer tracer = (Tracer)Configuration.FromEnv(_loggerFactory).GetTracer();
+            Assert.True(tracer.UseTraceId128Bit);
+        }
+
+        [Fact]
+        public void TestTracerInvalidUseTraceIdHigh()
+        {
+            SetProperty(Configuration.JaegerServiceName, "Test");
+            SetProperty(Configuration.JaegerTraceId128Bit, "X");
+            Tracer tracer = (Tracer)Configuration.FromEnv(_loggerFactory).GetTracer();
+            Assert.False(tracer.UseTraceId128Bit);
         }
 
         [Fact]

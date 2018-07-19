@@ -79,7 +79,7 @@ namespace Jaeger
         /// <summary>
         /// The sampler parameter (number).
         /// </summary>
-        public const string JaegerSamplerParam = "JAEGER_SAMPLER_PARAM";
+        public const string JaegerSamplerParam = JaegerPrefix + "SAMPLER_PARAM";
 
         /// <summary>
         /// The sampler manager host:port.
@@ -95,6 +95,11 @@ namespace Jaeger
         /// The tracer level tags.
         /// </summary>
         public const string JaegerTags = JaegerPrefix + "TAGS";
+
+        /// <summary>
+        /// Whether to use 128bit TraceID instead of 64bit.
+        /// </summary>
+        public const string JaegerTraceId128Bit = JaegerPrefix + "TRACEID_128BIT";
 
         /// <summary>
         /// Comma separated list of formats to use for propagating the trace context. Default will the
@@ -129,6 +134,7 @@ namespace Jaeger
         private CodecConfiguration _codecConfig;
         private IMetricsFactory _metricsFactory;
         private Dictionary<string, string> _tracerTags;
+        private bool _useTraceId128Bit;
 
         /// <summary>
         /// Lazy singleton <see cref="Tracer"/> initialized in <see cref="GetTracer()"/> method.
@@ -154,6 +160,7 @@ namespace Jaeger
 
             return new Configuration(GetProperty(JaegerServiceName), loggerFactory)
                 .WithTracerTags(TracerTagsFromEnv(logger))
+                .WithTraceId128Bit(GetPropertyAsBool(JaegerTraceId128Bit, logger).GetValueOrDefault(false))
                 .WithReporter(ReporterConfiguration.FromEnv(loggerFactory))
                 .WithSampler(SamplerConfiguration.FromEnv(loggerFactory))
                 .WithCodec(CodecConfiguration.FromEnv(loggerFactory));
@@ -186,6 +193,11 @@ namespace Jaeger
                 .WithReporter(reporter)
                 .WithMetrics(metrics)
                 .WithTags(_tracerTags);
+
+            if (_useTraceId128Bit)
+            {
+                builder = builder.WithTraceId128Bit();
+            }
 
             _codecConfig.Apply(builder);
 
@@ -242,6 +254,12 @@ namespace Jaeger
         public Configuration WithCodec(CodecConfiguration codecConfig)
         {
             _codecConfig = codecConfig;
+            return this;
+        }
+
+        private Configuration WithTraceId128Bit(bool useTraceId128Bit)
+        {
+            _useTraceId128Bit = useTraceId128Bit;
             return this;
         }
 

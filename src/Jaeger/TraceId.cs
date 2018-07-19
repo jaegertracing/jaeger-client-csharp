@@ -13,10 +13,11 @@ namespace Jaeger
         public long Low { get; }
         public bool IsZero => Low == 0 && High == 0;
 
-        public static TraceId NewUniqueId()
+        public static TraceId NewUniqueId(bool useHigh)
         {
-            // TODO: Only using 64bit for compatability. Make it configurable to use 128bit TraceIds.
-            return new TraceId(Utils.UniqueId());
+            var high = useHigh ? Utils.UniqueId() : 0;
+            var low = Utils.UniqueId();
+            return new TraceId(high, low);
         }
 
         public TraceId(long low) : this(0, low)

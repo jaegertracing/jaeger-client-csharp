@@ -40,6 +40,37 @@ namespace Jaeger.Tests
         }
 
         [Fact]
+        public void TestTraceId64Bit()
+        {
+            var tracer = new Tracer.Builder("name")
+                .Build();
+
+            // no exception
+            var span = tracer.BuildSpan("foo").Start();
+            span.Finish();
+
+            var spanContext = span.Context as SpanContext;
+            Assert.NotNull(spanContext);
+            Assert.True(spanContext.TraceId.High == 0);
+        }
+
+        [Fact]
+        public void TestTraceId128Bit()
+        {
+            var tracer = new Tracer.Builder("name")
+                .WithTraceId128Bit()
+                .Build();
+
+            // no exception
+            var span = tracer.BuildSpan("foo").Start();
+            span.Finish();
+
+            var spanContext = span.Context as SpanContext;
+            Assert.NotNull(spanContext);
+            Assert.True(spanContext.TraceId.High != 0);
+        }
+
+        [Fact]
         public void TestSpanMetrics()
         {
             Assert.Equal(1, metricsFactory.GetCounter("jaeger:started_spans", "sampled=y"));
@@ -51,13 +82,13 @@ namespace Jaeger.Tests
         {
             string service = "SamplerTest";
             IBaggageRestrictionManager mgr = Substitute.ForPartsOf<DefaultBaggageRestrictionManager>();
-            tracer = new Tracer.Builder(service)
+            var tracer = new Tracer.Builder(service)
                     .WithReporter(reporter)
                     .WithSampler(new ConstSampler(true))
                     .WithClock(clock)
                     .WithBaggageRestrictionManager(mgr)
                     .Build();
-            span = (Span)tracer.BuildSpan("some-operation").Start();
+            var span = (Span)tracer.BuildSpan("some-operation").Start();
 
             string key = "key";
             string value = "value";

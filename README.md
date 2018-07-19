@@ -82,6 +82,7 @@ JAEGER_SAMPLER_TYPE | no | The sampler type
 JAEGER_SAMPLER_PARAM | no | The sampler parameter (number)
 JAEGER_SAMPLER_MANAGER_HOST_PORT | no | The host name and port when using the remote controlled sampler
 JAEGER_TAGS | no | A comma separated list of `name = value` tracer level tags, which get added to all reported spans. The value can also refer to an environment variable using the format `${envVarName:default}`, where the `:default` is optional, and identifies a value to be used if the environment variable cannot be found
+JAEGER_TRACEID_128BIT | no | Whether to use 128bit TraceID instead of 64bit
 
 Setting `JAEGER_AGENT_HOST`/`JAEGER_AGENT_PORT` will make the client send traces to the agent via `UdpSender`.
 If the `JAEGER_ENDPOINT` environment variable is also set, the traces are sent to the endpoint, effectively making
