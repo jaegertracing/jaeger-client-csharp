@@ -32,7 +32,7 @@ namespace Jaeger.Tests.Propagation
         }
 
         [Fact]
-        public void TestExtract()
+        public void TestExtract_WithTraceState()
         {
             var carrier = new TestTextMap();
 
@@ -62,6 +62,37 @@ namespace Jaeger.Tests.Propagation
             Assert.Equal(new TraceId(938049759070498572), spanContext.TraceId);
             Assert.Equal(new SpanId(7498273649875), spanContext.SpanId);
             Assert.True(spanContext.IsDebug);
+        }
+
+        [Fact]
+        public void TestExtractWithoutTraceState()
+        {
+            var carrier = new TestTextMap();
+
+            // test
+            carrier.Set("traceparent", "00-3ec8a51f6f64736000023af045303d5-f067aa0ba902b7-01");
+            carrier.Set("tracestate", "");
+
+            var spanContext = w3cCodec.Extract(carrier);
+
+            Assert.Equal(new TraceId(282752961257817910, 39234598798293), spanContext.TraceId);
+            Assert.Equal(new SpanId(67667974448284343), spanContext.SpanId);
+            Assert.True(spanContext.IsSampled);
+        }
+
+        [Fact]
+        public void Extract_ShouldAllowMultipleTraceStateHeaders()
+        {
+            var carrier = new TestTextMap();
+
+            carrier.Set("tracestate", "someothertracingsystem=5238663d5a297802:2a2c1eb91912:1:0");
+            carrier.Set("traceState", "jaeger=3ec8a51f6f64736:f067aa0ba902b7:1:1");
+
+            var spanContext = w3cCodec.Extract(carrier);
+
+            Assert.Equal(new TraceId(282752961257817910), spanContext.TraceId);
+            Assert.Equal(new SpanId(67667974448284343), spanContext.SpanId);
+            Assert.True(spanContext.IsSampled);
         }
     }
 }

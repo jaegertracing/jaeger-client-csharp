@@ -21,7 +21,7 @@ namespace Jaeger.Propagation
                 return SpanContext.ContextFromString(traceStateValue[TraceStateTracingSystemName]);
             }
 
-            return null;
+            return GetSpanContextFromTraceParent(carrier);
         }
 
         protected override void Inject(SpanContext spanContext, ITextMap carrier)
@@ -44,14 +44,40 @@ namespace Jaeger.Propagation
         // GetTraceStateValue extracts the trace state item from the text map passed in
         private static Dictionary<string, string> GetTraceStateValue(ITextMap textMap)
         {
+            var traceStateValue = new Dictionary<string, string>();
+
+            textMap
+                .Where(kv => kv.Key.ToLower() == TraceStateName && kv.Value.IndexOf('=') > -1)
+                .ToList()
+                .ForEach(kv => 
+                    kv.Value.Split(',')
+                    .ToList()
+                    .ForEach(x => 
+                        {
+                            var xSplit = x.Split(new char[] { '=' }, 2);
+                            traceStateValue.Add(xSplit[0], xSplit[1]);
+                        }
+                    )
+                );
+                
+            return traceStateValue;
+        }
+
+        // GetSpanContextFromTraceParent creates a new span context using trace and span
+        // information from the traceparent header. If no info is present null is returned.
+        private static SpanContext GetSpanContextFromTraceParent(ITextMap textMap) 
+        {
             foreach (var item in textMap)
             {
-                if (item.Key.ToLower() == TraceStateName) {
-                    return item.Value.Split(',').ToDictionary(x => x.Split('=')[0], x => x.Split('=')[1],  StringComparer.OrdinalIgnoreCase);
+                if (item.Key.ToLower() == TraceParentName)
+                {
+                    var parentParts = item.Value.Split('-');
+                    var spanContextString = $"{parentParts[1]}:{parentParts[2]}:0:{parentParts[3]}";
+                    return SpanContext.ContextFromString(spanContextString);
                 }
             }
 
-            return new Dictionary<string, string>();
+            return null;
         }
     }
 }
