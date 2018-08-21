@@ -1,4 +1,5 @@
-﻿Microsoft Visual Studio Solution File, Format Version 12.00
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27130.2024
 MinimumVisualStudioVersion = 15.0.26124.0
@@ -30,7 +31,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jaeger", "src\Jaeger\Jaeger
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{1ADE2BBF-56C4-433D-9B1C-A532915058D3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jaeger.Example.WebApi", "examples\Jaeger.Example.WebApi\Jaeger.Example.WebApi.csproj", "{258F726B-6E51-4F18-9FB6-41D09A836904}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jaeger.Example.WebApi", "examples\Jaeger.Example.WebApi\Jaeger.Example.WebApi.csproj", "{258F726B-6E51-4F18-9FB6-41D09A836904}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jaeger.Example.WebApi.NetFx", "examples\Jaeger.Example.WebApi.NetFx\Jaeger.Example.WebApi.NetFx.csproj", "{4984D8D3-E8FE-4AC8-B285-AC041CB9B30F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -138,6 +141,16 @@ Global
 		{258F726B-6E51-4F18-9FB6-41D09A836904}.Release|x64.Build.0 = Release|Any CPU
 		{258F726B-6E51-4F18-9FB6-41D09A836904}.Release|x86.ActiveCfg = Release|Any CPU
 		{258F726B-6E51-4F18-9FB6-41D09A836904}.Release|x86.Build.0 = Release|Any CPU
+		{4984D8D3-E8FE-4AC8-B285-AC041CB9B30F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4984D8D3-E8FE-4AC8-B285-AC041CB9B30F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{4984D8D3-E8FE-4AC8-B285-AC041CB9B30F}.Debug|x64.Build.0 = Debug|Any CPU
+		{4984D8D3-E8FE-4AC8-B285-AC041CB9B30F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{4984D8D3-E8FE-4AC8-B285-AC041CB9B30F}.Debug|x86.Build.0 = Debug|Any CPU
+		{4984D8D3-E8FE-4AC8-B285-AC041CB9B30F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4984D8D3-E8FE-4AC8-B285-AC041CB9B30F}.Release|x64.ActiveCfg = Release|Any CPU
+		{4984D8D3-E8FE-4AC8-B285-AC041CB9B30F}.Release|x64.Build.0 = Release|Any CPU
+		{4984D8D3-E8FE-4AC8-B285-AC041CB9B30F}.Release|x86.ActiveCfg = Release|Any CPU
+		{4984D8D3-E8FE-4AC8-B285-AC041CB9B30F}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -154,6 +167,7 @@ Global
 		{B5C1039A-75E5-4F7F-BDB0-4A9EEA2716D5} = {B699D79B-C838-4636-B5FF-86FF6D571682}
 		{ABA4F1B1-F6D0-40A9-904B-EFA98A4C0411} = {4FB0DAC9-D8C6-4368-B48E-363FA85029A4}
 		{258F726B-6E51-4F18-9FB6-41D09A836904} = {1ADE2BBF-56C4-433D-9B1C-A532915058D3}
+		{4984D8D3-E8FE-4AC8-B285-AC041CB9B30F} = {1ADE2BBF-56C4-433D-9B1C-A532915058D3}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {83668757-63F5-48E3-A8E0-8AED6B7562D0}
