@@ -41,6 +41,7 @@ namespace Thrift.Transports.Client
         private bool _isDisposed;
         private MemoryStream _outputStream = new MemoryStream();
         private static readonly MediaTypeWithQualityHeaderValue XThriftMediaType = new MediaTypeWithQualityHeaderValue("application/x-thrift");
+        private static readonly MediaTypeWithQualityHeaderValue ApacheThriftMediaType = new MediaTypeWithQualityHeaderValue("application/vnd.apache.thrift.binary");
 
         public THttpClientTransport(Uri u, IDictionary<string, string> customHeaders)
             : this(u, Enumerable.Empty<X509Certificate>(), customHeaders)
@@ -176,7 +177,7 @@ namespace Thrift.Transports.Client
 
                     using (var outStream = new StreamContent(_outputStream))
                     {
-                        outStream.Headers.ContentType = XThriftMediaType;
+                        outStream.Headers.ContentType = ApacheThriftMediaType;
                         var msg = await _httpClient.PostAsync(_uri, outStream, cancellationToken);
 
                         msg.EnsureSuccessStatusCode();
