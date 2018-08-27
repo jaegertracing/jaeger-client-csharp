@@ -178,7 +178,7 @@ namespace Jaeger
             }
             if (_codecConfig == null)
             {
-                _codecConfig = new CodecConfiguration(new Dictionary<IFormat<ITextMap>, List<Codec<ITextMap>>>());
+                _codecConfig = new CodecConfiguration(_loggerFactory);
             }
             if (_metricsFactory == null)
             {
@@ -367,18 +367,20 @@ namespace Jaeger
         /// </summary>
         public class CodecConfiguration
         {
+            private readonly ILogger _logger;
             private readonly IDictionary<IFormat<ITextMap>, List<Codec<ITextMap>>> _codecs;
 
-            internal CodecConfiguration(IDictionary<IFormat<ITextMap>, List<Codec<ITextMap>>> codecs)
+            public CodecConfiguration(ILoggerFactory loggerFactory)
             {
-                _codecs = codecs;
+                _logger = loggerFactory.CreateLogger<Configuration>();
+                _codecs = new Dictionary<IFormat<ITextMap>, List<Codec<ITextMap>>>();
             }
 
             public static CodecConfiguration FromEnv(ILoggerFactory loggerFactory)
             {
                 ILogger logger = loggerFactory.CreateLogger<Configuration>();
 
-                var codecs = new Dictionary<IFormat<ITextMap>, List<Codec<ITextMap>>>();
+                CodecConfiguration codecConfiguration = new CodecConfiguration(loggerFactory);
                 string propagation = GetProperty(JaegerPropagation);
                 if (propagation != null)
                 {
@@ -386,20 +388,7 @@ namespace Jaeger
                     {
                         if (Enum.TryParse<Propagation>(format, true, out var propagationEnum))
                         {
-                            switch (propagationEnum)
-                            {
-                                case Propagation.Jaeger:
-                                    AddCodec(codecs, BuiltinFormats.HttpHeaders, new TextMapCodec(true));
-                                    AddCodec(codecs, BuiltinFormats.TextMap, new TextMapCodec(false));
-                                    break;
-                                case Propagation.B3:
-                                    AddCodec(codecs, BuiltinFormats.HttpHeaders, new B3TextMapCodec());
-                                    AddCodec(codecs, BuiltinFormats.TextMap, new B3TextMapCodec());
-                                    break;
-                                default:
-                                    logger.LogError("Unhandled propagation format {format}", format);
-                                    break;
-                            }
+                            codecConfiguration.WithPropagation(propagationEnum);
                         }
                         else
                         {
@@ -407,16 +396,35 @@ namespace Jaeger
                         }
                     }
                 }
-                return new CodecConfiguration(codecs);
+                return codecConfiguration;
             }
 
-            private static void AddCodec(IDictionary<IFormat<ITextMap>, List<Codec<ITextMap>>> codecs, IFormat<ITextMap> format, Codec<ITextMap> codec)
+            public CodecConfiguration WithPropagation(Propagation propagation)
+            {
+                switch (propagation)
+                {
+                    case Propagation.Jaeger:
+                        AddCodec(BuiltinFormats.HttpHeaders, new TextMapCodec(true));
+                        AddCodec(BuiltinFormats.TextMap, new TextMapCodec(false));
+                        break;
+                    case Propagation.B3:
+                        AddCodec(BuiltinFormats.HttpHeaders, new B3TextMapCodec());
+                        AddCodec(BuiltinFormats.TextMap, new B3TextMapCodec());
+                        break;
+                    default:
+                        _logger.LogError("Unhandled propagation {propagation}", propagation);
+                        break;
+                }
+                return this;
+            }
+
+            private void AddCodec(IFormat<ITextMap> format, Codec<ITextMap> codec)
             {
                 List<Codec<ITextMap>> codecList;
-                if (!codecs.TryGetValue(format, out codecList))
+                if (!_codecs.TryGetValue(format, out codecList))
                 {
                     codecList = new List<Codec<ITextMap>>();
-                    codecs.Add(format, codecList);
+                    _codecs.Add(format, codecList);
                 }
                 codecList.Add(codec);
             }
