@@ -40,7 +40,6 @@ namespace Thrift.Transports.Client
 
         private bool _isDisposed;
         private MemoryStream _outputStream = new MemoryStream();
-        private static readonly MediaTypeWithQualityHeaderValue XThriftMediaType = new MediaTypeWithQualityHeaderValue("application/x-thrift");
         private static readonly MediaTypeWithQualityHeaderValue ApacheThriftMediaType = new MediaTypeWithQualityHeaderValue("application/vnd.apache.thrift.binary");
 
         public THttpClientTransport(Uri u, IDictionary<string, string> customHeaders)
@@ -150,7 +149,7 @@ namespace Thrift.Transports.Client
                 httpClient.Timeout = TimeSpan.FromSeconds(_connectTimeout);
             }
 
-            httpClient.DefaultRequestHeaders.Accept.Add(XThriftMediaType);
+            httpClient.DefaultRequestHeaders.Accept.Add(ApacheThriftMediaType);
             httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("THttpClientTransport", "1.0.0"));
 
             if (CustomHeaders != null)
