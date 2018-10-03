@@ -140,7 +140,10 @@ namespace Thrift.Transports.Client
         private HttpClient CreateClient()
         {
             var handler = new HttpClientHandler();
-            handler.ClientCertificates.AddRange(_certificates);
+            if (_certificates.Length > 0)
+            {
+                handler.ClientCertificates.AddRange(_certificates);
+            }
 
             var httpClient = new HttpClient(handler);
 
