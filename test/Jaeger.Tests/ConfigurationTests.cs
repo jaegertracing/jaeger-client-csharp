@@ -264,7 +264,32 @@ namespace Jaeger.Tests
         }
 
         [Fact]
-        public void TestPropagationB3Only()
+        public void TestPropagationB3OnlyFromConfig()
+        {
+            TraceId traceId = new TraceId(1234);
+            SpanId spanId = new SpanId(5678);
+
+            TestTextMap textMap = new TestTextMap();
+            SpanContext spanContext = new SpanContext(traceId, spanId, new SpanId(0), (byte)0);
+
+            CodecConfiguration codecConfiguration = new CodecConfiguration(_loggerFactory)
+                .WithPropagation(Configuration.Propagation.B3);
+            ITracer tracer = new Configuration("Test", _loggerFactory)
+                .WithCodec(codecConfiguration)
+                .GetTracer();
+            tracer.Inject(spanContext, BuiltinFormats.TextMap, textMap);
+
+            Assert.NotNull(textMap.Get("X-B3-TraceId"));
+            Assert.NotNull(textMap.Get("X-B3-SpanId"));
+            Assert.Null(textMap.Get("uber-trace-id"));
+
+            SpanContext extractedContext = (SpanContext)tracer.Extract(BuiltinFormats.TextMap, textMap);
+            Assert.Equal(traceId, extractedContext.TraceId);
+            Assert.Equal(spanId, extractedContext.SpanId);
+        }
+
+        [Fact]
+        public void TestPropagationB3OnlyFromEnv()
         {
             SetProperty(Configuration.JaegerPropagation, "b3");
             SetProperty(Configuration.JaegerServiceName, "Test");
@@ -288,7 +313,33 @@ namespace Jaeger.Tests
         }
 
         [Fact]
-        public void TestPropagationJaegerAndB3()
+        public void TestPropagationJaegerAndB3FromConfig()
+        {
+            TraceId traceId = new TraceId(1234);
+            SpanId spanId = new SpanId(5678);
+
+            TestTextMap textMap = new TestTextMap();
+            SpanContext spanContext = new SpanContext(traceId, spanId, new SpanId(0), (byte)0);
+
+            CodecConfiguration codecConfiguration = new CodecConfiguration(_loggerFactory)
+                .WithPropagation(Configuration.Propagation.Jaeger)
+                .WithPropagation(Configuration.Propagation.B3);
+            ITracer tracer = new Configuration("Test", _loggerFactory)
+                .WithCodec(codecConfiguration)
+                .GetTracer();
+            tracer.Inject(spanContext, BuiltinFormats.TextMap, textMap);
+
+            Assert.NotNull(textMap.Get("uber-trace-id"));
+            Assert.NotNull(textMap.Get("X-B3-TraceId"));
+            Assert.NotNull(textMap.Get("X-B3-SpanId"));
+
+            SpanContext extractedContext = (SpanContext)tracer.Extract(BuiltinFormats.TextMap, textMap);
+            Assert.Equal(traceId, extractedContext.TraceId);
+            Assert.Equal(spanId, extractedContext.SpanId);
+        }
+
+        [Fact]
+        public void TestPropagationJaegerAndB3FromEnv()
         {
             SetProperty(Configuration.JaegerPropagation, "jaeger,b3");
             SetProperty(Configuration.JaegerServiceName, "Test");
