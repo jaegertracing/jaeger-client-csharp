@@ -83,6 +83,17 @@ namespace Jaeger.Tests
         }
 
         [Fact]
+        public void TestFromEnvWithPropertyResolver()
+        {
+            var properties = new Dictionary<string, string>
+            {
+                {Configuration.JaegerServiceName, "TestFromPropertyResolver"},
+            };
+            Assert.NotNull(Configuration.FromEnv(_loggerFactory, name => properties.GetValueOrDefault(name)).GetTracer());
+            Assert.False(GlobalTracer.IsRegistered());
+        }
+
+        [Fact]
         public void TestSamplerConst()
         {
             SetProperty(Configuration.JaegerSamplerType, ConstSampler.Type);
