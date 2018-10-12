@@ -10,7 +10,7 @@
 
     <!-- NOTE:
         In case you're building this application standalone, use below PackageReference 
-        with appropriate an appropriate version instead of relative-path ProjectReference 
+        with an appropriate version instead of relative-path ProjectReference 
         to Jaeger project -->
     <!-- PackageReference Include="Jaeger" Version="0.2.1" /-->
   </ItemGroup>
