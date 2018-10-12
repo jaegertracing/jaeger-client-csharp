@@ -9,6 +9,7 @@ using Jaeger.Reporters;
 using Jaeger.Samplers;
 using Jaeger.Senders;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 using OpenTracing;
 using OpenTracing.Propagation;
 
@@ -152,18 +153,29 @@ namespace Jaeger
         }
 
         /// <summary>
+        /// Returns <see cref="Configuration"/> object from a Configuration.
+        /// </summary>
+        public static Configuration FromIConfiguration(ILoggerFactory loggerFactory, IConfiguration configuration)
+        {
+            ILogger logger = loggerFactory.CreateLogger<Configuration>();
+
+            return new Configuration(GetProperty(JaegerServiceName, configuration), loggerFactory)
+                .WithTracerTags(TracerTagsFromEnv(logger, configuration))
+                .WithTraceId128Bit(GetPropertyAsBool(JaegerTraceId128Bit, logger, configuration).GetValueOrDefault(false))
+                .WithReporter(ReporterConfiguration.FromEnv(loggerFactory))
+                .WithSampler(SamplerConfiguration.FromEnv(loggerFactory))
+                .WithCodec(CodecConfiguration.FromEnv(loggerFactory));
+        }
+
+        /// <summary>
         /// Returns <see cref="Configuration"/> object from environmental variables.
         /// </summary>
         public static Configuration FromEnv(ILoggerFactory loggerFactory)
         {
-            ILogger logger = loggerFactory.CreateLogger<Configuration>();
+            var configuration = new ConfigurationBuilder()
+                    .AddEnvironmentVariables().Build();
 
-            return new Configuration(GetProperty(JaegerServiceName), loggerFactory)
-                .WithTracerTags(TracerTagsFromEnv(logger))
-                .WithTraceId128Bit(GetPropertyAsBool(JaegerTraceId128Bit, logger).GetValueOrDefault(false))
-                .WithReporter(ReporterConfiguration.FromEnv(loggerFactory))
-                .WithSampler(SamplerConfiguration.FromEnv(loggerFactory))
-                .WithCodec(CodecConfiguration.FromEnv(loggerFactory));
+            return FromIConfiguration(loggerFactory, configuration);
         }
 
         public Tracer.Builder GetTracerBuilder()
@@ -306,14 +318,28 @@ namespace Jaeger
                 _loggerFactory = loggerFactory;
             }
 
-            public static SamplerConfiguration FromEnv(ILoggerFactory loggerFactory)
+            /// <summary>
+            /// Attempts to create a new <see cref="SamplerConfiguration"/> based on an IConfiguration.
+            /// </summary>
+            public static SamplerConfiguration FromIConfiguration(ILoggerFactory loggerFactory, IConfiguration configuration)
             {
                 ILogger logger = loggerFactory.CreateLogger<Configuration>();
 
                 return new SamplerConfiguration(loggerFactory)
-                    .WithType(GetProperty(JaegerSamplerType))
-                    .WithParam(GetPropertyAsDouble(JaegerSamplerParam, logger))
-                    .WithManagerHostPort(GetProperty(JaegerSamplerManagerHostPort));
+                    .WithType(GetProperty(JaegerSamplerType, configuration))
+                    .WithParam(GetPropertyAsDouble(JaegerSamplerParam, logger, configuration))
+                    .WithManagerHostPort(GetProperty(JaegerSamplerManagerHostPort, configuration));
+            }
+
+            /// <summary>
+            /// Attempts to create a new <see cref="SamplerConfiguration"/> based on the environment variables.
+            /// </summary>
+            public static SamplerConfiguration FromEnv(ILoggerFactory loggerFactory)
+            {
+                var configuration = new ConfigurationBuilder()
+                    .AddEnvironmentVariables().Build();
+
+                return FromIConfiguration(loggerFactory, configuration);
             }
 
             // for tests
@@ -376,12 +402,15 @@ namespace Jaeger
                 _codecs = new Dictionary<IFormat<ITextMap>, List<Codec<ITextMap>>>();
             }
 
-            public static CodecConfiguration FromEnv(ILoggerFactory loggerFactory)
+            /// <summary>
+            /// Attempts to create a new <see cref="CodecConfiguration"/> based on an IConfiguration.
+            /// </summary>
+            public static CodecConfiguration FromIConfiguration(ILoggerFactory loggerFactory, IConfiguration configuration)
             {
                 ILogger logger = loggerFactory.CreateLogger<Configuration>();
 
                 CodecConfiguration codecConfiguration = new CodecConfiguration(loggerFactory);
-                string propagation = GetProperty(JaegerPropagation);
+                string propagation = GetProperty(JaegerPropagation, configuration);
                 if (propagation != null)
                 {
                     foreach (string format in propagation.Split(','))
@@ -397,6 +426,17 @@ namespace Jaeger
                     }
                 }
                 return codecConfiguration;
+            }
+
+            /// <summary>
+            /// Attempts to create a new <see cref="CodecConfiguration"/> based on the environment variables.
+            /// </summary>
+            public static CodecConfiguration FromEnv(ILoggerFactory loggerFactory)
+            {
+                var configuration = new ConfigurationBuilder()
+                    .AddEnvironmentVariables().Build();
+
+                return FromIConfiguration(loggerFactory, configuration);
             }
 
             public CodecConfiguration WithPropagation(Propagation propagation)
@@ -466,15 +506,29 @@ namespace Jaeger
                 SenderConfig = new SenderConfiguration(loggerFactory);
             }
 
-            public static ReporterConfiguration FromEnv(ILoggerFactory loggerFactory)
+            /// <summary>
+            /// Attempts to create a new <see cref="ReporterConfiguration"/> based on an IConfiguration.
+            /// </summary>
+            public static ReporterConfiguration FromIConfiguration(ILoggerFactory loggerFactory, IConfiguration configuration)
             {
                 ILogger logger = loggerFactory.CreateLogger<Configuration>();
 
                 return new ReporterConfiguration(loggerFactory)
-                    .WithLogSpans(GetPropertyAsBool(JaegerReporterLogSpans, logger).GetValueOrDefault(false))
-                    .WithFlushInterval(GetPropertyAsTimeSpan(JaegerReporterFlushInterval, logger))
-                    .WithMaxQueueSize(GetPropertyAsInt(JaegerReporterMaxQueueSize, logger))
+                    .WithLogSpans(GetPropertyAsBool(JaegerReporterLogSpans, logger, configuration).GetValueOrDefault(false))
+                    .WithFlushInterval(GetPropertyAsTimeSpan(JaegerReporterFlushInterval, logger, configuration))
+                    .WithMaxQueueSize(GetPropertyAsInt(JaegerReporterMaxQueueSize, logger, configuration))
                     .WithSender(SenderConfiguration.FromEnv(loggerFactory));
+            }
+
+            /// <summary>
+            /// Attempts to create a new <see cref="ReporterConfiguration"/> based on the environment variables.
+            /// </summary>
+            public static ReporterConfiguration FromEnv(ILoggerFactory loggerFactory)
+            {
+                IConfiguration configuration = new ConfigurationBuilder()
+                    .AddEnvironmentVariables().Build();
+
+                return FromIConfiguration(loggerFactory, configuration);
             }
 
             public ReporterConfiguration WithLogSpans(Boolean logSpans)
@@ -644,19 +698,19 @@ namespace Jaeger
             }
 
             /// <summary>
-            /// Attempts to create a new <see cref="SenderConfiguration"/> based on the environment variables.
+            /// Attempts to create a new <see cref="SenderConfiguration"/> based on an IConfiguration.
             /// </summary>
-            public static SenderConfiguration FromEnv(ILoggerFactory loggerFactory)
+            public static SenderConfiguration FromIConfiguration(ILoggerFactory loggerFactory, IConfiguration configuration)
             {
                 ILogger logger = loggerFactory.CreateLogger<Configuration>();
 
-                string agentHost = GetProperty(JaegerAgentHost);
-                int? agentPort = GetPropertyAsInt(JaegerAgentPort, logger);
+                string agentHost = GetProperty(JaegerAgentHost, configuration);
+                int? agentPort = GetPropertyAsInt(JaegerAgentPort, logger, configuration);
 
-                string collectorEndpoint = GetProperty(JaegerEndpoint);
-                string authToken = GetProperty(JaegerAuthToken);
-                string authUsername = GetProperty(JaegerUser);
-                string authPassword = GetProperty(JaegerPassword);
+                string collectorEndpoint = GetProperty(JaegerEndpoint, configuration);
+                string authToken = GetProperty(JaegerAuthToken, configuration);
+                string authUsername = GetProperty(JaegerUser, configuration);
+                string authPassword = GetProperty(JaegerPassword, configuration);
 
                 return new SenderConfiguration(loggerFactory)
                     .WithAgentHost(agentHost)
@@ -666,6 +720,17 @@ namespace Jaeger
                     .WithAuthUsername(authUsername)
                     .WithAuthPassword(authPassword);
             }
+
+            /// <summary>
+            /// Attempts to create a new <see cref="SenderConfiguration"/> based on the environment variables.
+            /// </summary>
+            public static SenderConfiguration FromEnv(ILoggerFactory loggerFactory)
+            {
+                IConfiguration configuration = new ConfigurationBuilder()
+                    .AddEnvironmentVariables().Build();
+
+                return FromIConfiguration(loggerFactory, configuration);
+            }
         }
 
         private static string StringOrDefault(string value, string defaultValue)
@@ -673,14 +738,14 @@ namespace Jaeger
             return value != null && value.Length > 0 ? value : defaultValue;
         }
 
-        private static string GetProperty(string name)
+        private static string GetProperty(string name, IConfiguration configuration)
         {
-            return Environment.GetEnvironmentVariable(name);
+            return configuration[name];
         }
 
-        private static int? GetPropertyAsInt(string name, ILogger logger)
+        private static int? GetPropertyAsInt(string name, ILogger logger, IConfiguration configuration)
         {
-            string value = GetProperty(name);
+            string value = GetProperty(name, configuration);
             if (!string.IsNullOrEmpty(value))
             {
                 if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int intValue))
@@ -695,9 +760,9 @@ namespace Jaeger
             return null;
         }
 
-        private static double? GetPropertyAsDouble(string name, ILogger logger)
+        private static double? GetPropertyAsDouble(string name, ILogger logger, IConfiguration configuration)
         {
-            string value = GetProperty(name);
+            string value = GetProperty(name, configuration);
             if (!string.IsNullOrEmpty(value))
             {
                 if (double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out double doubleValue))
@@ -712,9 +777,9 @@ namespace Jaeger
             return null;
         }
 
-        private static TimeSpan? GetPropertyAsTimeSpan(string name, ILogger logger)
+        private static TimeSpan? GetPropertyAsTimeSpan(string name, ILogger logger, IConfiguration configuration)
         {
-            int? valueInMs = GetPropertyAsInt(name, logger);
+            int? valueInMs = GetPropertyAsInt(name, logger, configuration);
             if (valueInMs.HasValue)
             {
                 return TimeSpan.FromMilliseconds(valueInMs.Value);
@@ -726,9 +791,9 @@ namespace Jaeger
         /// Gets the system property defined by the name, and returns a boolean value represented by
         /// the name. This method defaults to returning false for a name that doesn't exist.
         /// </summary>
-        private static bool? GetPropertyAsBool(string name, ILogger logger)
+        private static bool? GetPropertyAsBool(string name, ILogger logger, IConfiguration configuration)
         {
-            string value = GetProperty(name);
+            string value = GetProperty(name, configuration);
             if (!string.IsNullOrEmpty(value))
             {
                 if (string.Equals(value, "1", StringComparison.Ordinal))
@@ -752,10 +817,10 @@ namespace Jaeger
             return null;
         }
 
-        private static Dictionary<string, string> TracerTagsFromEnv(ILogger logger)
+        private static Dictionary<string, string> TracerTagsFromEnv(ILogger logger, IConfiguration configuration)
         {
             Dictionary<string, string> tracerTagMaps = null;
-            string tracerTags = GetProperty(JaegerTags);
+            string tracerTags = GetProperty(JaegerTags, configuration);
             if (!string.IsNullOrEmpty(tracerTags))
             {
                 string[] tags = tracerTags.Split(',');
@@ -768,7 +833,7 @@ namespace Jaeger
                         {
                             tracerTagMaps = new Dictionary<string, string>();
                         }
-                        tracerTagMaps[tagValue[0].Trim()] = ResolveValue(tagValue[1].Trim());
+                        tracerTagMaps[tagValue[0].Trim()] = ResolveValue(tagValue[1].Trim(), configuration);
                     }
                     else
                     {
@@ -779,14 +844,14 @@ namespace Jaeger
             return tracerTagMaps;
         }
 
-        private static string ResolveValue(string value)
+        private static string ResolveValue(string value, IConfiguration configuration)
         {
             if (value.StartsWith("${") && value.EndsWith("}"))
             {
                 string[] kvp = value.Substring(2, value.Length - 3).Split(':');
                 if (kvp.Length > 0)
                 {
-                    string propertyValue = GetProperty(kvp[0].Trim());
+                    string propertyValue = GetProperty(kvp[0].Trim(), configuration);
                     if (propertyValue == null && kvp.Length > 1)
                     {
                         propertyValue = kvp[1].Trim();
