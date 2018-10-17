@@ -12,9 +12,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="SourceLink.Create.CommandLine" Version="2.8.1" PrivateAssets="All" />
-    <DotNetCliToolReference Include="dotnet-sourcelink" Version="2.8.1" />
-    <DotNetCliToolReference Include="dotnet-sourcelink-git" Version="2.8.1" />
+    <PackageReference Include="SourceLink.Create.CommandLine" Version="2.8.3" PrivateAssets="All" />
+    <DotNetCliToolReference Include="dotnet-sourcelink" Version="2.8.3" />
+    <DotNetCliToolReference Include="dotnet-sourcelink-git" Version="2.8.3" />
   </ItemGroup>
 
 </Project>
