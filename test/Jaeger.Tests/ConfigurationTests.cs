@@ -51,6 +51,7 @@ namespace Jaeger.Tests
             ClearProperty(Configuration.JaegerServiceName);
             ClearProperty(Configuration.JaegerTags);
             ClearProperty(Configuration.JaegerTraceId128Bit);
+            ClearProperty(Configuration.JaegerExpandExceptionLogs);
             ClearProperty(Configuration.JaegerEndpoint);
             ClearProperty(Configuration.JaegerAuthToken);
             ClearProperty(Configuration.JaegerUser);
@@ -188,6 +189,24 @@ namespace Jaeger.Tests
             SetProperty(Configuration.JaegerTags, "testTag1=${" + TestProperty + ":hello}");
             Tracer tracer = (Tracer)Configuration.FromEnv(_loggerFactory).GetTracer();
             Assert.Equal("goodbye", tracer.Tags["testTag1"]);
+        }
+
+        [Fact]
+        public void TestTracerExpandExceptionLogs()
+        {
+            SetProperty(Configuration.JaegerServiceName, "Test");
+            SetProperty(Configuration.JaegerExpandExceptionLogs, "true");
+            Tracer tracer = (Tracer)Configuration.FromEnv(_loggerFactory).GetTracer();
+            Assert.True(tracer.ExpandExceptionLogs);
+        }
+
+        [Fact]
+        public void TestTracerInvalidExpandExceptionLogs()
+        {
+            SetProperty(Configuration.JaegerServiceName, "Test");
+            SetProperty(Configuration.JaegerExpandExceptionLogs, "X");
+            Tracer tracer = (Tracer)Configuration.FromEnv(_loggerFactory).GetTracer();
+            Assert.False(tracer.ExpandExceptionLogs);
         }
 
         [Fact]
