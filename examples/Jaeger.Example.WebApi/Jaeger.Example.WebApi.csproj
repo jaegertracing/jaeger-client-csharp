@@ -7,6 +7,12 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.5" />
     <PackageReference Include="OpenTracing.Contrib.NetCore" Version="0.4.0" />
+
+    <!-- NOTE:
+        In case you're building this application standalone, use below PackageReference 
+        with an appropriate version instead of relative-path ProjectReference 
+        to Jaeger project -->
+    <!-- PackageReference Include="Jaeger" Version="0.2.1" /-->
   </ItemGroup>
 
   <ItemGroup>
