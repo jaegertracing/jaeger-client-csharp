@@ -42,7 +42,7 @@ namespace Jaeger.Senders
             var customHeaders = new Dictionary<string, string>();
             if (builder.AuthenticationHeaderValue != null)
             {
-                customHeaders.Add("Authorize", builder.AuthenticationHeaderValue.ToString());
+                customHeaders.Add("Authorization", builder.AuthenticationHeaderValue.ToString());
             }
 
             _transport = new THttpClientTransport(collectorUri, customHeaders);
