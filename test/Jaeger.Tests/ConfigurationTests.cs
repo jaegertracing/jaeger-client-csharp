@@ -10,6 +10,7 @@ using Jaeger.Samplers;
 using Jaeger.Senders;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Configuration;
 using OpenTracing;
 using OpenTracing.Noop;
 using OpenTracing.Propagation;
@@ -83,11 +84,45 @@ namespace Jaeger.Tests
         }
 
         [Fact]
+        public void TestFromIConfig()
+        {
+            var arrayDict = new Dictionary<string, string>
+            {
+                {Configuration.JaegerServiceName, "Test"},
+            };
+
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(arrayDict)
+                .Build();
+
+            Assert.NotNull(Configuration.FromIConfiguration(_loggerFactory, configuration).GetTracer());
+            Assert.False(GlobalTracer.IsRegistered());
+        }
+
+        [Fact]
         public void TestSamplerConst()
         {
             SetProperty(Configuration.JaegerSamplerType, ConstSampler.Type);
             SetProperty(Configuration.JaegerSamplerParam, "1");
             SamplerConfiguration samplerConfig = SamplerConfiguration.FromEnv(_loggerFactory);
+            Assert.Equal(ConstSampler.Type, samplerConfig.Type);
+            Assert.Equal(1, samplerConfig.Param);
+        }
+
+        [Fact]
+        public void TestSamplerConstFromIConfiguration()
+        {
+            var arrayDict = new Dictionary<string, string>
+            {
+                {Configuration.JaegerSamplerType, ConstSampler.Type},
+                {Configuration.JaegerSamplerParam, "1"}
+            };
+
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(arrayDict)
+                .Build();
+
+            SamplerConfiguration samplerConfig = SamplerConfiguration.FromIConfiguration(_loggerFactory, configuration);
             Assert.Equal(ConstSampler.Type, samplerConfig.Type);
             Assert.Equal(1, samplerConfig.Param);
         }
@@ -124,6 +159,22 @@ namespace Jaeger.Tests
             SetProperty(Configuration.JaegerReporterFlushInterval, "X");
             ReporterConfiguration reporterConfig = ReporterConfiguration.FromEnv(_loggerFactory);
             Assert.Null(reporterConfig.FlushInterval);
+        }
+
+        [Fact]
+        public void TestReporterConfigurationFromIConfiguration()
+        {
+            var arrayDict = new Dictionary<string, string>
+            {
+                {Configuration.JaegerReporterLogSpans, "X"},
+            };
+
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(arrayDict)
+                .Build();
+
+            ReporterConfiguration reporterConfig = ReporterConfiguration.FromIConfiguration(_loggerFactory, configuration);
+            Assert.False(reporterConfig.LogSpans);
         }
 
         [Fact]
