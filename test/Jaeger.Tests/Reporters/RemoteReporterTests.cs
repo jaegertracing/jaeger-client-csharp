@@ -160,7 +160,7 @@ namespace Jaeger.Tests.Reporters
         }
 
         [Fact]
-        public void TestAppendWhenQueueFull()
+        public async Task TestAppendWhenQueueFull()
         {
             SetupTracer();
 
@@ -177,9 +177,13 @@ namespace Jaeger.Tests.Reporters
             _reporter.Report(NewSpan());
             _reporter.Report(NewSpan());
 
+            _sender.AllowAppend();
+
+            var closeTimeout = new CancellationTokenSource(TimeSpan.FromMinutes(15)).Token;
+            await _reporter.CloseAsync(closeTimeout).ConfigureAwait(false);
+
             // Then: one or both spans should be dropped
-            long droppedCount = _metricsFactory.GetCounter("jaeger:reporter_spans", "result=dropped");
-            Assert.InRange(droppedCount, 1, 2);
+            Assert.Equal(MaxQueueSize, _sender.GetReceived().Count);
         }
 
         [Fact]
@@ -224,7 +228,7 @@ namespace Jaeger.Tests.Reporters
             // expect no exception thrown
         }
 
-        [Fact]
+        [Fact(Skip = "The reporter_queue_length gauge not available with Channel-based reporter any more")]
         public void TestFlushUpdatesQueueLength()
         {
             TimeSpan neverFlushInterval = TimeSpan.FromHours(1);

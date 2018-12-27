@@ -1,6 +1,6 @@
 using System;
-using System.Collections.Concurrent;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using Jaeger.Exceptions;
 using Jaeger.Metrics;
@@ -18,7 +18,7 @@ namespace Jaeger.Reporters
         public const int DefaultMaxQueueSize = 100;
         public static readonly TimeSpan DefaultFlushInterval = TimeSpan.FromSeconds(1);
 
-        private readonly BlockingCollection<ICommand> _commandQueue;
+        private readonly Channel<ICommand> _commandQueue;
         private readonly Task _queueProcessorTask;
         private readonly TimeSpan _flushInterval;
         private readonly Task _flushTask;
@@ -32,44 +32,47 @@ namespace Jaeger.Reporters
             _sender = sender;
             _metrics = metrics;
             _logger = loggerFactory.CreateLogger<RemoteReporter>();
-            _commandQueue = new BlockingCollection<ICommand>(maxQueueSize);
+
+            // 1. Guarantee this channel can only have single reader, but could be with multi writer.
+            // 2. AllowSynchronousContinuations need to be false, or a slow read operation may block the write operation which awaked it. 
+            _commandQueue = Channel.CreateBounded<ICommand>(new BoundedChannelOptions(maxQueueSize)
+            {
+                FullMode = BoundedChannelFullMode.DropWrite,
+                SingleWriter = false,
+                SingleReader = true,
+                AllowSynchronousContinuations = false
+            });
 
             // start a thread to append spans
-            _queueProcessorTask = Task.Factory.StartNew(ProcessQueueLoop, TaskCreationOptions.LongRunning);
+            // The task returned by Task.Factory.StartNew has an invalid complete state, so we need unwrap it to make it awaitable.
+            _queueProcessorTask = Task.Factory.StartNew(ProcessQueueLoop, TaskCreationOptions.LongRunning).Unwrap();
 
             _flushInterval = flushInterval;
-            _flushTask = Task.Factory.StartNew(FlushLoop, TaskCreationOptions.LongRunning);
+            _flushTask = Task.Factory.StartNew(FlushLoop, TaskCreationOptions.LongRunning).Unwrap();
         }
 
         public void Report(Span span)
         {
-            bool added = false;
-            try
-            {
-                // It's better to drop spans, than to block here
-                added = _commandQueue.TryAdd(new AppendCommand(this, span));
-            }
-            catch (InvalidOperationException)
-            {
-                // The queue has been marked as IsAddingCompleted -> no-op.
-            }
+            ChannelWriter<ICommand> writer = _commandQueue.Writer;
 
-            if (!added)
-            {
-                _metrics.ReporterDropped.Inc(1);
-            }
+            // In drop mode, we can not determine this command has beed enqueued or dropped.
+            // https://github.com/dotnet/corefx/blob/master/src/System.Threading.Channels/src/System/Threading/Channels/BoundedChannel.cs#L360
+            // A workaround: Count all write attempts, then get dropped command count by (ReporterAll - ReporterAppended)
+
+            var cmd = new AppendCommand(this, span);
+            // In drop mode, TryWrite should always return ture.
+            writer.TryWrite(cmd);
         }
 
         public async Task CloseAsync(CancellationToken cancellationToken)
         {
             // Note: Java creates a CloseCommand but we have CompleteAdding() in C# so we don't need the command.
             // (This also stops the FlushLoop)
-            _commandQueue.CompleteAdding();
+            _commandQueue.Writer.TryComplete();
 
             try
             {
                 // Give processor some time to process any queued commands.
-
                 var cts = CancellationTokenSource.CreateLinkedTokenSource(
                     cancellationToken,
                     new CancellationTokenSource(10000).Token);
@@ -95,21 +98,11 @@ namespace Jaeger.Reporters
             }
         }
 
-        internal void Flush()
+        internal bool Flush()
         {
-            // to reduce the number of updateGauge stats, we only emit queue length on flush
-            _metrics.ReporterQueueLength.Update(_commandQueue.Count);
-
-            try
-            {
-                // We can safely drop FlushCommand when the queue is full - sender should take care of flushing
-                // in such case
-                _commandQueue.TryAdd(new FlushCommand(this));
-            }
-            catch (InvalidOperationException)
-            {
-                // The queue has been marked as IsAddingCompleted -> no-op.
-            }
+            // We can safely drop FlushCommand when the queue is full - sender should take care of flushing
+            // in such case
+            return _commandQueue.Writer.TryWrite(new FlushCommand(this));
         }
 
         private async Task FlushLoop()
@@ -118,30 +111,40 @@ namespace Jaeger.Reporters
             do
             {
                 await Task.Delay(_flushInterval).ConfigureAwait(false);
-                Flush();
             }
-            while (!_commandQueue.IsAddingCompleted);
+            while (Flush()); // Flush() will return false if channel has been closed.
         }
 
         private async Task ProcessQueueLoop()
         {
-            // This blocks until a command is available or IsCompleted=true
-            foreach (ICommand command in _commandQueue.GetConsumingEnumerable())
+            ChannelReader<ICommand> reader = _commandQueue.Reader;
+
+            while (true)
             {
-                try
+                ValueTask<bool> vt = reader.WaitToReadAsync();
+                bool res = vt.IsCompletedSuccessfully ? vt.Result : await vt.ConfigureAwait(false);
+                if (!res) // No further command will enqueue, then we can exit the loop.
                 {
-                    await command.ExecuteAsync().ConfigureAwait(false);
+                    break;
                 }
-                catch (SenderException ex)
+
+                if (reader.TryRead(out ICommand command))
                 {
-                    _metrics.ReporterFailure.Inc(ex.DroppedSpanCount);
+                    try
+                    {
+                        await command.ExecuteAsync().ConfigureAwait(false);
+                    }
+                    catch (SenderException ex)
+                    {
+                        _metrics.ReporterFailure.Inc(ex.DroppedSpanCount);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "QueueProcessor error");
+                        // Do nothing, and try again on next command.
+                    }
                 }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "QueueProcessor error");
-                    // Do nothing, and try again on next command.
-                }
-            }
+            };
         }
 
         public override string ToString()

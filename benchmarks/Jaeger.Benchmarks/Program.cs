@@ -6,7 +6,15 @@ namespace Jaeger.Benchmarks
     {
         static void Main(string[] args)
         {
-            BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args);
+            switch (args[0])
+            {
+               case "RemoteReporter":
+                   new RemoteReporterBenchmark().RunReport().GetAwaiter().GetResult();
+                   break;
+               default:
+                   BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args);
+                   break;
+            }
         }
     }
 }
