@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Thrift\netcore\Thrift\Thrift.csproj" />
+    <PackageReference Include="ApacheThrift" Version="0.11.0" />
   </ItemGroup>
 
 </Project>
