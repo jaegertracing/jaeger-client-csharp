@@ -183,7 +183,8 @@ namespace Jaeger.Tests.Reporters
             await _reporter.CloseAsync(closeTimeout).ConfigureAwait(false);
 
             // Then: one or both spans should be dropped
-            Assert.Equal(MaxQueueSize, _sender.GetReceived().Count);
+            // There may be one span which has dequeued but is blocked in sender
+            Assert.InRange(_sender.GetReceived().Count, MaxQueueSize, MaxQueueSize + 1);
         }
 
         [Fact]

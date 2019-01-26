@@ -44,11 +44,12 @@ namespace Jaeger.Reporters
             });
 
             // start a thread to append spans
-            // The task returned by Task.Factory.StartNew has an invalid complete state, so we need unwrap it to make it awaitable.
-            _queueProcessorTask = Task.Factory.StartNew(ProcessQueueLoop, TaskCreationOptions.LongRunning).Unwrap();
+            // The task returned by Task.Factory.StartNew has an invalid complete state,
+            // which make the await invalid, so we replace it with Task.Run
+            _queueProcessorTask = Task.Run(ProcessQueueLoop);
 
             _flushInterval = flushInterval;
-            _flushTask = Task.Factory.StartNew(FlushLoop, TaskCreationOptions.LongRunning).Unwrap();
+            _flushTask = Task.Run(FlushLoop);
         }
 
         public void Report(Span span)
@@ -128,7 +129,8 @@ namespace Jaeger.Reporters
                     break;
                 }
 
-                if (reader.TryRead(out ICommand command))
+                // Read commands with loop after WaitToReadAsync
+                while (reader.TryRead(out ICommand command))
                 {
                     try
                     {
