@@ -96,7 +96,48 @@ namespace Jaeger.Tests
             });
         }
 
-        [Fact]
+	    private class SpanContextData : ISpanContext
+	    {
+		    public string TraceId { get; set; }
+		    public string SpanId { get; set; }
+		    public IDictionary<string, string> Baggage { get; set; }
+		    public IEnumerable<KeyValuePair<string, string>> GetBaggageItems() => Baggage;
+	    }
+
+	    [Fact]
+	    public void SpanBuilder_AddReference_ShouldAddReferenceOfAnotherThanSpanContextType()
+	    {
+		    var tracer = GetTracer();
+
+		    // Reference
+		    var referencedContext = new SpanContextData
+		    {
+				TraceId = "1",
+				SpanId = "2",
+				Baggage = new Dictionary<string, string>
+				{
+					["key"] = "value"
+				}
+		    };
+
+		    // Child
+		    var span = (Span)tracer.BuildSpan("child")
+			    .AddReference(References.ChildOf, referencedContext)
+			    .Start();
+
+		    var builtContext = (SpanContext)span.Context;
+
+		    Assert.Single(span.GetReferences());
+		    Assert.Equal(referencedContext.TraceId, span.Context.TraceId.ToString());
+		    Assert.Equal(referencedContext.SpanId, span.Context.ParentId.ToString());
+		    Assert.Collection(builtContext.GetBaggageItems(), kvp =>
+		    {
+			    Assert.Equal("key", kvp.Key);
+			    Assert.Equal("value", kvp.Value);
+		    });
+	    }
+
+		[Fact]
         public void SpanBuilder_WithStartTimestamp_ShouldSetASpecificTimestamp()
         {
             var tracer = GetTracer();

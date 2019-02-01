@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using OpenTracing;
 using OpenTracing.Tag;
 
@@ -30,8 +31,19 @@ namespace Jaeger
 
         public ISpanBuilder AddReference(string referenceType, ISpanContext referencedContext)
         {
-            if (!(referencedContext is SpanContext typedReferencedContext))
-                return this;
+	        if (referencedContext == null)
+	        {
+		        return this;
+	        }
+
+	        if (!(referencedContext is SpanContext typedReferencedContext))
+	        {
+				TraceId traceId = TraceId.FromString(referencedContext.TraceId);
+				SpanId spanId = SpanId.FromString(referencedContext.SpanId);
+				SpanId parentSpanId = new SpanId(0);
+				Dictionary<string, string> baggage = referencedContext.GetBaggageItems().ToDictionary(x => x.Key, x => x.Value);
+		        typedReferencedContext = new SpanContext(traceId, spanId, parentSpanId, SpanContextFlags.Sampled).WithBaggage(baggage);
+			}
 
             // Jaeger thrift currently does not support other reference types
             if (!string.Equals(References.ChildOf, referenceType, StringComparison.Ordinal)
