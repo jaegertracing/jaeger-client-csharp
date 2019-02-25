@@ -118,7 +118,7 @@ namespace Jaeger
             {
                 if (FinishTimestampUtc != null)
                 {
-                    Tracer.Logger.LogWarning("Span has already been finished; will not be reported again.");
+                    Tracer.Logger.LogWarning("Span has already been finished; will not be reported again. Operation: {0} Trace Id: {1} Span Id: {2}", OperationName, Context.TraceId, Context.SpanId);
                     return;
                 }
                 FinishTimestampUtc = finishTimestampUtc;
