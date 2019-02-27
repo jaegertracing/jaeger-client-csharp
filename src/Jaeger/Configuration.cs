@@ -345,7 +345,7 @@ namespace Jaeger
                 return FromIConfiguration(loggerFactory, configuration);
             }
 
-            public ISampler GetSampler(string serviceName, IMetrics metrics)
+            public virtual ISampler GetSampler(string serviceName, IMetrics metrics)
             {
                 string samplerType = StringOrDefault(Type, RemoteControlledSampler.Type);
                 double samplerParam = Param.GetValueOrDefault(ProbabilisticSampler.DefaultSamplingProbability);
@@ -557,7 +557,7 @@ namespace Jaeger
                 return this;
             }
 
-            public IReporter GetReporter(IMetrics metrics)
+            public virtual IReporter GetReporter(IMetrics metrics)
             {
                 IReporter reporter = new RemoteReporter.Builder()
                     .WithLoggerFactory(_loggerFactory)
@@ -666,7 +666,7 @@ namespace Jaeger
             /// configuration's state.
             /// </summary>
             /// <returns>The sender passed via the constructor or a properly configured sender.</returns>
-            public ISender GetSender()
+            public virtual ISender GetSender()
             {
                 // if we have a sender, that's the one we return
                 if (Sender != null)
