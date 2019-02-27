@@ -1,22 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.5" />
-    <PackageReference Include="OpenTracing.Contrib.NetCore" Version="0.4.0" />
+    <PackageReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="OpenTracing.Contrib.NetCore" Version="0.5.0" />
 
     <!-- NOTE:
         In case you're building this application standalone, use below PackageReference 
         with an appropriate version instead of relative-path ProjectReference 
         to Jaeger project -->
     <!-- PackageReference Include="Jaeger" Version="0.2.1" /-->
-  </ItemGroup>
-
-  <ItemGroup>
-    <DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="2.0.2" />
   </ItemGroup>
 
   <ItemGroup>
