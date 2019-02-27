@@ -200,7 +200,7 @@ namespace Jaeger
             }
             IMetrics metrics = new MetricsImpl(_metricsFactory);
             IReporter reporter = ReporterConfig.GetReporter(metrics);
-            ISampler sampler = SamplerConfig.CreateSampler(_serviceName, metrics);
+            ISampler sampler = SamplerConfig.GetSampler(ServiceName, metrics);
             Tracer.Builder builder = new Tracer.Builder(ServiceName)
                 .WithLoggerFactory(_loggerFactory)
                 .WithSampler(sampler)
@@ -345,8 +345,7 @@ namespace Jaeger
                 return FromIConfiguration(loggerFactory, configuration);
             }
 
-            // for tests
-            internal ISampler CreateSampler(string serviceName, IMetrics metrics)
+            public ISampler GetSampler(string serviceName, IMetrics metrics)
             {
                 string samplerType = StringOrDefault(Type, RemoteControlledSampler.Type);
                 double samplerParam = Param.GetValueOrDefault(ProbabilisticSampler.DefaultSamplingProbability);
