@@ -444,6 +444,24 @@ namespace Jaeger.Tests
         }
 
         [Fact]
+        public void TestUseTraceId128BitFromEnv()
+        {
+            SetProperty(Configuration.JaegerServiceName, "Test");
+            SetProperty(Configuration.JaegerTraceId128Bit, "true");
+            Tracer tracer = (Tracer)Configuration.FromEnv(_loggerFactory).GetTracer();
+            Assert.True(tracer.UseTraceId128Bit);
+        }
+
+        [Fact]
+        public void TestUseTraceId128BitFromConfig()
+        {
+            Tracer tracer = (Tracer)new Configuration("Test", _loggerFactory)
+                .WithTraceId128Bit(true)
+                .GetTracer();
+            Assert.True(tracer.UseTraceId128Bit);
+        }
+
+        [Fact]
         public void TestNoServiceName()
         {
             Assert.Throws<ArgumentException>(() => new Configuration(null, _loggerFactory));
