@@ -66,7 +66,7 @@ namespace Jaeger.Reporters.Protocols
             List<ThriftLog> thriftLogs = new List<ThriftLog>();
             if (logs != null)
             {
-                foreach (LogData logData in logs)
+                foreach (LogData logData in logs.ToArray())
                 {
                     ThriftLog thriftLog = new ThriftLog();
                     thriftLog.Timestamp = logData.TimestampUtc.ToUnixTimeMicroseconds();
@@ -94,7 +94,7 @@ namespace Jaeger.Reporters.Protocols
             var thriftTags = new List<ThriftTag>();
             if (tags != null)
             {
-                foreach (var tag in tags)
+                foreach (var tag in tags.ToArray())
                 {
                     thriftTags.Add(BuildTag(tag.Key, tag.Value));
                 }
