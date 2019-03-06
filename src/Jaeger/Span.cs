@@ -79,7 +79,7 @@ namespace Jaeger
                     return EmptyLogs;
                 }
 
-                return new List<LogData>(_logs).AsReadOnly();
+                return new List<LogData>(_logs);
             }
         }
 
