@@ -21,7 +21,7 @@ namespace Jaeger.Reporters
         {
             lock (_lock)
             {
-                return new List<Span>(_spans).AsReadOnly();
+                return new List<Span>(_spans);
             }
         }
 
