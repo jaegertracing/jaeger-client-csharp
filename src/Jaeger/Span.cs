@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using Microsoft.Extensions.Logging;
 using OpenTracing;
 using OpenTracing.Tag;
@@ -53,7 +54,7 @@ namespace Jaeger
 
         public IReadOnlyList<Reference> GetReferences() => _references;
 
-        public IReadOnlyDictionary<string, object> GetTags() => _tags;
+        public IReadOnlyDictionary<string, object> GetTags() => new Dictionary<string, object>(_tags);
 
         public ISpan SetOperationName(string operationName)
         {
@@ -73,7 +74,12 @@ namespace Jaeger
         {
             lock (_lock)
             {
-                return _logs ?? EmptyLogs;
+                if (_logs == null)
+                {
+                    return EmptyLogs;
+                }
+
+                return new List<LogData>(_logs).AsReadOnly();
             }
         }
 
