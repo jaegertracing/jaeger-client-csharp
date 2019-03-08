@@ -10,6 +10,7 @@ namespace Jaeger
     public class Span : ISpan
     {
         private static readonly IReadOnlyList<LogData> EmptyLogs = new List<LogData>().AsReadOnly();
+        private static readonly IReadOnlyDictionary<string, object> EmptyTags = new ReadOnlyDictionary<string, object>(new Dictionary<string, object>());
         private static readonly IReadOnlyList<Reference> EmptyReferences = new List<Reference>().AsReadOnly();
 
         private readonly object _lock = new object();
@@ -54,7 +55,18 @@ namespace Jaeger
 
         public IReadOnlyList<Reference> GetReferences() => _references;
 
-        public IReadOnlyDictionary<string, object> GetTags() => new Dictionary<string, object>(_tags);
+        public IReadOnlyDictionary<string, object> GetTags()
+        {
+            lock (_lock)
+            {
+                if (_tags == null)
+                {
+                    return EmptyTags;
+                }
+
+                return new Dictionary<string, object>(_tags);
+            }
+        }
 
         public ISpan SetOperationName(string operationName)
         {
