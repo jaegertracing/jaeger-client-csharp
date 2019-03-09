@@ -119,6 +119,20 @@ namespace Jaeger.Tests
         }
 
         [Fact]
+        public void TestGetTags_IsImmutable()
+        {
+            string expected = "expected.value";
+            string key = "tag.key";
+            
+            var oldTags = span.GetTags();
+            span.SetTag(key, expected);
+
+            var newTags = span.GetTags();
+            Assert.Equal(expected, newTags[key]);
+            Assert.NotEqual(oldTags, newTags);
+        }
+
+        [Fact]
         public void TestSetStringTag()
         {
             string expected = "expected.value";
@@ -233,6 +247,20 @@ namespace Jaeger.Tests
             Assert.Equal(expectedTimestamp, actualLogData.TimestampUtc);
             Assert.Null(actualLogData.Message);
             Assert.Equal(expectedFields, actualLogData.Fields);
+        }
+
+        [Fact]
+        public void TestGetLogs_IsImmutable()
+        {
+            string expectedEvent = "expectedEvent";
+
+            var oldLogs = span.GetLogs();
+            Assert.Empty(oldLogs);
+            span.Log(expectedEvent);
+
+            var newLogs = span.GetLogs();
+            Assert.Empty(oldLogs);
+            Assert.NotEmpty(newLogs);
         }
 
         [Fact]

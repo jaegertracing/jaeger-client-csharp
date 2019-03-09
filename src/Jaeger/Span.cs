@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using Microsoft.Extensions.Logging;
 using OpenTracing;
 using OpenTracing.Tag;
@@ -9,6 +10,7 @@ namespace Jaeger
     public class Span : ISpan
     {
         private static readonly IReadOnlyList<LogData> EmptyLogs = new List<LogData>().AsReadOnly();
+        private static readonly IReadOnlyDictionary<string, object> EmptyTags = new ReadOnlyDictionary<string, object>(new Dictionary<string, object>());
         private static readonly IReadOnlyList<Reference> EmptyReferences = new List<Reference>().AsReadOnly();
 
         private readonly object _lock = new object();
@@ -53,7 +55,18 @@ namespace Jaeger
 
         public IReadOnlyList<Reference> GetReferences() => _references;
 
-        public IReadOnlyDictionary<string, object> GetTags() => _tags;
+        public IReadOnlyDictionary<string, object> GetTags()
+        {
+            lock (_lock)
+            {
+                if (_tags == null)
+                {
+                    return EmptyTags;
+                }
+
+                return new Dictionary<string, object>(_tags);
+            }
+        }
 
         public ISpan SetOperationName(string operationName)
         {
@@ -73,7 +86,12 @@ namespace Jaeger
         {
             lock (_lock)
             {
-                return _logs ?? EmptyLogs;
+                if (_logs == null)
+                {
+                    return EmptyLogs;
+                }
+
+                return new List<LogData>(_logs);
             }
         }
 
