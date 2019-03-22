@@ -286,7 +286,7 @@ namespace Jaeger
             return this;
         }
 
-        [Obsolete]
+        [Obsolete("Use the property 'TracerTags' instead.")]
         public IReadOnlyDictionary<string, string> GetTracerTags()
         {
             return _tracerTags;
