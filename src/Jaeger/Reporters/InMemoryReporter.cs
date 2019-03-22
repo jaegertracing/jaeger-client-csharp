@@ -21,7 +21,7 @@ namespace Jaeger.Reporters
         {
             lock (_lock)
             {
-                return _spans;
+                return new List<Span>(_spans);
             }
         }
 

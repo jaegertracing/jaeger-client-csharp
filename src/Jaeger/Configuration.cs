@@ -271,7 +271,7 @@ namespace Jaeger
             return this;
         }
 
-        private Configuration WithTraceId128Bit(bool useTraceId128Bit)
+        public Configuration WithTraceId128Bit(bool useTraceId128Bit)
         {
             UseTraceId128Bit = useTraceId128Bit;
             return this;
