@@ -199,26 +199,28 @@ namespace Jaeger
 
         public sealed class Builder
         {
-            private ILoggerFactory _loggerFactory;
-            private ISampler _sampler;
-            private IReporter _reporter;
             private PropagationRegistry _registry;
-            private IMetrics _metrics = new MetricsImpl(NoopMetricsFactory.Instance);
-            private readonly string _serviceName;
-            private IClock _clock = new SystemClock();
             private readonly Dictionary<string, object> _tags = new Dictionary<string, object>();
-            private bool _zipkinSharedRpcSpan;
-            private IScopeManager _scopeManager = new AsyncLocalScopeManager();
-            private IBaggageRestrictionManager _baggageRestrictionManager = new DefaultBaggageRestrictionManager();
-            private bool _expandExceptionLogs;
-            private bool _useTraceId128Bit;
 
             // We need the loggerFactory for the PropagationRegistry so we have to defer these invocations.
             private readonly List<Action<PropagationRegistry>> _registryActions = new List<Action<PropagationRegistry>>();
 
+            public string ServiceName { get; }
+            public ILoggerFactory LoggerFactory { get; private set; }
+            public IBaggageRestrictionManager BaggageRestrictionManager { get; private set; } = new DefaultBaggageRestrictionManager();
+            public IMetrics Metrics { get; private set; } = new MetricsImpl(NoopMetricsFactory.Instance);
+            public bool ZipkinSharedRpcSpan { get; private set; }
+            public ISampler Sampler { get; private set; }
+            public IReporter Reporter { get; private set; }
+            public IClock Clock { get; private set; } = new SystemClock();
+            public IScopeManager ScopeManager { get; private set; } = new AsyncLocalScopeManager();
+            public bool ExpandExceptionLogs { get; private set; }
+            public bool UseTraceId128Bit { get; private set; }
+            public IReadOnlyDictionary<string, object> Tags => _tags;
+
             public Builder(string serviceName)
             {
-                _serviceName = CheckValidServiceName(serviceName);
+                ServiceName = CheckValidServiceName(serviceName);
 
                 _registryActions.Add(registry =>
                 {
@@ -229,19 +231,19 @@ namespace Jaeger
 
             public Builder WithLoggerFactory(ILoggerFactory loggerFactory)
             {
-                _loggerFactory = loggerFactory;
+                LoggerFactory = loggerFactory;
                 return this;
             }
 
             public Builder WithReporter(IReporter reporter)
             {
-                _reporter = reporter;
+                Reporter = reporter;
                 return this;
             }
 
             public Builder WithSampler(ISampler sampler)
             {
-                _sampler = sampler;
+                Sampler = sampler;
                 return this;
             }
             public Builder RegisterInjector<TCarrier>(IFormat<TCarrier> format, Injector<TCarrier> injector)
@@ -264,43 +266,43 @@ namespace Jaeger
 
             public Builder WithMetrics(IMetrics metrics)
             {
-                _metrics = metrics;
+                Metrics = metrics;
                 return this;
             }
 
             public Builder WithMetricsFactory(IMetricsFactory factory)
             {
-                _metrics = new MetricsImpl(factory);
+                Metrics = new MetricsImpl(factory);
                 return this;
             }
 
             public Builder WithScopeManager(IScopeManager scopeManager)
             {
-                _scopeManager = scopeManager;
+                ScopeManager = scopeManager;
                 return this;
             }
 
             public Builder WithClock(IClock clock)
             {
-                _clock = clock;
+                Clock = clock;
                 return this;
             }
 
             public Builder WithZipkinSharedRpcSpan()
             {
-                _zipkinSharedRpcSpan = true;
+                ZipkinSharedRpcSpan = true;
                 return this;
             }
 
             public Builder WithExpandExceptionLogs()
             {
-                _expandExceptionLogs = true;
+                ExpandExceptionLogs = true;
                 return this;
             }
 
             public Builder WithTraceId128Bit()
             {
-                _useTraceId128Bit = true;
+                UseTraceId128Bit = true;
                 return this;
             }
 
@@ -342,45 +344,45 @@ namespace Jaeger
 
             public Builder WithBaggageRestrictionManager(IBaggageRestrictionManager baggageRestrictionManager)
             {
-                _baggageRestrictionManager = baggageRestrictionManager;
+                BaggageRestrictionManager = baggageRestrictionManager;
                 return this;
             }
 
             public Tracer Build()
             {
-                if (_loggerFactory == null)
+                if (LoggerFactory == null)
                 {
-                    _loggerFactory = NullLoggerFactory.Instance;
+                    LoggerFactory = NullLoggerFactory.Instance;
                 }
 
-                _registry = new PropagationRegistry(_loggerFactory);
+                _registry = new PropagationRegistry(LoggerFactory);
                 foreach (var configureRegistry in _registryActions)
                 {
                     configureRegistry(_registry);
                 }
 
-                if (_metrics == null)
+                if (Metrics == null)
                 {
-                    _metrics = new MetricsImpl(NoopMetricsFactory.Instance);
+                    Metrics = new MetricsImpl(NoopMetricsFactory.Instance);
                 }
 
-                if (_reporter == null)
+                if (Reporter == null)
                 {
-                    _reporter = new RemoteReporter.Builder()
-                        .WithLoggerFactory(_loggerFactory)
-                        .WithMetrics(_metrics)
+                    Reporter = new RemoteReporter.Builder()
+                        .WithLoggerFactory(LoggerFactory)
+                        .WithMetrics(Metrics)
                         .Build();
                 }
-                if (_sampler == null)
+                if (Sampler == null)
                 {
-                    _sampler = new RemoteControlledSampler.Builder(_serviceName)
-                        .WithLoggerFactory(_loggerFactory)
-                        .WithMetrics(_metrics)
+                    Sampler = new RemoteControlledSampler.Builder(ServiceName)
+                        .WithLoggerFactory(LoggerFactory)
+                        .WithMetrics(Metrics)
                         .Build();
                 }
 
-                return new Tracer(_serviceName, _reporter, _sampler, _registry, _clock, _metrics, _loggerFactory,
-                    _tags, _zipkinSharedRpcSpan, _scopeManager, _baggageRestrictionManager, _expandExceptionLogs, _useTraceId128Bit);
+                return new Tracer(ServiceName, Reporter, Sampler, _registry, Clock, Metrics, LoggerFactory,
+                    _tags, ZipkinSharedRpcSpan, ScopeManager, BaggageRestrictionManager, ExpandExceptionLogs, UseTraceId128Bit);
             }
 
             public static String CheckValidServiceName(String serviceName)

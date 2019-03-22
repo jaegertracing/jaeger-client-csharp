@@ -129,13 +129,12 @@ namespace Jaeger
         /// <summary>
         /// The serviceName that the tracer will use.
         /// </summary>
-        private readonly string _serviceName;
+        public string ServiceName { get; }
+
         private readonly ILoggerFactory _loggerFactory;
         private readonly ILogger _logger;
-        private CodecConfiguration _codecConfig;
         private IMetricsFactory _metricsFactory;
         private Dictionary<string, string> _tracerTags;
-        private bool _useTraceId128Bit;
 
         /// <summary>
         /// Lazy singleton <see cref="Tracer"/> initialized in <see cref="GetTracer()"/> method.
@@ -144,10 +143,13 @@ namespace Jaeger
 
         public SamplerConfiguration SamplerConfig { get; private set; }
         public ReporterConfiguration ReporterConfig { get; private set; }
+        public CodecConfiguration CodecConfig { get; private set; }
+        public bool UseTraceId128Bit { get; private set; }
+        public IReadOnlyDictionary<string, string> TracerTags => _tracerTags;
 
         public Configuration(string serviceName, ILoggerFactory loggerFactory)
         {
-            _serviceName = Tracer.Builder.CheckValidServiceName(serviceName);
+            ServiceName = Tracer.Builder.CheckValidServiceName(serviceName);
             _loggerFactory = loggerFactory;
             _logger = _loggerFactory.CreateLogger<Configuration>();
         }
@@ -188,9 +190,9 @@ namespace Jaeger
             {
                 SamplerConfig = new SamplerConfiguration(_loggerFactory);
             }
-            if (_codecConfig == null)
+            if (CodecConfig == null)
             {
-                _codecConfig = new CodecConfiguration(_loggerFactory);
+                CodecConfig = new CodecConfiguration(_loggerFactory);
             }
             if (_metricsFactory == null)
             {
@@ -198,20 +200,20 @@ namespace Jaeger
             }
             IMetrics metrics = new MetricsImpl(_metricsFactory);
             IReporter reporter = ReporterConfig.GetReporter(metrics);
-            ISampler sampler = SamplerConfig.CreateSampler(_serviceName, metrics);
-            Tracer.Builder builder = new Tracer.Builder(_serviceName)
+            ISampler sampler = SamplerConfig.GetSampler(ServiceName, metrics);
+            Tracer.Builder builder = new Tracer.Builder(ServiceName)
                 .WithLoggerFactory(_loggerFactory)
                 .WithSampler(sampler)
                 .WithReporter(reporter)
                 .WithMetrics(metrics)
                 .WithTags(_tracerTags);
 
-            if (_useTraceId128Bit)
+            if (UseTraceId128Bit)
             {
                 builder = builder.WithTraceId128Bit();
             }
 
-            _codecConfig.Apply(builder);
+            CodecConfig.Apply(builder);
 
             return builder;
         }
@@ -265,13 +267,13 @@ namespace Jaeger
 
         public Configuration WithCodec(CodecConfiguration codecConfig)
         {
-            _codecConfig = codecConfig;
+            CodecConfig = codecConfig;
             return this;
         }
 
         public Configuration WithTraceId128Bit(bool useTraceId128Bit)
         {
-            _useTraceId128Bit = useTraceId128Bit;
+            UseTraceId128Bit = useTraceId128Bit;
             return this;
         }
 
@@ -284,6 +286,7 @@ namespace Jaeger
             return this;
         }
 
+        [Obsolete("Use the property 'TracerTags' instead.")]
         public IReadOnlyDictionary<string, string> GetTracerTags()
         {
             return _tracerTags;
@@ -342,8 +345,7 @@ namespace Jaeger
                 return FromIConfiguration(loggerFactory, configuration);
             }
 
-            // for tests
-            internal ISampler CreateSampler(string serviceName, IMetrics metrics)
+            public virtual ISampler GetSampler(string serviceName, IMetrics metrics)
             {
                 string samplerType = StringOrDefault(Type, RemoteControlledSampler.Type);
                 double samplerParam = Param.GetValueOrDefault(ProbabilisticSampler.DefaultSamplingProbability);
@@ -555,7 +557,7 @@ namespace Jaeger
                 return this;
             }
 
-            public IReporter GetReporter(IMetrics metrics)
+            public virtual IReporter GetReporter(IMetrics metrics)
             {
                 IReporter reporter = new RemoteReporter.Builder()
                     .WithLoggerFactory(_loggerFactory)
@@ -664,7 +666,7 @@ namespace Jaeger
             /// configuration's state.
             /// </summary>
             /// <returns>The sender passed via the constructor or a properly configured sender.</returns>
-            public ISender GetSender()
+            public virtual ISender GetSender()
             {
                 // if we have a sender, that's the one we return
                 if (Sender != null)

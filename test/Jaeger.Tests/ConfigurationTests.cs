@@ -492,7 +492,7 @@ namespace Jaeger.Tests
         {
             SamplerConfiguration samplerConfiguration = new SamplerConfiguration(_loggerFactory)
                 .WithType(ConstSampler.Type);
-            ISampler sampler = samplerConfiguration.CreateSampler("name",
+            ISampler sampler = samplerConfiguration.GetSampler("name",
                 new MetricsImpl(NoopMetricsFactory.Instance));
             Assert.True(sampler is ConstSampler);
         }
@@ -502,7 +502,7 @@ namespace Jaeger.Tests
         {
             SamplerConfiguration samplerConfiguration = new SamplerConfiguration(_loggerFactory)
                 .WithType(ProbabilisticSampler.Type);
-            ISampler sampler = samplerConfiguration.CreateSampler("name",
+            ISampler sampler = samplerConfiguration.GetSampler("name",
                 new MetricsImpl(NoopMetricsFactory.Instance));
             Assert.True(sampler is ProbabilisticSampler);
         }
@@ -512,7 +512,7 @@ namespace Jaeger.Tests
         {
             SamplerConfiguration samplerConfiguration = new SamplerConfiguration(_loggerFactory)
                 .WithType(RateLimitingSampler.Type);
-            ISampler sampler = samplerConfiguration.CreateSampler("name",
+            ISampler sampler = samplerConfiguration.GetSampler("name",
                 new MetricsImpl(NoopMetricsFactory.Instance));
             Assert.True(sampler is RateLimitingSampler);
         }
