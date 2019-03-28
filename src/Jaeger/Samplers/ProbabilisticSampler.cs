@@ -26,11 +26,20 @@ namespace Jaeger.Samplers
 
             SamplingRate = samplingRate;
 
-            // Note: Java uses bit shifting but that code results in a compiler warning in C#.
-            // We could enclose it in an `unchecked` block but we're using this code
-            // as it's more readable.
-            _positiveSamplingBoundary = (long)(long.MaxValue * samplingRate);
-            _negativeSamplingBoundary = (long)(long.MinValue * samplingRate);
+            // Check possible long overflow (if sampling param 1.0)
+            if (Math.Abs(samplingRate - 1.0) < 0.00001)
+            {
+                _positiveSamplingBoundary = long.MaxValue;
+                _negativeSamplingBoundary = long.MinValue;
+            }
+            else
+            {
+                // Note: Java uses bit shifting but that code results in a compiler warning in C#.
+                // We could enclose it in an `unchecked` block but we're using this code
+                // as it's more readable.
+                _positiveSamplingBoundary = (long)(long.MaxValue * samplingRate);
+                _negativeSamplingBoundary = (long)(long.MinValue * samplingRate);
+            }
 
             _tags = new Dictionary<string, object> {
                 { Constants.SamplerTypeTagKey, Type },
