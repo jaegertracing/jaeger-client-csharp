@@ -162,11 +162,11 @@ namespace Jaeger
             ILogger logger = loggerFactory.CreateLogger<Configuration>();
 
             return new Configuration(GetProperty(JaegerServiceName, configuration), loggerFactory)
-                .WithTracerTags(TracerTagsFromEnv(logger, configuration))
+                .WithTracerTags(TracerTagsFromIConfiguration(logger, configuration))
                 .WithTraceId128Bit(GetPropertyAsBool(JaegerTraceId128Bit, logger, configuration).GetValueOrDefault(false))
-                .WithReporter(ReporterConfiguration.FromEnv(loggerFactory))
-                .WithSampler(SamplerConfiguration.FromEnv(loggerFactory))
-                .WithCodec(CodecConfiguration.FromEnv(loggerFactory));
+                .WithReporter(ReporterConfiguration.FromIConfiguration(loggerFactory, configuration))
+                .WithSampler(SamplerConfiguration.FromIConfiguration(loggerFactory, configuration))
+                .WithCodec(CodecConfiguration.FromIConfiguration(loggerFactory, configuration));
         }
 
         /// <summary>
@@ -519,7 +519,7 @@ namespace Jaeger
                     .WithLogSpans(GetPropertyAsBool(JaegerReporterLogSpans, logger, configuration).GetValueOrDefault(false))
                     .WithFlushInterval(GetPropertyAsTimeSpan(JaegerReporterFlushInterval, logger, configuration))
                     .WithMaxQueueSize(GetPropertyAsInt(JaegerReporterMaxQueueSize, logger, configuration))
-                    .WithSender(SenderConfiguration.FromEnv(loggerFactory));
+                    .WithSender(SenderConfiguration.FromIConfiguration(loggerFactory, configuration));
             }
 
             /// <summary>
@@ -819,7 +819,7 @@ namespace Jaeger
             return null;
         }
 
-        private static Dictionary<string, string> TracerTagsFromEnv(ILogger logger, IConfiguration configuration)
+        private static Dictionary<string, string> TracerTagsFromIConfiguration(ILogger logger, IConfiguration configuration)
         {
             Dictionary<string, string> tracerTagMaps = null;
             string tracerTags = GetProperty(JaegerTags, configuration);
