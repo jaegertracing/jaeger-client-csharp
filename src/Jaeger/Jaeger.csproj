@@ -7,7 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Jaeger.Thrift\Jaeger.Thrift.csproj" />
+      <ProjectReference Include="..\Jaeger.Grpc\Jaeger.Grpc.csproj" />
+      <ProjectReference Include="..\Jaeger.Thrift\Jaeger.Thrift.csproj" />
   </ItemGroup>
 
   <ItemGroup>

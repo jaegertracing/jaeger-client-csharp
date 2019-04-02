@@ -43,6 +43,9 @@ namespace Jaeger.Tests
             // Explicitly clear all properties
             ClearProperty(Configuration.JaegerAgentHost);
             ClearProperty(Configuration.JaegerAgentPort);
+            ClearProperty(Configuration.JaegerGrpcHost);
+            ClearProperty(Configuration.JaegerGrpcPort);
+            ClearProperty(Configuration.JaegerGrpcRootCertificate);
             ClearProperty(Configuration.JaegerReporterLogSpans);
             ClearProperty(Configuration.JaegerReporterMaxQueueSize);
             ClearProperty(Configuration.JaegerReporterFlushInterval);
@@ -246,7 +249,16 @@ namespace Jaeger.Tests
         {
             SetProperty(Configuration.JaegerEndpoint, "https://jaeger-collector:14268/api/traces");
             ISender sender = Configuration.SenderConfiguration.FromEnv(_loggerFactory).GetSender();
-            Assert.True(sender is HttpSender);
+            Assert.IsType<HttpSender>(sender);
+        }
+
+        [Fact]
+        public void TestSenderWithGrpcDataFromEnv()
+        {
+            SetProperty(Configuration.JaegerGrpcHost, "jaeger-collector");
+            SetProperty(Configuration.JaegerGrpcPort, "14250");
+            ISender sender = Configuration.SenderConfiguration.FromEnv(_loggerFactory).GetSender();
+            Assert.IsType<GrpcSender>(sender);
         }
 
         [Fact]
@@ -292,7 +304,7 @@ namespace Jaeger.Tests
                     .WithEndpoint("https://jaeger-collector:14268/api/traces")
                     .WithAuthUsername("username")
                     .WithAuthPassword("password");
-            Assert.True(senderConfiguration.GetSender() is HttpSender);
+            Assert.IsType<HttpSender>(senderConfiguration.GetSender());
         }
 
         [Fact]
@@ -301,17 +313,30 @@ namespace Jaeger.Tests
             Configuration.SenderConfiguration senderConfiguration = new Configuration.SenderConfiguration(_loggerFactory)
                     .WithEndpoint("https://jaeger-collector:14268/api/traces")
                     .WithAuthToken("authToken");
-            Assert.True(senderConfiguration.GetSender() is HttpSender);
+            Assert.IsType<HttpSender>(senderConfiguration.GetSender());
         }
 
         [Fact]
         public void TestSenderWithAllPropertiesReturnsHttpSender()
         {
             SetProperty(Configuration.JaegerEndpoint, "https://jaeger-collector:14268/api/traces");
+            SetProperty(Configuration.JaegerGrpcHost, "jaeger-collector");
+            SetProperty(Configuration.JaegerGrpcPort, "14250");
             SetProperty(Configuration.JaegerAgentHost, "jaeger-agent");
             SetProperty(Configuration.JaegerAgentPort, "6832");
 
-            Assert.True(Configuration.SenderConfiguration.FromEnv(_loggerFactory).GetSender() is HttpSender);
+            Assert.IsType<HttpSender>(Configuration.SenderConfiguration.FromEnv(_loggerFactory).GetSender());
+        }
+
+        [Fact]
+        public void TestSenderWithGrpcAndAgentDataReturnsGrpcSender()
+        {
+            SetProperty(Configuration.JaegerGrpcHost, "jaeger-collector");
+            SetProperty(Configuration.JaegerGrpcPort, "14250");
+            SetProperty(Configuration.JaegerAgentHost, "jaeger-agent");
+            SetProperty(Configuration.JaegerAgentPort, "6832");
+
+            Assert.IsType<GrpcSender>(Configuration.SenderConfiguration.FromEnv(_loggerFactory).GetSender());
         }
 
         [Fact]
@@ -494,7 +519,7 @@ namespace Jaeger.Tests
                 .WithType(ConstSampler.Type);
             ISampler sampler = samplerConfiguration.GetSampler("name",
                 new MetricsImpl(NoopMetricsFactory.Instance));
-            Assert.True(sampler is ConstSampler);
+            Assert.IsType<ConstSampler>(sampler);
         }
 
         [Fact]
@@ -504,7 +529,7 @@ namespace Jaeger.Tests
                 .WithType(ProbabilisticSampler.Type);
             ISampler sampler = samplerConfiguration.GetSampler("name",
                 new MetricsImpl(NoopMetricsFactory.Instance));
-            Assert.True(sampler is ProbabilisticSampler);
+            Assert.IsType<ProbabilisticSampler>(sampler);
         }
 
         [Fact]
@@ -514,7 +539,7 @@ namespace Jaeger.Tests
                 .WithType(RateLimitingSampler.Type);
             ISampler sampler = samplerConfiguration.GetSampler("name",
                 new MetricsImpl(NoopMetricsFactory.Instance));
-            Assert.True(sampler is RateLimitingSampler);
+            Assert.IsType<RateLimitingSampler>(sampler);
         }
 
         internal class TestTextMap : ITextMap

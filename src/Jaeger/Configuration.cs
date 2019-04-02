@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
+using Grpc.Core;
 using Jaeger.Metrics;
 using Jaeger.Propagation;
 using Jaeger.Reporters;
@@ -56,6 +57,21 @@ namespace Jaeger
         /// The port used to locate the agent.
         /// </summary>
         public const string JaegerAgentPort = JaegerPrefix + "AGENT_PORT";
+
+        /// <summary>
+        /// The host name used to locate the GRPC collector.
+        /// </summary>
+        public const string JaegerGrpcHost = JaegerPrefix + "GRPC_HOST";
+
+        /// <summary>
+        /// The port used to locate the GRPC collector.
+        /// </summary>
+        public const string JaegerGrpcPort = JaegerPrefix + "GRPC_PORT";
+
+        /// <summary>
+        /// The root certificate used to create a trusted TLS connection to the GRPC collector.
+        /// </summary>
+        public const string JaegerGrpcRootCertificate = JaegerPrefix + "GRPC_ROOT_CERTIFICATE";
 
         /// <summary>
         /// Whether the reporter should log the spans.
@@ -577,7 +593,7 @@ namespace Jaeger
         }
 
         /// <summary>
-        /// Holds the configuration related to the sender. A sender can be a <see cref="HttpSender"/> or <see cref="UdpSender"/>.
+        /// Holds the configuration related to the sender. A sender can be a <see cref="HttpSender"/>, <see cref="UdpSender"/> or <see cref="GrpcSender"/>.
         /// </summary>
         public class SenderConfiguration
         {
@@ -598,6 +614,21 @@ namespace Jaeger
             /// The Agent Port. Has no effect if the sender is set. Optional.
             /// </summary>
             public int? AgentPort { get; private set; }
+
+            /// <summary>
+            /// The GRPC Host. Has no effect if the sender is set. Optional.
+            /// </summary>
+            public string GrpcHost { get; private set; }
+
+            /// <summary>
+            /// The GRPC root certificate. Has no effect if the sender is set. Optional.
+            /// </summary>
+            public string GrpcRootCertificate { get; private set; }
+
+            /// <summary>
+            /// The GRPC Port. Has no effect if the sender is set. Optional.
+            /// </summary>
+            public int? GrpcPort { get; private set; }
 
             /// <summary>
             /// The endpoint, like https://jaeger-collector:14268/api/traces.
@@ -634,6 +665,24 @@ namespace Jaeger
             public SenderConfiguration WithAgentPort(int? agentPort)
             {
                 AgentPort = agentPort;
+                return this;
+            }
+
+            public SenderConfiguration WithGrpcHost(string grpcHost)
+            {
+                GrpcHost = grpcHost;
+                return this;
+            }
+
+            public SenderConfiguration WithGrpcPort(int? grpcPort)
+            {
+                GrpcPort = grpcPort;
+                return this;
+            }
+
+            public SenderConfiguration WithGrpcRootCertificate(string grpcRootCertificate)
+            {
+                GrpcRootCertificate = grpcRootCertificate;
                 return this;
             }
 
@@ -674,29 +723,65 @@ namespace Jaeger
                     return Sender;
                 }
 
+                // if we have an HTTP endpoint, return that one
                 if (!string.IsNullOrEmpty(Endpoint))
                 {
-                    HttpSender.Builder httpSenderBuilder = new HttpSender.Builder(Endpoint);
-                    if (!string.IsNullOrEmpty(AuthUsername) && !string.IsNullOrEmpty(AuthPassword))
-                    {
-                        _logger.LogDebug("Using HTTP Basic authentication with data from the environment variables.");
-                        httpSenderBuilder.WithAuth(AuthUsername, AuthPassword);
-                    }
-                    else if (!string.IsNullOrEmpty(AuthToken))
-                    {
-                        _logger.LogDebug("Auth Token environment variable found.");
-                        httpSenderBuilder.WithAuth(AuthToken);
-                    }
-
-                    _logger.LogDebug("Using the HTTP Sender to send spans directly to the endpoint.");
-                    return httpSenderBuilder.Build();
+                    return GetHttpSender();
                 }
 
+                // if we have an GRPC endpoint, return that one
+                if (!string.IsNullOrEmpty(GrpcHost))
+                {
+                    return GetGrpcSender();
+                }
+
+                // if we have no specific endpoint, use UDP agent
+                return GetUdpSender();
+            }
+
+            private ISender GetHttpSender()
+            {
+                HttpSender.Builder httpSenderBuilder = new HttpSender.Builder(Endpoint);
+                if (!string.IsNullOrEmpty(AuthUsername) && !string.IsNullOrEmpty(AuthPassword))
+                {
+                    _logger.LogDebug("Using HTTP Basic authentication with data from the environment variables.");
+                    httpSenderBuilder.WithAuth(AuthUsername, AuthPassword);
+                }
+                else if (!string.IsNullOrEmpty(AuthToken))
+                {
+                    _logger.LogDebug("Auth Token environment variable found.");
+                    httpSenderBuilder.WithAuth(AuthToken);
+                }
+
+                _logger.LogDebug("Using the HTTP Sender to send spans directly to the endpoint.");
+                return httpSenderBuilder.Build();
+            }
+
+            private ISender GetGrpcSender()
+            {
+                ChannelCredentials credentials;
+                if (!string.IsNullOrEmpty(GrpcRootCertificate))
+                {
+                    _logger.LogDebug("Use TLS GRPC channel with data from the environment variables.");
+                    credentials = new SslCredentials(GrpcRootCertificate);
+                }
+                else
+                {
+                    _logger.LogDebug("Use insecure GRPC channel without credentials.");
+                    credentials = ChannelCredentials.Insecure;
+                }
+
+                _logger.LogDebug("Using the GRPC Sender to send spans directly to the endpoint.");
+                return new GrpcSender(GrpcHost, GrpcPort ?? 0, credentials);
+            }
+
+            private ISender GetUdpSender()
+            {
                 _logger.LogDebug("Using the UDP Sender to send spans to the agent.");
                 return new UdpSender(
-                        StringOrDefault(AgentHost, UdpSender.DefaultAgentUdpHost),
-                        AgentPort.GetValueOrDefault(UdpSender.DefaultAgentUdpCompactPort),
-                        0 /* max packet size */);
+                    StringOrDefault(AgentHost, UdpSender.DefaultAgentUdpHost),
+                    AgentPort.GetValueOrDefault(UdpSender.DefaultAgentUdpCompactPort),
+                    0 /* max packet size */);
             }
 
             /// <summary>
@@ -709,6 +794,10 @@ namespace Jaeger
                 string agentHost = GetProperty(JaegerAgentHost, configuration);
                 int? agentPort = GetPropertyAsInt(JaegerAgentPort, logger, configuration);
 
+                string grpcHost = GetProperty(JaegerGrpcHost, configuration);
+                int? grpcPort = GetPropertyAsInt(JaegerGrpcPort, logger, configuration);
+                string grpcRootCertificate = GetProperty(JaegerGrpcRootCertificate, configuration);
+
                 string collectorEndpoint = GetProperty(JaegerEndpoint, configuration);
                 string authToken = GetProperty(JaegerAuthToken, configuration);
                 string authUsername = GetProperty(JaegerUser, configuration);
@@ -717,6 +806,9 @@ namespace Jaeger
                 return new SenderConfiguration(loggerFactory)
                     .WithAgentHost(agentHost)
                     .WithAgentPort(agentPort)
+                    .WithGrpcHost(grpcHost)
+                    .WithGrpcPort(grpcPort)
+                    .WithGrpcRootCertificate(grpcRootCertificate)
                     .WithEndpoint(collectorEndpoint)
                     .WithAuthToken(authToken)
                     .WithAuthUsername(authUsername)

@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+
+    <!-- No XML docs as this library contains auto-generated code that doesn't produce useful XML comments -->
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Google.Protobuf" Version="3.7.0" />
+    <PackageReference Include="Grpc" Version="1.19.0" />
+    <PackageReference Include="Grpc.Tools" Version="1.19.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProtoBuf Include="**/*.proto" />
+  </ItemGroup>
+
+</Project>
