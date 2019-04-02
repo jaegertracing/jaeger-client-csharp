@@ -14,13 +14,13 @@ using ThriftTagType = Jaeger.Thrift.TagType;
 
 namespace Jaeger.Tests.Reporters.Protocols
 {
-    public class JaegerThriftSpanConverterTest
+    public class JaegerThriftSpanConverterTests
     {
         private static readonly ThriftReferenceComparer _thriftReferenceComparer = new ThriftReferenceComparer();
 
         private readonly Tracer _tracer;
 
-        public JaegerThriftSpanConverterTest()
+        public JaegerThriftSpanConverterTests()
         {
             _tracer = new Tracer.Builder("test-service-name")
                 .WithReporter(new InMemoryReporter())
