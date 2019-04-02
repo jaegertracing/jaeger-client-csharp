@@ -40,6 +40,18 @@ namespace Jaeger
             return $"{High:x}{Low:x016}";
         }
 
+        public byte[] ToByteArray()
+        {
+            var bytesHigh = Utils.LongToNetworkBytes(High);
+            var bytesLow = Utils.LongToNetworkBytes(Low);
+
+            var bytes = new byte[bytesHigh.Length + bytesLow.Length];
+            Array.Copy(bytesHigh, 0, bytes, 0, bytesHigh.Length);
+            Array.Copy(bytesLow, 0, bytes, bytesHigh.Length, bytesLow.Length);
+
+            return bytes;
+        }
+
         public static TraceId FromString(string from)
         {
             if (from.Length > 32)

@@ -1,4 +1,5 @@
 using System;
+using Jaeger.Util;
 using Xunit;
 
 namespace Jaeger.Tests
@@ -25,6 +26,20 @@ namespace Jaeger.Tests
         {
             var longValue = (long)_spanId;
             Assert.Equal(longValue, Convert.ToInt64(_spanIdValue));
+        }
+
+        [Fact]
+        public void Field_ShouldReturnBytes()
+        {
+            Assert.Collection(_spanId.ToByteArray(),
+                b => Assert.Equal(b, (byte)0x00),
+                b => Assert.Equal(b, (byte)0x00),
+                b => Assert.Equal(b, (byte)0x00),
+                b => Assert.Equal(b, (byte)0x00),
+                b => Assert.Equal(b, (byte)0x00),
+                b => Assert.Equal(b, (byte)0x00),
+                b => Assert.Equal(b, (byte)0x00),
+                b => Assert.Equal(b, (byte)0x2a));
         }
     }
 }

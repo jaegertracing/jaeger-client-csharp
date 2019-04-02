@@ -26,14 +26,19 @@ namespace Jaeger
             Id = traceId.Low;
         }
 
-        public override string ToString()
-        {
-            return Id.ToString("x");
-        }
-
         public static implicit operator long(SpanId s)
         {
             return s.Id;
+        }
+
+        public byte[] ToByteArray()
+        {
+            return Utils.LongToNetworkBytes(Id);
+        }
+
+        public override string ToString()
+        {
+            return Id.ToString("x");
         }
 
         public static SpanId FromString(string from)
