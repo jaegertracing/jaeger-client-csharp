@@ -100,7 +100,7 @@ namespace Jaeger.Tests
         }
 
         [Fact]
-        public void TestSamplerConst()
+        public void TestSamplerConstFromEnv()
         {
             SetProperty(Configuration.JaegerSamplerType, ConstSampler.Type);
             SetProperty(Configuration.JaegerSamplerParam, "1");
@@ -138,7 +138,7 @@ namespace Jaeger.Tests
         }
 
         [Fact]
-        public void TestReporterConfiguration()
+        public void TestReporterConfigurationFromEnv()
         {
             SetProperty(Configuration.JaegerReporterLogSpans, "true");
             SetProperty(Configuration.JaegerAgentHost, "MyHost");
@@ -154,19 +154,17 @@ namespace Jaeger.Tests
         }
 
         [Fact]
-        public void TestReporterConfigurationInvalidFlushInterval()
-        {
-            SetProperty(Configuration.JaegerReporterFlushInterval, "X");
-            ReporterConfiguration reporterConfig = ReporterConfiguration.FromEnv(_loggerFactory);
-            Assert.Null(reporterConfig.FlushInterval);
-        }
-
-        [Fact]
         public void TestReporterConfigurationFromIConfiguration()
         {
             var arrayDict = new Dictionary<string, string>
             {
-                {Configuration.JaegerReporterLogSpans, "X"},
+                {Configuration.JaegerSamplerType, ConstSampler.Type},
+                {Configuration.JaegerSamplerParam, "1"},
+                {Configuration.JaegerReporterLogSpans, "true"},
+                {Configuration.JaegerAgentHost, "MyHost"},
+                {Configuration.JaegerAgentPort, "1234"},
+                {Configuration.JaegerReporterFlushInterval, "500"},
+                {Configuration.JaegerReporterMaxQueueSize, "1000"}
             };
 
             var configuration = new ConfigurationBuilder()
@@ -174,7 +172,19 @@ namespace Jaeger.Tests
                 .Build();
 
             ReporterConfiguration reporterConfig = ReporterConfiguration.FromIConfiguration(_loggerFactory, configuration);
-            Assert.False(reporterConfig.LogSpans);
+            Assert.True(reporterConfig.LogSpans);
+            Assert.Equal("MyHost", reporterConfig.SenderConfig.AgentHost);
+            Assert.Equal(1234, reporterConfig.SenderConfig.AgentPort);
+            Assert.Equal(TimeSpan.FromMilliseconds(500), reporterConfig.FlushInterval);
+            Assert.Equal(1000, reporterConfig.MaxQueueSize);
+        }
+
+        [Fact]
+        public void TestReporterConfigurationInvalidFlushInterval()
+        {
+            SetProperty(Configuration.JaegerReporterFlushInterval, "X");
+            ReporterConfiguration reporterConfig = ReporterConfiguration.FromEnv(_loggerFactory);
+            Assert.Null(reporterConfig.FlushInterval);
         }
 
         [Fact]
