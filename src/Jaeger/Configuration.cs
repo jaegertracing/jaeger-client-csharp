@@ -717,21 +717,19 @@ namespace Jaeger
             /// <returns>The sender passed via the constructor or a properly configured sender.</returns>
             public virtual ISender GetSender()
             {
-                // if we have a sender, that's the one we return
                 if (Sender != null)
                 {
+                    // If we have a sender, that's the one we return
                     return Sender;
                 }
-
-                // if we have an HTTP endpoint, return that one
                 if (!string.IsNullOrEmpty(Endpoint))
                 {
+                    // If we have an HTTP endpoint, return that one
                     return GetHttpSender();
                 }
-
-                // if we have an GRPC endpoint, return that one
                 if (!string.IsNullOrEmpty(GrpcHost))
                 {
+                    // If we have an GRPC endpoint, return that one
                     return GetGrpcSender();
                 }
 
