@@ -95,6 +95,7 @@ namespace Jaeger
                 {
                 }
             }
+#if !NETSTANDARD1_6
             else
             {
                 try
@@ -108,6 +109,7 @@ namespace Jaeger
                 {
                 }
             }
+#endif
 
             Tags = tags;
         }
@@ -188,12 +190,17 @@ namespace Jaeger
 
         internal string GetHostName()
         {
-            return Dns.GetHostName();
+            return Environment.MachineName;
         }
 
         private static string LoadVersion()
         {
-            var version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+#if NETSTANDARD1_6
+            var assembly = typeof(Tracer).GetTypeInfo().Assembly;
+#else
+            var assembly = Assembly.GetExecutingAssembly();
+#endif
+            var version = assembly.GetName().Version.ToString();
             return $"CSharp-{version}";
         }
 

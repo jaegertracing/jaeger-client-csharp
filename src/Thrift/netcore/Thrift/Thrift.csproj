@@ -1,7 +1,7 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>netstandard2.0;netstandard1.6</TargetFrameworks>
     <AssemblyName>Jaeger.Thrift.VendoredThrift</AssemblyName>
     <PackageId>Jaeger.Thrift.VendoredThrift</PackageId>
     <IsPackable>true</IsPackable>
@@ -16,5 +16,9 @@
     <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
     <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
   </PropertyGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard1.6'">
+    <PackageReference Include="System.IO.Pipes" Version="4.3.0" />
+  </ItemGroup>
 
 </Project>

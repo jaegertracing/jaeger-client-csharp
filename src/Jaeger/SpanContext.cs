@@ -138,7 +138,7 @@ namespace Jaeger
 
         /// <summary>
         /// Returns <c>true</c> when the instance of the context is only used to return the debug/correlation ID
-        /// from <see cref="ITracer.Extract"/> method. This happens in the situation when "jaeger-debug-id" header is passed in
+        /// from <see cref="ITracer.Extract{TCarrier}"/> method. This happens in the situation when "jaeger-debug-id" header is passed in
         /// the carrier to the extract method, but the request otherwise has no span context in it.
         /// Previously this would've returned <c>null</c> from the extract method, but now it returns a dummy
         /// context with only debugId filled in.

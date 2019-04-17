@@ -8,6 +8,11 @@ namespace Jaeger.Thrift.Senders.Internal
     {
         private readonly UdpClient _client;
 
+#if NETSTANDARD1_6
+        private string _host;
+        private int _port;
+#endif
+
         public UdpClientAdapter()
         {
             _client = new UdpClient();
@@ -15,14 +20,30 @@ namespace Jaeger.Thrift.Senders.Internal
 
         public void Dispose() => _client.Dispose();
 
-        public void Connect(string host, int port) => _client.Connect(host, port);
-
         public Socket Client => _client.Client;
-
-        public void Close() => _client.Close();
 
         public Task<UdpReceiveResult> ReceiveAsync() => _client.ReceiveAsync();
 
+#if NETSTANDARD1_6
+        public void Connect(string host, int port)
+        {
+            _host = host;
+            _port = port;
+        }
+
+        public Task SendAsync(byte[] bytes, int bytesLength) => _client.SendAsync(bytes, bytesLength, _host, _port);
+
+        public void Close()
+        {
+            _host = null;
+            _port = 0;
+        }
+#else
+        public void Connect(string host, int port) => _client.Connect(host, port);
+
         public Task SendAsync(byte[] bytes, int bytesLength) => _client.SendAsync(bytes, bytesLength);
+
+        public void Close() => _client.Close();
+#endif
     }
 }

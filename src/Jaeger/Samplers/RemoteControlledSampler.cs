@@ -60,7 +60,7 @@ namespace Jaeger.Samplers
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Updating sampler failed");
+                _logger.LogWarning(default, ex, "Updating sampler failed");
                 _metrics.SamplerQueryFailure.Inc(1);
             }
         }

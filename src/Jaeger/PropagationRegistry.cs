@@ -62,7 +62,7 @@ namespace Jaeger
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Error when extracting SpanContext from carrier. Handling gracefully.");
+                    _logger.LogWarning(default, ex, "Error when extracting SpanContext from carrier. Handling gracefully.");
                     return null;
                 }
             }
@@ -87,7 +87,7 @@ namespace Jaeger
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Error when injecting SpanContext into carrier. Handling gracefully.");
+                    _logger.LogWarning(default, ex, "Error when injecting SpanContext into carrier. Handling gracefully.");
                 }
             }
         }

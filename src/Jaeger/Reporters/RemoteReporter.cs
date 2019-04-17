@@ -79,7 +79,7 @@ namespace Jaeger.Reporters
             }
             catch (OperationCanceledException ex)
             {
-                _logger.LogError(ex, "Dispose interrupted");
+                _logger.LogError(default, ex, "Dispose interrupted");
             }
             finally
             {
@@ -138,7 +138,7 @@ namespace Jaeger.Reporters
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "QueueProcessor error");
+                    _logger.LogError(default, ex, "QueueProcessor error");
                     // Do nothing, and try again on next command.
                 }
             }

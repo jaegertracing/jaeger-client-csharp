@@ -102,13 +102,13 @@ namespace Jaeger.Metrics
 
         private void CreateMetrics(IMetricsFactory factory)
         {
-            foreach (PropertyInfo property in typeof(MetricsImpl).GetProperties())
+            foreach (PropertyInfo property in typeof(MetricsImpl).GetTypeInfo().GetProperties())
             {
                 Type metricType = property.PropertyType;
 
-                if (!typeof(ICounter).IsAssignableFrom(metricType)
-                      && !typeof(ITimer).IsAssignableFrom(metricType)
-                      && !typeof(IGauge).IsAssignableFrom(metricType))
+                if (!typeof(ICounter).GetTypeInfo().IsAssignableFrom(metricType)
+                      && !typeof(ITimer).GetTypeInfo().IsAssignableFrom(metricType)
+                      && !typeof(IGauge).GetTypeInfo().IsAssignableFrom(metricType))
                 {
                     // Some frameworks dynamically add code that this reflection will pick up
                     // I only want this classes Stats based fields to be picked up.
