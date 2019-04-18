@@ -27,13 +27,13 @@ namespace Jaeger.Propagation
 
         protected override void Inject(SpanContext spanContext, ITextMap carrier)
         {
-            carrier.Set(TraceIdName, HexCodec.ToLowerHex(spanContext.TraceId.High, spanContext.TraceId.Low));
+            carrier.Set(TraceIdName, spanContext.TraceId.ToString());
             if (spanContext.ParentId != 0L)
             {
                 // Conventionally, parent id == 0 means the root span
-                carrier.Set(ParentSpanIdName, HexCodec.ToLowerHex(spanContext.ParentId));
+                carrier.Set(ParentSpanIdName, spanContext.ParentId.ToString());
             }
-            carrier.Set(SpanIdName, HexCodec.ToLowerHex(spanContext.SpanId));
+            carrier.Set(SpanIdName, spanContext.SpanId.ToString());
             carrier.Set(SampledName, spanContext.IsSampled ? "1" : "0");
             if (spanContext.IsDebug)
             {
@@ -43,9 +43,9 @@ namespace Jaeger.Propagation
 
         protected override SpanContext Extract(ITextMap carrier)
         {
-            long? traceId = null;
-            long? spanId = null;
-            long? parentId = 0L; // Conventionally, parent id == 0 means the root span
+            TraceId? traceId = null;
+            SpanId? spanId = null;
+            SpanId parentId = new SpanId(0); // Conventionally, parent id == 0 means the root span
             SpanContextFlags flags = SpanContextFlags.None;
 
             foreach (var entry in carrier)
@@ -60,15 +60,15 @@ namespace Jaeger.Propagation
                 }
                 else if (string.Equals(entry.Key, TraceIdName, StringComparison.OrdinalIgnoreCase))
                 {
-                    traceId = HexCodec.LowerHexToUnsignedLong(entry.Value);
+                    traceId = TraceId.FromString(entry.Value);
                 }
                 else if (string.Equals(entry.Key, ParentSpanIdName, StringComparison.OrdinalIgnoreCase))
                 {
-                    parentId = HexCodec.LowerHexToUnsignedLong(entry.Value);
+                    parentId = SpanId.FromString(entry.Value);
                 }
                 else if (string.Equals(entry.Key, SpanIdName, StringComparison.OrdinalIgnoreCase))
                 {
-                    spanId = HexCodec.LowerHexToUnsignedLong(entry.Value);
+                    spanId = SpanId.FromString(entry.Value);
                 }
                 else if (string.Equals(entry.Key, FlagsName, StringComparison.OrdinalIgnoreCase))
                 {
@@ -79,9 +79,9 @@ namespace Jaeger.Propagation
                 }
             }
 
-            if (traceId != null && parentId != null && spanId != null)
+            if (traceId != null && spanId != null)
             {
-                return new SpanContext(new TraceId(traceId.Value), new SpanId(spanId.Value), new SpanId(parentId.Value), flags);
+                return new SpanContext(traceId.Value, spanId.Value, parentId, flags);
             }
             return null;
         }

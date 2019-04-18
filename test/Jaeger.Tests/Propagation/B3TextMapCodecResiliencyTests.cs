@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Jaeger.Propagation;
 using OpenTracing.Propagation;
@@ -28,10 +29,7 @@ namespace Jaeger.Tests.Propagation
         {
             ITextMap maliciousCarrier = ValidHeaders();
             maliciousCarrier.Set(headerName, maliciousInput);
-            //when
-            SpanContext extract = _sut.Extract(maliciousCarrier);
-            //then
-            Assert.Null(extract);
+            Assert.ThrowsAny<Exception>(() => _sut.Extract(maliciousCarrier));
         }
 
         private ITextMap ValidHeaders()
