@@ -18,11 +18,22 @@ namespace Jaeger.Tests
         }
 
         [Fact]
-        public void TestContextFromString()
+        public void TestContextFromString64bit()
         {
             SpanContext context = SpanContext.ContextFromString("ff:dd:cc:4");
             Assert.Equal(0L, context.TraceId.High);
             Assert.Equal(255L, context.TraceId.Low);
+            Assert.Equal(221L, context.SpanId);
+            Assert.Equal(204L, context.ParentId);
+            Assert.Equal(4, (byte)context.Flags);
+        }
+
+        [Fact]
+        public void TestContextFromString128bit()
+        {
+            SpanContext context = SpanContext.ContextFromString("66a9b9e94fbd82982dd4bf8929a43f92:dd:cc:4");
+            Assert.Equal(0x66a9b9e94fbd8298L, context.TraceId.High);
+            Assert.Equal(0x2dd4bf8929a43f92L, context.TraceId.Low);
             Assert.Equal(221L, context.SpanId);
             Assert.Equal(204L, context.ParentId);
             Assert.Equal(4, (byte)context.Flags);

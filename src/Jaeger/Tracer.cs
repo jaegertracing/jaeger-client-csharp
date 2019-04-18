@@ -124,7 +124,7 @@ namespace Jaeger
             sb.Append($"IPv4={IPv4}, ");
             sb.Append($"Tags={string.Join(", ", Tags)}, ");
             sb.Append($"ZipkinSharedRpcSpan={ZipkinSharedRpcSpan}, ");
-            sb.Append($"ExpandExceptionLogs={ExpandExceptionLogs}");
+            sb.Append($"ExpandExceptionLogs={ExpandExceptionLogs}, ");
             sb.Append($"UseTraceId128Bit={UseTraceId128Bit}");
             sb.Append(')');
             return sb.ToString();
