@@ -5,7 +5,6 @@
  *  @generated
  */
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using System.IO;
@@ -18,8 +17,6 @@ using Thrift.Protocol;
 using Thrift.Protocol.Entities;
 using Thrift.Protocol.Utilities;
 using Thrift.Transport;
-using Thrift.Transport.Client;
-using Thrift.Transport.Server;
 using Thrift.Processor;
 
 

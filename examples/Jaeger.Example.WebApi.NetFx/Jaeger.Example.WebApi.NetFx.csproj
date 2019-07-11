@@ -114,9 +114,9 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Jaeger\Jaeger.csproj">
+    <ProjectReference Include="..\..\src\Jaeger.Core\Jaeger.Core.csproj">
       <Project>{aba4f1b1-f6d0-40a9-904b-efa98a4c0411}</Project>
-      <Name>Jaeger</Name>
+      <Name>Jaeger.Core</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

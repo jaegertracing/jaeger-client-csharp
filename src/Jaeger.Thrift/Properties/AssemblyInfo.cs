@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("Jaeger.Tests, PublicKey=" +
+[assembly: InternalsVisibleTo("Jaeger.Core.Tests, PublicKey=" +
 "0024000004800000940000000602000000240000525341310004000001000100ed30feea874346" +
 "6a7483d713831fbbfee3ba0e9a6638fcc419019f1b1031358b67b862a9e3b169d280093be6aea3" +
 "c555b56f1ef11d0ffddf3139b48c0c62f0ed09e5e01b04144b6158311adf688c9bdfd1c8122af9" +
