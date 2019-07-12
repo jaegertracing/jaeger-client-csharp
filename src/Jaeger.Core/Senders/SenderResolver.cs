@@ -115,7 +115,7 @@ namespace Jaeger.Senders
             catch (Exception e)
             {
                 _logger.LogWarning("Failed to get a sender from the sender factory.", e);
-                return null;
+                throw;
             }
         }
     }
