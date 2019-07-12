@@ -31,13 +31,18 @@ var reporter = new LoggingReporter(loggerFactory);
 A reporter that sends spans to a remote endpoint.
 
 ```C#
+Configuration.SenderConfiguration.DefaultSenderResolver = new SenderResolver(loggerFactory)
+	.RegisterSenderFactory<ThriftSenderFactory>();
 var reporter = new RemoteReporter.Builder()
     .WithLoggerFactory(loggerFactory) // optional, defaults to no logging
     .WithMaxQueueSize(...)            // optional, defaults to 100
     .WithFlushInterval(...)           // optional, defaults to TimeSpan.FromSeconds(1)
-    .WithSender(...)                  // optional, defaults to UdpSender("localhost", 6831, 0)
+    .WithSenderResolver(...)          // optional, defaults to Configuration.SenderConfiguration.DefaultSenderResolver
+    .WithSender(...)                  // optional, defaults to SenderResolver.Resolve()
     .Build();
 ```
+
+For more information on sender resolution see the sender [README](src/Jaeger.Core/Senders/README.md)
 
 ## Combined Reporter
 A reporter that combines multiple reporters for usage with the tracer. This is mostly used for debugging, when an output to the Console logger is wanted.
@@ -58,16 +63,20 @@ var spans = reporterInMemory.GetSpans();
 Most of the time, configuration will happen through usage of the `Configuration` helper. A common example for getting a combined `LoggingReporter` and `RemoteReporter` can be achieved by using
 
 ```C#
+var senderResolver = new SenderResolver(loggerFactory)
+	.RegisterSenderFactory<ThriftSenderFactory>();
+	
 var senderConfiguration = new Configuration.SenderConfiguration(loggerFactory)
+	.WithSenderResolver(senderResolver)	// optional, defaults to Configuration.SenderConfiguration.DefaultSenderResolver
     .With...();
 
 var reporterConfiguration = new Configuration.ReporterConfiguration(loggerFactory)
-    .WithSender(senderConfiguration) // optional, defaults to UdpSender at localhost:6831
+    .WithSender(senderConfiguration) // optional, defaults to UdpSender at localhost:6831 when ThriftSenderFactory is registered
     .WithLogSpans(true);             // optional, defaults to no LoggingReporter
 
 var tracer = new Configuration(serviceName, loggerFactory)
     .WithSampler(...)                    // optional, defaults to RemoteControlledSampler with HttpSamplingManager on localhost:5778
-    .WithReporter(reporterConfiguration) // optional, defaults to RemoteReporter with UdpSender at localhost:6831
+    .WithReporter(reporterConfiguration) // optional, defaults to RemoteReporter with UdpSender at localhost:6831 when ThriftSenderFactory is registered
     .GetTracer();
 ```
 

@@ -9,7 +9,15 @@
 This library is still under construction and needs to be peer reviewed as well as have features added.
 
 ## Usage
-This package contains everything you need to get up and running. If you want to report to a system such as Jaeger or Zipkin you will need to use their NuGet packages.
+This package contains everything you need to get up and running. The meta-package includes the following packages:
+* [Jaeger.Core](https://www.nuget.org/packages/Jaeger.Core/)
+* [Jaeger.Senders.Thrift](https://www.nuget.org/packages/Jaeger.Senders.Thrift/)
+
+### Senders
+The implementation of `Jaeger.Core` is agnostic to any reporting endpoint and could be even used without any in case of logfile reporting. For more information about the sender concept, have a look at the sender [README](src/Jaeger.Core/Senders/README.md).
+
+This is a list of sender implementations known to the Jaeger team:
+* [Jaeger.Senders.Thrift](src/Senders/Jaeger.Senders.Thrift/README.md) (default, included in `Jaeger`)
 
 ### The Tracer
 The following will give you a tracer that reports spans to an `ILogger` instance from `ILoggerFactory`.
@@ -44,9 +52,11 @@ using Microsoft.Extensions.Logging;
 var loggerFactory = ; // get Microsoft.Extensions.Logging ILoggerFactory
 var serviceName = "initExampleService";
 
+Configuration.SenderConfiguration.DefaultSenderResolver = new SenderResolver(loggerFactory)
+	.RegisterSenderFactory<ThriftSenderFactory>();
 Configuration config = new Configuration("myServiceName")
 	.WithSampler(...)   // optional, defaults to RemoteControlledSampler with HttpSamplingManager on localhost:5778
-	.WithReporter(...); // optional, defaults to RemoteReporter with UdpSender on localhost:6831
+	.WithReporter(...); // optional, defaults to RemoteReporter with UdpSender on localhost:6831 when ThriftSenderFactory is registered
 
 ITracer tracer = config.GetTracer();
 ```
@@ -83,6 +93,7 @@ JAEGER_SAMPLER_PARAM | no | The sampler parameter (double)
 JAEGER_SAMPLER_MANAGER_HOST_PORT | no | (DEPRECATED) The host name and port when using the remote controlled sampler
 JAEGER_SAMPLING_ENDPOINT | no | The url for the remote sampling conf when using sampler type remote. Default is http://127.0.0.1:5778/sampling
 JAEGER_TAGS | no | A comma separated list of `name = value` tracer level tags, which get added to all reported spans. The value can also refer to an environment variable using the format `${envVarName:default}`, where the `:default` is optional, and identifies a value to be used if the environment variable cannot be found
+JAEGER_SENDER_FACTORY | no | The name of the sender factory to use if multiple are available
 JAEGER_TRACEID_128BIT | no | Whether to use 128bit TraceID instead of 64bit
 
 Setting `JAEGER_AGENT_HOST`/`JAEGER_AGENT_PORT` will make the client send traces to the agent via `UdpSender`.
@@ -96,10 +107,10 @@ token, like a JWT, set the `JAEGER_AUTH_TOKEN` environment variable. If the Basi
 variables *and* the Auth Token environment variable are set, Basic Authentication is used.
 
 #### Reporting
-For more information on reporting see the reporting [README](src/Jaeger/Reporters/README.md)
+For more information on reporting see the reporting [README](src/Jaeger.Core/Reporters/README.md)
 
 #### Sampling
-For more information on sampling see the sampling [README](src/Jaeger/Samplers/README.md)
+For more information on sampling see the sampling [README](src/Jaeger.Core/Samplers/README.md)
 
 #### Extracting Span Information
 When your code is called you might want to pull current trace information out of calling information before building and starting a span. This allows you to link your span into a current trace and track its relation to other spans. By default text map and http headers are supported. More support is planned for the future as well as allowing custom extractors.
