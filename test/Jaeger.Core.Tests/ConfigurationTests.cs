@@ -23,7 +23,7 @@ namespace Jaeger.Core.Tests
 {
     public class ConfigurationTests : IDisposable
     {
-        private const string TestProperty = "TestProperty";
+        private const string TEST_PROPERTY = "TestProperty";
         private const string FACTORY_NAME_TEST1 = "test1";
         private const string FACTORY_NAME_TEST2 = "test2";
 
@@ -67,7 +67,7 @@ namespace Jaeger.Core.Tests
             ClearProperty(Configuration.JaegerPassword);
             ClearProperty(Configuration.JaegerPropagation);
 
-            ClearProperty(TestProperty);
+            ClearProperty(TEST_PROPERTY);
 
             // Reset opentracing's global tracer
             FieldInfo field = typeof(GlobalTracer).GetField("_tracer", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -254,7 +254,7 @@ namespace Jaeger.Core.Tests
         public void TestTracerTagsSubstitutionDefault()
         {
             SetProperty(Configuration.JaegerServiceName, "Test");
-            SetProperty(Configuration.JaegerTags, "testTag1=${" + TestProperty + ":hello}");
+            SetProperty(Configuration.JaegerTags, "testTag1=${" + TEST_PROPERTY + ":hello}");
             Tracer tracer = (Tracer)Configuration.FromEnv(_loggerFactory).GetTracer();
             Assert.Equal("hello", tracer.Tags["testTag1"]);
         }
@@ -263,8 +263,8 @@ namespace Jaeger.Core.Tests
         public void TestTracerTagsSubstitutionSpecified()
         {
             SetProperty(Configuration.JaegerServiceName, "Test");
-            SetProperty(TestProperty, "goodbye");
-            SetProperty(Configuration.JaegerTags, "testTag1=${" + TestProperty + ":hello}");
+            SetProperty(TEST_PROPERTY, "goodbye");
+            SetProperty(Configuration.JaegerTags, "testTag1=${" + TEST_PROPERTY + ":hello}");
             Tracer tracer = (Tracer)Configuration.FromEnv(_loggerFactory).GetTracer();
             Assert.Equal("goodbye", tracer.Tags["testTag1"]);
         }
