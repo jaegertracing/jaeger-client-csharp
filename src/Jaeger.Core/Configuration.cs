@@ -103,6 +103,13 @@ namespace Jaeger
         public const string JaegerTags = JaegerPrefix + "TAGS";
 
         /// <summary>
+        /// When there are multiple service providers for the <see cref="ISenderFactory"/> available,
+        /// this var is used to select a <see cref="ISenderFactory"/> by matching it with
+        /// <see cref="ISenderFactory.FactoryName"/>.
+        /// </summary>
+        public const string JaegerSenderFactory = JaegerPrefix + "SENDER_FACTORY";
+
+        /// <summary>
         /// Whether to use 128bit TraceID instead of 64bit.
         /// </summary>
         public const string JaegerTraceId128Bit = JaegerPrefix + "TRACEID_128BIT";
@@ -529,7 +536,6 @@ namespace Jaeger
             public ReporterConfiguration(ILoggerFactory loggerFactory)
             {
                 _loggerFactory = loggerFactory;
-                SenderConfig = new SenderConfiguration(loggerFactory);
             }
 
             /// <summary>
@@ -557,7 +563,7 @@ namespace Jaeger
                 return FromIConfiguration(loggerFactory, configuration);
             }
 
-            public ReporterConfiguration WithLogSpans(Boolean logSpans)
+            public ReporterConfiguration WithLogSpans(bool logSpans)
             {
                 LogSpans = logSpans;
                 return this;
@@ -583,6 +589,11 @@ namespace Jaeger
 
             public virtual IReporter GetReporter(IMetrics metrics)
             {
+                if (SenderConfig == null)
+                {
+                    SenderConfig = new SenderConfiguration(_loggerFactory);
+                }
+
                 IReporter reporter = new RemoteReporter.Builder()
                     .WithLoggerFactory(_loggerFactory)
                     .WithMetrics(metrics)
@@ -601,17 +612,29 @@ namespace Jaeger
         }
 
         /// <summary>
-        /// Holds the configuration related to the sender. A sender can be a <see cref="HttpSender"/> or <see cref="UdpSender"/>.
+        /// Holds the configuration related to the sender.
         /// </summary>
         public class SenderConfiguration
         {
             private readonly ILoggerFactory _loggerFactory;
             private readonly ILogger _logger;
 
+            public static SenderResolver DefaultSenderResolver { get; set; }
+
             /// <summary>
             /// A custom sender set by our consumers. If set, nothing else has effect. Optional.
             /// </summary>
             public ISender Sender { get; private set; }
+
+            /// <summary>
+            /// The Sender Resolver. Has no effect if the sender is set. Optional.
+            /// </summary>
+            public SenderResolver SenderResolver { get; private set; }
+
+            /// <summary>
+            /// The Sender Factory. Has no effect if the sender is set. Optional.
+            /// </summary>
+            public string SenderFactory { get; private set; }
 
             /// <summary>
             /// The Agent Host. Has no effect if the sender is set. Optional.
@@ -647,6 +670,29 @@ namespace Jaeger
             {
                 _loggerFactory = loggerFactory;
                 _logger = loggerFactory.CreateLogger<Configuration>();
+
+                if (DefaultSenderResolver == null)
+                {
+                    DefaultSenderResolver = new SenderResolver(_loggerFactory);
+                }
+            }
+
+            public SenderConfiguration WithSender(ISender sender)
+            {
+                Sender = sender;
+                return this;
+            }
+
+            public SenderConfiguration WithSenderResolver(SenderResolver senderResolver)
+            {
+                SenderResolver = senderResolver;
+                return this;
+            }
+
+            public SenderConfiguration WithSenderFactory(string senderFactory)
+            {
+                SenderFactory = senderFactory;
+                return this;
             }
 
             public SenderConfiguration WithAgentHost(string agentHost)
@@ -692,35 +738,16 @@ namespace Jaeger
             /// <returns>The sender passed via the constructor or a properly configured sender.</returns>
             public virtual ISender GetSender()
             {
-                // if we have a sender, that's the one we return
-                if (Sender != null)
+                if (SenderResolver == null)
                 {
-                    return Sender;
+                    SenderResolver = DefaultSenderResolver;
+                }
+                if (Sender == null)
+                {
+                    Sender = SenderResolver.Resolve(this);
                 }
 
-                if (!string.IsNullOrEmpty(Endpoint))
-                {
-                    HttpSender.Builder httpSenderBuilder = new HttpSender.Builder(Endpoint);
-                    if (!string.IsNullOrEmpty(AuthUsername) && !string.IsNullOrEmpty(AuthPassword))
-                    {
-                        _logger.LogDebug("Using HTTP Basic authentication with data from the environment variables.");
-                        httpSenderBuilder.WithAuth(AuthUsername, AuthPassword);
-                    }
-                    else if (!string.IsNullOrEmpty(AuthToken))
-                    {
-                        _logger.LogDebug("Auth Token environment variable found.");
-                        httpSenderBuilder.WithAuth(AuthToken);
-                    }
-
-                    _logger.LogDebug("Using the HTTP Sender to send spans directly to the endpoint.");
-                    return httpSenderBuilder.Build();
-                }
-
-                _logger.LogDebug("Using the UDP Sender to send spans to the agent.");
-                return new UdpSender(
-                        StringOrDefault(AgentHost, UdpSender.DefaultAgentUdpHost),
-                        AgentPort.GetValueOrDefault(UdpSender.DefaultAgentUdpCompactPort),
-                        0 /* max packet size */);
+                return Sender;
             }
 
             /// <summary>
@@ -729,6 +756,8 @@ namespace Jaeger
             public static SenderConfiguration FromIConfiguration(ILoggerFactory loggerFactory, IConfiguration configuration)
             {
                 ILogger logger = loggerFactory.CreateLogger<Configuration>();
+
+                string senderFactory = GetProperty(JaegerSenderFactory, logger, configuration);
 
                 string agentHost = GetProperty(JaegerAgentHost, logger, configuration);
                 int? agentPort = GetPropertyAsInt(JaegerAgentPort, logger, configuration);
@@ -739,6 +768,8 @@ namespace Jaeger
                 string authPassword = GetProperty(JaegerPassword, logger, configuration);
 
                 return new SenderConfiguration(loggerFactory)
+                    .WithSenderResolver(DefaultSenderResolver)
+                    .WithSenderFactory(senderFactory)
                     .WithAgentHost(agentHost)
                     .WithAgentPort(agentPort)
                     .WithEndpoint(collectorEndpoint)
@@ -761,7 +792,7 @@ namespace Jaeger
 
         private static string StringOrDefault(string value, string defaultValue)
         {
-            return value != null && value.Length > 0 ? value : defaultValue;
+            return !string.IsNullOrEmpty(value) ? value : defaultValue;
         }
 
         private static string GetProperty(string name, ILogger logger, IConfiguration configuration, string replacedBy = null)

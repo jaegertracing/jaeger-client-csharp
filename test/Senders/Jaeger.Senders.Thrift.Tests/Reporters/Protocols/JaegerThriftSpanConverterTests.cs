@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using Jaeger.Reporters;
-using Jaeger.Reporters.Protocols;
 using Jaeger.Samplers;
+using Jaeger.Senders.Thrift.Protocols;
 using OpenTracing;
 using Xunit;
 using ThriftLog = Jaeger.Thrift.Log;
@@ -11,7 +11,7 @@ using ThriftSpan = Jaeger.Thrift.Span;
 using ThriftTag = Jaeger.Thrift.Tag;
 using ThriftTagType = Jaeger.Thrift.TagType;
 
-namespace Jaeger.Core.Tests.Reporters.Protocols
+namespace Jaeger.Senders.Thrift.Tests.Reporters.Protocols
 {
     public class JaegerThriftSpanConverterTest
     {

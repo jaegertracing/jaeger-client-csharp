@@ -5,13 +5,13 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Jaeger.Core.Tests.Senders;
 using Jaeger.Metrics;
 using Jaeger.Reporters;
 using Jaeger.Samplers;
 using Microsoft.Extensions.Logging;
 using Xunit;
 using Xunit.Abstractions;
-using ThriftSpan = Jaeger.Thrift.Span;
 
 namespace Jaeger.Core.Tests.Reporters
 {
@@ -77,7 +77,7 @@ namespace Jaeger.Core.Tests.Reporters
                 await Task.Delay(1).ConfigureAwait(false);
             }
 
-            List<ThriftSpan> received = _sender.GetReceived();
+            List<Span> received = _sender.GetReceived();
 
             Assert.Single(received);
         }

@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Jaeger.Core\Jaeger.Core.csproj" />
+    <ProjectReference Include="..\..\..\src\Senders\Jaeger.Senders.Thrift\Jaeger.Senders.Thrift.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,11 +1,9 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Jaeger.Reporters.Protocols;
 using Jaeger.Senders;
-using ThriftSpan = Jaeger.Thrift.Span;
 
-namespace Jaeger.Core.Tests.Reporters
+namespace Jaeger.Core.Tests.Senders
 {
     /// <summary>
     /// Sender which stores spans in memory. Appending a new span is a blocking operation unless
@@ -13,42 +11,41 @@ namespace Jaeger.Core.Tests.Reporters
     /// </summary>
     public class InMemorySender : ISender
     {
-        private readonly List<ThriftSpan> _appended;
-        private readonly List<ThriftSpan> _flushed;
-        private readonly List<ThriftSpan> _received;
+        private readonly List<Span> _appended;
+        private readonly List<Span> _flushed;
+        private readonly List<Span> _received;
 
         // By default, all Append actions are allowed.
         private ManualResetEventSlim _blocker = new ManualResetEventSlim(true);
 
         public InMemorySender()
         {
-            _appended = new List<ThriftSpan>();
-            _flushed = new List<ThriftSpan>();
-            _received = new List<ThriftSpan>();
+            _appended = new List<Span>();
+            _flushed = new List<Span>();
+            _received = new List<Span>();
         }
 
-        public List<ThriftSpan> GetAppended()
+        public List<Span> GetAppended()
         {
-            return new List<ThriftSpan>(_appended);
+            return new List<Span>(_appended);
         }
 
-        public List<ThriftSpan> GetFlushed()
+        public List<Span> GetFlushed()
         {
-            return new List<ThriftSpan>(_flushed);
+            return new List<Span>(_flushed);
         }
 
-        public List<ThriftSpan> GetReceived()
+        public List<Span> GetReceived()
         {
-            return new List<ThriftSpan>(_received);
+            return new List<Span>(_received);
         }
 
         public Task<int> AppendAsync(Span span, CancellationToken cancellationToken)
         {
-            _blocker.Wait();
+            _blocker.Wait(cancellationToken);
 
-            ThriftSpan thriftSpan = JaegerThriftSpanConverter.ConvertSpan(span);
-            _appended.Add(thriftSpan);
-            _received.Add(thriftSpan);
+            _appended.Add(span);
+            _received.Add(span);
             return Task.FromResult(0);
         }
 

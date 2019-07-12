@@ -15,6 +15,7 @@
   <ItemGroup>
     <!-- PrivateAssets set to None to ensure the build targets/props are propagated to parent project -->
     <ProjectReference Include="..\Jaeger.Core\Jaeger.Core.csproj" PrivateAssets="None" />
+    <ProjectReference Include="..\Senders\Jaeger.Senders.Thrift\Jaeger.Senders.Thrift.csproj" PrivateAssets="None" />
   </ItemGroup>
 
 </Project>

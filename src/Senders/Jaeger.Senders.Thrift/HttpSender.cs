@@ -11,7 +11,7 @@ using ThriftBatch = Jaeger.Thrift.Batch;
 using ThriftProcess = Jaeger.Thrift.Process;
 using ThriftSpan = Jaeger.Thrift.Span;
 
-namespace Jaeger.Senders
+namespace Jaeger.Senders.Thrift
 {
     public class HttpSender : ThriftSender
     {

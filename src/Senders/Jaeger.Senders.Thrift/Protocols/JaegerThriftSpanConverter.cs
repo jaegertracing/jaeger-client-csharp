@@ -10,7 +10,7 @@ using ThriftReferenceType = Jaeger.Thrift.SpanRefType;
 using ThriftLog = Jaeger.Thrift.Log;
 using ThriftTagType = Jaeger.Thrift.TagType;
 
-namespace Jaeger.Reporters.Protocols
+namespace Jaeger.Senders.Thrift.Protocols
 {
     public static class JaegerThriftSpanConverter
     {

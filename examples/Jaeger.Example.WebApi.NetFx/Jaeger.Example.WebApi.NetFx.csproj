@@ -118,6 +118,10 @@
       <Project>{aba4f1b1-f6d0-40a9-904b-efa98a4c0411}</Project>
       <Name>Jaeger.Core</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\src\Senders\Jaeger.Senders.Thrift\Jaeger.Senders.Thrift.csproj">
+      <Project>{b7f77019-9165-4d4c-9196-877d4b7181cb}</Project>
+      <Name>Jaeger.Senders.Thrift</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

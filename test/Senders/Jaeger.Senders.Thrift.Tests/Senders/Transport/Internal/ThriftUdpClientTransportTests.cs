@@ -9,7 +9,7 @@ using NSubstitute.ExceptionExtensions;
 using Thrift.Transport;
 using Xunit;
 
-namespace Jaeger.Core.Tests.Senders.Transport.Internal
+namespace Jaeger.Senders.Thrift.Tests.Senders.Transport.Internal
 {
     public class ThriftUdpClientTransportTests : IDisposable
     {

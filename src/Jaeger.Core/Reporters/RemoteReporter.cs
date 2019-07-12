@@ -239,7 +239,7 @@ namespace Jaeger.Reporters
                 }
                 if (_sender == null)
                 {
-                    _sender = new UdpSender();
+                    _sender = NoopSender.Instance;
                 }
                 if (_metrics == null)
                 {

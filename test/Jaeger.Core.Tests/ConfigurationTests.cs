@@ -1,11 +1,12 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Net.Sockets;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using Jaeger.Core.Tests.Senders;
 using Jaeger.Metrics;
+using Jaeger.Reporters;
 using Jaeger.Samplers;
 using Jaeger.Senders;
 using Microsoft.Extensions.Logging;
@@ -23,12 +24,18 @@ namespace Jaeger.Core.Tests
     public class ConfigurationTests : IDisposable
     {
         private const string TestProperty = "TestProperty";
+        private const string FACTORY_NAME_TEST1 = "test1";
+        private const string FACTORY_NAME_TEST2 = "test2";
 
         private readonly ILoggerFactory _loggerFactory;
+        private readonly SenderResolver _flexibleSenderResolver;
 
         public ConfigurationTests()
         {
             _loggerFactory = NullLoggerFactory.Instance;
+            _flexibleSenderResolver = new SenderResolver(_loggerFactory)
+                .RegisterSenderFactory(new FlexibleSenderFactory(FACTORY_NAME_TEST1))
+                .RegisterSenderFactory(new FlexibleSenderFactory(FACTORY_NAME_TEST2));
 
             ClearProperties();
         }
@@ -52,6 +59,7 @@ namespace Jaeger.Core.Tests
             ClearProperty(Configuration.JaegerSamplingEndpoint);
             ClearProperty(Configuration.JaegerServiceName);
             ClearProperty(Configuration.JaegerTags);
+            ClearProperty(Configuration.JaegerSenderFactory);
             ClearProperty(Configuration.JaegerTraceId128Bit);
             ClearProperty(Configuration.JaegerEndpoint);
             ClearProperty(Configuration.JaegerAuthToken);
@@ -98,6 +106,15 @@ namespace Jaeger.Core.Tests
 
             Assert.NotNull(Configuration.FromIConfiguration(_loggerFactory, configuration).GetTracer());
             Assert.False(GlobalTracer.IsRegistered());
+        }
+
+        [Fact]
+        public void TestConfigurationWithDefaultReporterReturnsNoopRemoteReporter()
+        {
+            SetProperty(Configuration.JaegerServiceName, "Test");
+            Tracer tracer = (Tracer)Configuration.FromEnv(_loggerFactory).GetTracer();
+            Assert.IsType<RemoteReporter>(tracer.Reporter);
+            Assert.Equal("RemoteReporter(Sender=NoopSender())", tracer.Reporter.ToString());
         }
 
         [Fact]
@@ -253,76 +270,69 @@ namespace Jaeger.Core.Tests
         }
 
         [Fact]
-        public void TestSenderWithEndpointWithoutAuthData()
-        {
-            SetProperty(Configuration.JaegerEndpoint, "https://jaeger-collector:14268/api/traces");
-            ISender sender = Configuration.SenderConfiguration.FromEnv(_loggerFactory).GetSender();
-            Assert.True(sender is HttpSender);
-        }
-
-        [Fact]
-        public void TestSenderWithAgentDataFromEnv()
-        {
-            SetProperty(Configuration.JaegerAgentHost, "jaeger-agent");
-            SetProperty(Configuration.JaegerAgentPort, "6832");
-            Assert.Throws<SocketException>(() => Configuration.SenderConfiguration.FromEnv(_loggerFactory).GetSender());
-        }
-
-        [Fact]
-        public void TestSenderBackwardsCompatibilityGettingAgentHostAndPort()
-        {
-            SetProperty(Configuration.JaegerAgentHost, "jaeger-agent");
-            SetProperty(Configuration.JaegerAgentPort, "6832");
-            Assert.Equal("jaeger-agent", Configuration.ReporterConfiguration.FromEnv(_loggerFactory).SenderConfig.AgentHost);
-            Assert.Equal(6832, Configuration.ReporterConfiguration.FromEnv(_loggerFactory).SenderConfig.AgentPort);
-        }
-
-        [Fact]
-        public void TestNoNullPointerOnNullSender()
-        {
-            var reporterConfiguration = new Configuration.ReporterConfiguration(_loggerFactory);
-            Assert.Null(reporterConfiguration.SenderConfig.AgentHost);
-            Assert.Null(reporterConfiguration.SenderConfig.AgentPort);
-        }
-
-        [Fact(Skip="Java is using the Builder for this and it is deprecated.")]
         public void TestCustomSender()
         {
             String endpoint = "https://custom-sender-endpoint:14268/api/traces";
             SetProperty(Configuration.JaegerEndpoint, "https://jaeger-collector:14268/api/traces");
             CustomSender customSender = new CustomSender(endpoint);
-            Configuration.SenderConfiguration senderConfiguration = new Configuration.SenderConfiguration(_loggerFactory);
-            //senderConfiguration.Sender = customSender;
+            Configuration.SenderConfiguration senderConfiguration = new Configuration.SenderConfiguration(_loggerFactory)
+                .WithSender(customSender);
             Assert.Equal(endpoint, ((CustomSender)senderConfiguration.GetSender()).Endpoint);
         }
 
         [Fact]
-        public void TestSenderWithBasicAuthUsesHttpSender()
+        public void TestSenderWithNoPropertiesReturnsNoopSender()
         {
-            Configuration.SenderConfiguration senderConfiguration = new Configuration.SenderConfiguration(_loggerFactory)
-                    .WithEndpoint("https://jaeger-collector:14268/api/traces")
-                    .WithAuthUsername("username")
-                    .WithAuthPassword("password");
-            Assert.True(senderConfiguration.GetSender() is HttpSender);
+            Assert.True(Configuration.SenderConfiguration.FromEnv(_loggerFactory).GetSender() is NoopSender);
         }
 
         [Fact]
-        public void TestSenderWithAuthTokenUsesHttpSender()
+        public void TestSenderWithTest1SelectedOnFlexibleResolverReturnsTest1Sender()
         {
-            Configuration.SenderConfiguration senderConfiguration = new Configuration.SenderConfiguration(_loggerFactory)
-                    .WithEndpoint("https://jaeger-collector:14268/api/traces")
-                    .WithAuthToken("authToken");
-            Assert.True(senderConfiguration.GetSender() is HttpSender);
+            SetProperty(Configuration.JaegerSenderFactory, FACTORY_NAME_TEST1);
+
+            var sender = Configuration.SenderConfiguration.FromEnv(_loggerFactory)
+                .WithSenderResolver(_flexibleSenderResolver)
+                .GetSender();
+            Assert.IsType<FlexibleSenderFactory.Sender>(sender);
+
+            var flexibleSender = (FlexibleSenderFactory.Sender)sender;
+            Assert.Equal(FACTORY_NAME_TEST1, flexibleSender.FactoryName);
         }
 
         [Fact]
-        public void TestSenderWithAllPropertiesReturnsHttpSender()
+        public void TestSenderWithTest2SelectedOnFlexibleResolverReturnsTest2Sender()
+        {
+            SetProperty(Configuration.JaegerSenderFactory, FACTORY_NAME_TEST2);
+
+            var sender = Configuration.SenderConfiguration.FromEnv(_loggerFactory)
+                .WithSenderResolver(_flexibleSenderResolver)
+                .GetSender();
+            Assert.IsType<FlexibleSenderFactory.Sender>(sender);
+
+            var flexibleSender = (FlexibleSenderFactory.Sender)sender;
+            Assert.Equal(FACTORY_NAME_TEST2, flexibleSender.FactoryName);
+        }
+
+        [Fact]
+        public void TestSenderWithTest3SelectedOnFlexibleResolverReturnsNoopSender()
+        {
+            SetProperty(Configuration.JaegerSenderFactory, "test3");
+
+            var sender = Configuration.SenderConfiguration.FromEnv(_loggerFactory)
+                .WithSenderResolver(_flexibleSenderResolver)
+                .GetSender();
+            Assert.IsType<NoopSender>(sender);
+        }
+
+        [Fact]
+        public void TestSenderWithAllPropertiesReturnsNoopSender()
         {
             SetProperty(Configuration.JaegerEndpoint, "https://jaeger-collector:14268/api/traces");
             SetProperty(Configuration.JaegerAgentHost, "jaeger-agent");
             SetProperty(Configuration.JaegerAgentPort, "6832");
 
-            Assert.True(Configuration.SenderConfiguration.FromEnv(_loggerFactory).GetSender() is HttpSender);
+            Assert.True(Configuration.SenderConfiguration.FromEnv(_loggerFactory).GetSender() is NoopSender);
         }
 
         [Fact]
@@ -569,12 +579,11 @@ namespace Jaeger.Core.Tests
             }
         }
 
-        private class CustomSender : HttpSender
+        private class CustomSender : NoopSender
         {
             public string Endpoint { get; }
 
             public CustomSender(string endpoint)
-                : base(endpoint)
             {
                 Endpoint = endpoint;
             }
