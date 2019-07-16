@@ -22,12 +22,10 @@ namespace Jaeger.Crossdock
         {
             Configuration = configuration;
             LoggerFactory = loggerFactory;
-            ScopeManager = new AsyncLocalScopeManager();
         }
 
         public IConfiguration Configuration { get; }
         public ILoggerFactory LoggerFactory { get; }
-        public IScopeManager ScopeManager { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -37,7 +35,6 @@ namespace Jaeger.Crossdock
             services.AddSingleton<ITracer>(serviceProvider =>
             {
                 var tracer = new Tracer.Builder(Constants.DEFAULT_TRACER_SERVICE_NAME)
-                    .WithScopeManager(ScopeManager)
                     .WithSampler(new ConstSampler(false))
                     .WithReporter(new LoggingReporter(LoggerFactory))
                     .Build();
@@ -53,9 +50,9 @@ namespace Jaeger.Crossdock
                     .AddEnvironmentVariables()
                     .Build();
 
-                return new EndToEndBehavior(configuration.GetValue("SAMPLING_HOST_PORT", "jaeger-agent:5778"),
+                return new EndToEndBehavior(configuration.GetValue("SAMPLING_HOST_PORT", "jaeger:5778"),
                     Constants.DEFAULT_TRACER_SERVICE_NAME,
-                        new UdpSender(configuration.GetValue("AGENT_HOST", "jaeger-agent"), 0, 0));
+                        new UdpSender(configuration.GetValue("AGENT_HOST", "jaeger"), 0, 0));
             });
             services.AddSingleton(serviceProvider =>
             {
