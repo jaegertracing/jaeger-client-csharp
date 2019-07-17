@@ -78,6 +78,8 @@ services:
             - "jaeger:jaeger-query"
         ports:
             - "8080"
+        environment:
+            - JAEGER_QUERY_HC_HOST_PORT=jaeger-query:14269
 
     jaeger:
         image: jaegertracing/all-in-one
