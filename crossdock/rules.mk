@@ -4,12 +4,9 @@ XDOCK_YAML=crossdock/docker-compose.yml
 dotnet-build:
 	dotnet build -c Release crossdock\Jaeger.Crossdock\Jaeger.Crossdock.csproj
 	dotnet publish -c Release -o .\publish crossdock\Jaeger.Crossdock\Jaeger.Crossdock.csproj
-	dir
 
 .PHONY: crossdock
 crossdock: dotnet-build
-
-	docker build -f crossdock/Dockerfile -t test .
 
 	docker-compose -f $(XDOCK_YAML) kill csharp
 	docker-compose -f $(XDOCK_YAML) rm -f csharp
