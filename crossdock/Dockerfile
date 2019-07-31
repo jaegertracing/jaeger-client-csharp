@@ -16,7 +16,7 @@ EXPOSE 8080-8082
 WORKDIR /app
 COPY --from=build /dotnet /dotnet
 
-COPY ./crossdock/Jaeger.Crossdock/bin/Release/netcoreapp2.2/publish/. ./
+COPY ./publish/. ./
 
 ENV \
 DOTNET_RUNNING_IN_CONTAINER=true \

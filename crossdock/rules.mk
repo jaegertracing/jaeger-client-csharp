@@ -3,7 +3,7 @@ XDOCK_YAML=crossdock/docker-compose.yml
 .PHONY: dotnet-build
 dotnet-build:
 	dotnet build -c Release
-	dotnet publish -c Release
+	dotnet publish -c Release -o publish
 
 .PHONY: crossdock
 crossdock: dotnet-build
