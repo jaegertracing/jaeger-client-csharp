@@ -40,11 +40,14 @@ Task "Init" $true {
     if ($BuildConfiguration -eq $null) { throw "Property 'BuildConfiguration' may not be null." }
     if ((Get-Command "dotnet" -ErrorAction SilentlyContinue) -eq $null) { throw "'dotnet' command not found. Is .NET Core SDK installed?" }
 	
-	git config --global core.autocrlf true
-    Write-Host "Configured Git settings"
+	#choco install make
+    #Write-Host "Installed make"
 	
-	choco install make
-    Write-Host "Installed make"
+	#choco upgrade docker-desktop
+    #Write-Host "Upgrade docker-desktop"
+	
+	#choco upgrade docker-compose
+    #Write-Host "Upgrade docker-compose"
 
     Write-Host "ArtifactsPath: $ArtifactsPath"
     Write-Host "BuildConfiguration: $BuildConfiguration"
@@ -82,7 +85,13 @@ Task "Tests" $RunTests {
 
 Task "Xdock" $RunXdock {
 
-	make crossdock
+	# make crossdock
+	
+	$ xdockYaml = "crossdock/docker-compose.yml"
+	docker-compose -f $xdockYaml kill csharp
+	docker-compose -f $xdockYaml rm -f csharp
+	docker-compose -f $xdockYaml build csharp
+	docker-compose -f $xdockYaml run crossdock
 	
     if ($LASTEXITCODE -ne 0) { throw "Crossdock failed." }
 }
