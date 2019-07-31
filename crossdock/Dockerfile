@@ -2,7 +2,7 @@ FROM microsoft/windowsservercore@sha256:c06b4bfaf634215ea194e6005450740f3a230b27
 
 SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
 
-ENV ASPNETCORE_VERSION 2.2.4
+ENV ASPNETCORE_VERSION 2.2.6
 RUN Invoke-WebRequest -OutFile aspnetcore.zip https://dotnetcli.blob.core.windows.net/dotnet/aspnetcore/Runtime/$Env:ASPNETCORE_VERSION/aspnetcore-runtime-$Env:ASPNETCORE_VERSION-win-x64.zip; \
 Expand-Archive aspnetcore.zip -DestinationPath c:\dotnet; \
 Remove-Item -Force aspnetcore.zip
