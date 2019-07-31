@@ -2,7 +2,11 @@ FROM microsoft/windowsservercore@sha256:c06b4bfaf634215ea194e6005450740f3a230b27
 
 SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
 
-ENV DOTNET_SDK_VERSION 2.2.203
+ENV \
+DOTNET_SKIP_FIRST_TIME_EXPERIENCE=true \
+DOTNET_CLI_TELEMETRY_OPTOUT=1
+
+ENV DOTNET_SDK_VERSION 2.2.401
 RUN Invoke-WebRequest -OutFile dotnet.zip https://dotnetcli.blob.core.windows.net/dotnet/Sdk/$Env:DOTNET_SDK_VERSION/dotnet-sdk-$Env:DOTNET_SDK_VERSION-win-x64.zip; \
 Expand-Archive dotnet.zip -DestinationPath c:\sdk; \
 Remove-Item -Force dotnet.zip
