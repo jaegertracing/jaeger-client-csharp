@@ -94,6 +94,9 @@ Task "Xdock" $RunXdock {
 
 	#make crossdock
 	dotnet publish -c Release -o $PublishPath crossdock\Jaeger.Crossdock\Jaeger.Crossdock.csproj
+	dir $PWD
+	dir $PublishPath
+	
 	docker build -f crossdock/Dockerfile -t test .
 	
     if ($LASTEXITCODE -ne 0) { throw "Crossdock failed." }

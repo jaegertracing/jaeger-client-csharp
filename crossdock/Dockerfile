@@ -2,8 +2,6 @@ FROM microsoft/nanoserver@sha256:8f78a4a7da4464973a5cd239732626141aec97e69ba3e40
 
 EXPOSE 8080-8082
 
-RUN dir
-RUN dir publish
 COPY ./publish /app
 
 ENV \
