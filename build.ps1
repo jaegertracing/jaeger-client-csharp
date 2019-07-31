@@ -85,14 +85,7 @@ Task "Tests" $RunTests {
 
 Task "Xdock" $RunXdock {
 
-	# make crossdock
-	
-	# Only for testing...
-	docker build -f crossdock/Dockerfile -t test .
-	
-	$xdockYaml = "crossdock/docker-compose.yml"
-	docker-compose -f $xdockYaml build csharp
-	docker-compose -f $xdockYaml run crossdock
+	make crossdock
 	
     if ($LASTEXITCODE -ne 0) { throw "Crossdock failed." }
 }

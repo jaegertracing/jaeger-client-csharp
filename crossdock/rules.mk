@@ -7,6 +7,9 @@ dotnet-build:
 
 .PHONY: crossdock
 crossdock: dotnet-build
+
+	docker build -f crossdock/Dockerfile -t test .
+
 	docker-compose -f $(XDOCK_YAML) kill csharp
 	docker-compose -f $(XDOCK_YAML) rm -f csharp
 	docker-compose -f $(XDOCK_YAML) build csharp
