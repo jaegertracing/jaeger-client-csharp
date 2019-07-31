@@ -3,10 +3,6 @@ version: '{build}'
 
 image: Visual Studio 2017
 
-init:
-  - cmd: git config --global core.autocrlf true
-  - cmd: choco install docker-compose
-
 environment:
   global:
     DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
