@@ -4,6 +4,7 @@ XDOCK_YAML=crossdock/docker-compose.yml
 dotnet-build:
 	dotnet build -c Release crossdock\Jaeger.Crossdock\Jaeger.Crossdock.csproj
 	dotnet publish -c Release -o publish crossdock\Jaeger.Crossdock\Jaeger.Crossdock.csproj
+	dir publish
 
 .PHONY: crossdock
 crossdock: dotnet-build
