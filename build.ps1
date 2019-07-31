@@ -45,9 +45,6 @@ Task "Init" $true {
 	
 	choco install make
     Write-Host "Installed make"
-	
-	choco install docker-compose
-    Write-Host "Installed docker-compose"
 
     Write-Host "ArtifactsPath: $ArtifactsPath"
     Write-Host "BuildConfiguration: $BuildConfiguration"

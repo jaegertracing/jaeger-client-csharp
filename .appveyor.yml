@@ -1,7 +1,7 @@
 # AppVeyor Build number is incremental and not related to actual version number of the product
 version: '{build}'
 
-image: Visual Studio 2019
+image: Visual Studio 2017
 
 environment:
   global:
