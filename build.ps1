@@ -4,7 +4,7 @@ param(
     [string] $BuildConfiguration = "Release",
 
     [bool] $RunBuild = $true,
-    [bool] $RunTests = $true,
+    [bool] $RunTests = $false,
     [bool] $RunXdock = $true
 )
 
