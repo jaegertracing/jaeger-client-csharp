@@ -20,6 +20,7 @@ x64/
 x86/
 build/
 bld/
+publish/
 [Bb]in/
 [Oo]bj/
 msbuild.log
