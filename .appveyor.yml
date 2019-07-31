@@ -5,16 +5,24 @@ image: Visual Studio 2017
 
 init:
   - cmd: git config --global core.autocrlf true
+  - cmd: choco install docker-compose
 
 environment:
   global:
     DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
     DOTNET_CLI_TELEMETRY_OPTOUT: 1
-
+  DOCKER_USER:
+    secure: xxxxxxx
+  DOCKER_PASS:
+    secure: yyyyyyy
+    
 build_script:
   - ps: .\build.ps1
 
 test: off
+
+deploy_script:
+  - ps: .\deploy.ps1
 
 artifacts:
   - path: artifacts\nuget\*.nupkg

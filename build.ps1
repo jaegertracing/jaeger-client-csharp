@@ -4,7 +4,8 @@ param(
     [string] $BuildConfiguration = "Release",
 
     [bool] $RunBuild = $true,
-    [bool] $RunTests = $true
+    [bool] $RunTests = $true,
+    [bool] $RunXdock = $true
 )
 
 $ErrorActionPreference = "Stop"
@@ -69,6 +70,13 @@ Task "Tests" $RunTests {
     }
 
     if ($testsFailed) { throw "At least one test failed." }
+}
+
+Task "Xdock" $RunXdock {
+
+	make crossdock
+	
+    if ($LASTEXITCODE -ne 0) { throw "Crossdock failed." }
 }
 
 Write-Host "`nBuild finished in $($Stopwatch.Elapsed.TotalSeconds) sec." -ForegroundColor Green
