@@ -39,14 +39,6 @@ Task "Init" $true {
     if ($ArtifactsPath -eq $null) { "Property 'ArtifactsPath' may not be null." }
     if ($BuildConfiguration -eq $null) { throw "Property 'BuildConfiguration' may not be null." }
     if ((Get-Command "dotnet" -ErrorAction SilentlyContinue) -eq $null) { throw "'dotnet' command not found. Is .NET Core SDK installed?" }
-
-    Write-Host "ArtifactsPath: $ArtifactsPath"
-    Write-Host "BuildConfiguration: $BuildConfiguration"
-    Write-Host ".NET Core SDK: $(dotnet --version)`n"
-
-    Remove-Item -Path $ArtifactsPath -Recurse -Force -ErrorAction Ignore
-    New-Item $ArtifactsPath -ItemType Directory -ErrorAction Ignore | Out-Null
-    Write-Host "Created artifacts folder '$ArtifactsPath'"
 	
 	git config --global core.autocrlf true
     Write-Host "Configured Git settings"
@@ -56,6 +48,16 @@ Task "Init" $true {
 	
 	choco install docker-compose
     Write-Host "Installed docker-compose"
+
+    Write-Host "ArtifactsPath: $ArtifactsPath"
+    Write-Host "BuildConfiguration: $BuildConfiguration"
+    Write-Host ".NET Core SDK: $(dotnet --version)`n"
+    Write-Host "Docker: $(docker version)`n"
+    Write-Host "Docker Compose: $(docker-compose version)`n"
+
+    Remove-Item -Path $ArtifactsPath -Recurse -Force -ErrorAction Ignore
+    New-Item $ArtifactsPath -ItemType Directory -ErrorAction Ignore | Out-Null
+    Write-Host "Created artifacts folder '$ArtifactsPath'"
 }
 
 Task "Build" $RunBuild {
