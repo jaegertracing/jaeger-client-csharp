@@ -1,7 +1,12 @@
 XDOCK_YAML=crossdock/docker-compose.yml
 
+.PHONY: dotnet-build
+dotnet-build:
+	dotnet build -c Release
+	dotnet publish -c Release
+
 .PHONY: crossdock
-crossdock:
+crossdock: dotnet-build
 
 	docker build -f crossdock/Dockerfile -t test .
 
@@ -11,7 +16,7 @@ crossdock:
 	docker-compose -f $(XDOCK_YAML) run crossdock
 
 .PHONY: crossdock-fresh
-crossdock-fresh:
+crossdock-fresh: dotnet-build
 	docker-compose -f $(XDOCK_YAML) down --rmi all
 	docker-compose -f $(XDOCK_YAML) run crossdock
 
