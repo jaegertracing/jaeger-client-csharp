@@ -84,11 +84,8 @@ Task "Tests" $RunTests {
 Task "Xdock" $RunXdock {
 
 	dotnet publish -c Release -o $PublishPath crossdock\Jaeger.Crossdock\Jaeger.Crossdock.csproj
-	docker build -f crossdock/Dockerfile -t test .
-	
-	$XDOCK_YAML = "crossdock/docker-compose.yml"
-	docker-compose -f $XDOCK_YAML build csharp
-	docker-compose -f $XDOCK_YAML run crossdock
+	docker build -f crossdock/Dockerfile -t jaegertracing/xdock-csharp .
+	docker-compose -f crossdock/docker-compose.yml run crossdock
 	
     if ($LASTEXITCODE -ne 0) { throw "Crossdock failed." }
 }
