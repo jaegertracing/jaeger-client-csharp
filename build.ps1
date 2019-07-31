@@ -47,6 +47,15 @@ Task "Init" $true {
     Remove-Item -Path $ArtifactsPath -Recurse -Force -ErrorAction Ignore
     New-Item $ArtifactsPath -ItemType Directory -ErrorAction Ignore | Out-Null
     Write-Host "Created artifacts folder '$ArtifactsPath'"
+	
+	git config --global core.autocrlf true
+    Write-Host "Configured Git settings"
+	
+	choco install make
+    Write-Host "Installed make"
+	
+	choco install docker-compose
+    Write-Host "Installed docker-compose"
 }
 
 Task "Build" $RunBuild {
