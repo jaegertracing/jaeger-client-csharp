@@ -51,8 +51,8 @@ Task "Init" $true {
 
     Write-Host "ArtifactsPath: $ArtifactsPath"
     Write-Host "BuildConfiguration: $BuildConfiguration"
-    Write-Host ".NET Core SDK: $(dotnet --version)`n"
-    Write-Host "Docker: $(docker version)`n"
+    Write-Host ".NET Core SDK: $(dotnet --version)"
+    Write-Host "Docker: $(docker version)"
     Write-Host "Docker Compose: $(docker-compose version)`n"
 
     Remove-Item -Path $ArtifactsPath -Recurse -Force -ErrorAction Ignore
@@ -88,8 +88,6 @@ Task "Xdock" $RunXdock {
 	# make crossdock
 	
 	$xdockYaml = "crossdock/docker-compose.yml"
-	docker-compose -f $xdockYaml kill csharp
-	docker-compose -f $xdockYaml rm -f csharp
 	docker-compose -f $xdockYaml build csharp
 	docker-compose -f $xdockYaml run crossdock
 	
