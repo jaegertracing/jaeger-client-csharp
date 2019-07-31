@@ -4,7 +4,7 @@ EXPOSE 8080-8082
 
 WORKDIR /app
 
-COPY publish/. ./
+COPY publish/. .
 
 ENV \
 DOTNET_RUNNING_IN_CONTAINER=true \
