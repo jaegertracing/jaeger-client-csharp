@@ -42,15 +42,6 @@ Task "Init" $true {
     if ($BuildConfiguration -eq $null) { throw "Property 'BuildConfiguration' may not be null." }
     if ((Get-Command "dotnet" -ErrorAction SilentlyContinue) -eq $null) { throw "'dotnet' command not found. Is .NET Core SDK installed?" }
 	
-	#choco install make
-    #Write-Host "Installed make"
-	
-	#choco upgrade docker-desktop
-    #Write-Host "Upgrade docker-desktop"
-	
-	#choco upgrade docker-compose
-    #Write-Host "Upgrade docker-compose"
-
     Write-Host "ArtifactsPath: $ArtifactsPath"
     Write-Host "PublishPath: $PublishPath"
     Write-Host "BuildConfiguration: $BuildConfiguration"
@@ -92,12 +83,12 @@ Task "Tests" $RunTests {
 
 Task "Xdock" $RunXdock {
 
-	#make crossdock
 	dotnet publish -c Release -o $PublishPath crossdock\Jaeger.Crossdock\Jaeger.Crossdock.csproj
-	dir $PWD
-	dir $PublishPath
-	
 	docker build -f crossdock/Dockerfile -t test .
+	
+	$XDOCK_YAML = "crossdock/docker-compose.yml"
+	docker-compose -f $XDOCK_YAML build csharp
+	docker-compose -f $XDOCK_YAML run crossdock
 	
     if ($LASTEXITCODE -ne 0) { throw "Crossdock failed." }
 }
