@@ -3,7 +3,7 @@ param(
     [string] $ArtifactsPath = (Join-Path $PWD "artifacts"),
     [string] $BuildConfiguration = "Release",
 
-    [bool] $RunBuild = $true,
+    [bool] $RunBuild = $false,
     [bool] $RunTests = $false,
     [bool] $RunXdock = $true
 )
