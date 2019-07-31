@@ -87,7 +87,7 @@ Task "Xdock" $RunXdock {
 
 	# make crossdock
 	
-	$ xdockYaml = "crossdock/docker-compose.yml"
+	$xdockYaml = "crossdock/docker-compose.yml"
 	docker-compose -f $xdockYaml kill csharp
 	docker-compose -f $xdockYaml rm -f csharp
 	docker-compose -f $xdockYaml build csharp
