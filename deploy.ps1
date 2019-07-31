@@ -33,13 +33,9 @@ function Task {
 
 Task "Deploy" $RunDeploy {
 
-	$repo = jaegertracing/xdock-csharp
-
 	docker login -u "$env:DOCKER_USER" -p "$env:DOCKER_PASS"
-	docker build -f crossdock/Dockerfile -t $repo .
-	docker push $repo
+	docker push jaegertracing/xdock-csharp
 
-	
     if ($LASTEXITCODE -ne 0) { throw "Deploy docker failed." }
 }
 
