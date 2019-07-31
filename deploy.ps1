@@ -3,7 +3,7 @@ param(
     [string] $ArtifactsPath = (Join-Path $PWD "artifacts"),
     [string] $BuildConfiguration = "Release",
 
-    [bool] $RunDeploy = $true
+    [bool] $RunDeploy = $env:APPVEYOR_REPO_BRANCH -eq "master"
 )
 
 $ErrorActionPreference = "Stop"
