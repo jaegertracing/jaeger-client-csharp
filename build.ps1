@@ -40,8 +40,8 @@ Task "Init" $true {
     if ($BuildConfiguration -eq $null) { throw "Property 'BuildConfiguration' may not be null." }
     if ((Get-Command "dotnet" -ErrorAction SilentlyContinue) -eq $null) { throw "'dotnet' command not found. Is .NET Core SDK installed?" }
 	
-	#choco install make
-    #Write-Host "Installed make"
+	choco install make
+    Write-Host "Installed make"
 	
 	#choco upgrade docker-desktop
     #Write-Host "Upgrade docker-desktop"
