@@ -45,7 +45,14 @@ namespace Jaeger.Senders
                 customHeaders.Add("Authorization", builder.AuthenticationHeaderValue.ToString());
             }
 
-            _transport = new THttpClientTransport(collectorUri, customHeaders);
+            var customProperties = new Dictionary<string, object>
+            {
+                // Note: This ensures that internal requests from the tracer are not instrumented
+                // by https://github.com/opentracing-contrib/csharp-netcore
+                { "ot-ignore", true }
+            };
+
+            _transport = new THttpClientTransport(collectorUri, customHeaders, customProperties);
             _protocol = ProtocolFactory.GetProtocol(_transport);
         }
 

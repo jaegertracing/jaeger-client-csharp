@@ -47,12 +47,20 @@ namespace Thrift.Transports.Client
         {
         }
 
+        public THttpClientTransport(Uri u, IDictionary<string, string> customHeaders,
+            IDictionary<string, object> customProperties)
+            : this(u, Enumerable.Empty<X509Certificate>(), customHeaders, customProperties)
+        {
+        }
+
         public THttpClientTransport(Uri u, IEnumerable<X509Certificate> certificates,
-            IDictionary<string, string> customHeaders)
+            IDictionary<string, string> customHeaders,
+            IDictionary<string, object> customProperties = null)
         {
             _uri = u;
             _certificates = (certificates ?? Enumerable.Empty<X509Certificate>()).ToArray();
             CustomHeaders = customHeaders;
+            CustomProperties = customProperties ?? new Dictionary<string, object>();
 
             // due to current bug with performance of Dispose in netcore https://github.com/dotnet/corefx/issues/8809
             // this can be switched to default way (create client->use->dispose per flush) later
@@ -60,6 +68,8 @@ namespace Thrift.Transports.Client
         }
 
         public IDictionary<string, string> CustomHeaders { get; }
+
+        public IDictionary<string, object> CustomProperties { get; }
 
         public int ConnectTimeout
         {
@@ -166,6 +176,21 @@ namespace Thrift.Transports.Client
             return httpClient;
         }
 
+        private HttpRequestMessage CreateRequestMessage(StreamContent streamContent)
+        {
+            var requestMessage = new HttpRequestMessage(HttpMethod.Post, _uri)
+            {
+                Content = streamContent
+            };
+
+            foreach (var requestProperty in CustomProperties)
+            {
+                requestMessage.Properties.Add(requestProperty);
+            }
+
+            return requestMessage;
+        }
+
         public override async Task FlushAsync(CancellationToken cancellationToken)
         {
             try
@@ -180,7 +205,8 @@ namespace Thrift.Transports.Client
                     using (var outStream = new StreamContent(_outputStream))
                     {
                         outStream.Headers.ContentType = ApacheThriftMediaType;
-                        var msg = await _httpClient.PostAsync(_uri, outStream, cancellationToken);
+                        var requestMessage = CreateRequestMessage(outStream);
+                        var msg = await _httpClient.SendAsync(requestMessage, cancellationToken);
 
                         msg.EnsureSuccessStatusCode();
 
