@@ -208,6 +208,10 @@ namespace Jaeger.Samplers
                 {
                     Metrics = new MetricsImpl(NoopMetricsFactory.Instance);
                 }
+                if (SamplingManager == null)
+                {
+                    SamplingManager = new HttpSamplingManager();
+                }
                 return new RemoteControlledSampler(this);
             }
         }
