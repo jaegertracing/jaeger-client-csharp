@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
+using NSubstitute.Extensions;
 using Xunit;
 
 namespace Jaeger.Tests.Samplers
@@ -154,6 +155,18 @@ namespace Jaeger.Tests.Samplers
                 .Build();
 
             Assert.Equal(new ProbabilisticSampler(0.001), _undertest.Sampler);
+        }
+
+        [Fact]
+        public void BuilderDefaultSamplingManagerIsSetToHttpSamplingManager()
+        {
+            var builder = new RemoteControlledSampler
+                .Builder(SERVICE_NAME);
+
+            builder.Build();
+
+            Assert.NotNull(builder.SamplingManager);
+            Assert.Equal(typeof(HttpSamplingManager), builder.SamplingManager.GetType());            
         }
     }
 }
