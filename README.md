@@ -47,9 +47,9 @@ var serviceName = "initExampleService";
 Configuration config = new Configuration("myServiceName")
 	.WithSampler(...)   // optional, defaults to RemoteControlledSampler with HttpSamplingManager on localhost:5778
 	.WithReporter(...); // optional, defaults to RemoteReporter with UdpSender on localhost:6831
-```
 
 ITracer tracer = config.GetTracer();
+```
 
 The config objects lazily builds and configures Jaeger Tracer. Multiple calls to GetTracer() return the same instance.
 
