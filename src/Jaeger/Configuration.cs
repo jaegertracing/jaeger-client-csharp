@@ -315,6 +315,11 @@ namespace Jaeger
             /// Optional.
             /// </summary>
             public string ManagerHostPort { get; private set; }
+            
+            /// <summary>
+            /// HTTP host fallback if ManagerHostPort is not set.
+            /// </summary>
+            private string FallbackManagerHost { get; set; }
 
             public SamplerConfiguration(ILoggerFactory loggerFactory)
             {
@@ -331,7 +336,8 @@ namespace Jaeger
                 return new SamplerConfiguration(loggerFactory)
                     .WithType(GetProperty(JaegerSamplerType, configuration))
                     .WithParam(GetPropertyAsDouble(JaegerSamplerParam, logger, configuration))
-                    .WithManagerHostPort(GetProperty(JaegerSamplerManagerHostPort, configuration));
+                    .WithManagerHostPort(GetProperty(JaegerSamplerManagerHostPort, configuration))
+                    .WithFallbackManagerHost(GetProperty(JaegerAgentHost, configuration));
             }
 
             /// <summary>
@@ -349,7 +355,8 @@ namespace Jaeger
             {
                 string samplerType = StringOrDefault(Type, RemoteControlledSampler.Type);
                 double samplerParam = Param.GetValueOrDefault(ProbabilisticSampler.DefaultSamplingProbability);
-                string hostPort = StringOrDefault(ManagerHostPort, HttpSamplingManager.DefaultHostPort);
+                string fallbackHost = StringOrDefault(FallbackManagerHost, HttpSamplingManager.DefaultHost);
+                string hostPort = StringOrDefault(ManagerHostPort, $"{fallbackHost}:{HttpSamplingManager.DefaultPort}");
 
                 switch (samplerType)
                 {
@@ -386,6 +393,12 @@ namespace Jaeger
             public SamplerConfiguration WithManagerHostPort(string managerHostPort)
             {
                 ManagerHostPort = managerHostPort;
+                return this;
+            }
+
+            private SamplerConfiguration WithFallbackManagerHost(string managerHost)
+            {
+                FallbackManagerHost = managerHost;
                 return this;
             }
         }

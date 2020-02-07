@@ -8,7 +8,9 @@ namespace Jaeger.Samplers
 {
     public class HttpSamplingManager : ISamplingManager
     {
-        public const string DefaultHostPort = "localhost:5778";
+        public const string DefaultHost = "localhost";
+        public const string DefaultPort = "5778";
+        public const string DefaultHostPort = DefaultHost + ":" + DefaultPort;
 
         private readonly IHttpClient _httpClient;
         private readonly string _hostPort;

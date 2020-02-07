@@ -527,6 +527,16 @@ namespace Jaeger.Tests
             Assert.True(sampler is RateLimitingSampler);
         }
 
+        [Fact]
+        public void TestRemoteControlledSampler()
+        {
+            SamplerConfiguration samplerConfiguration = new SamplerConfiguration(_loggerFactory)
+                .WithType(RemoteControlledSampler.Type);
+            ISampler sampler = samplerConfiguration.GetSampler("name",
+                new MetricsImpl(NoopMetricsFactory.Instance));
+            Assert.True(sampler is RemoteControlledSampler);
+        }
+
         internal class TestTextMap : ITextMap
         {
             private Dictionary<string, string> _values = new Dictionary<string, string>();
