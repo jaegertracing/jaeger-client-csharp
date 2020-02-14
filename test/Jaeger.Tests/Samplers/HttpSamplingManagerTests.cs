@@ -22,7 +22,7 @@ namespace Jaeger.Tests.Samplers
         public HttpSamplingManagerTests()
         {
             _httpClient = Substitute.For<IHttpClient>();
-            _undertest = new HttpSamplingManager(_httpClient, "www.example.com");
+            _undertest = new HttpSamplingManager(_httpClient, "http://www.example.com");
         }
 
         [Fact]
@@ -87,7 +87,7 @@ namespace Jaeger.Tests.Samplers
         [Fact]
         public async Task TestDefaultConstructor()
         {
-            _httpClient.MakeGetRequestAsync("http://localhost:5778/?service=name")
+            _httpClient.MakeGetRequestAsync("http://127.0.0.1:5778/sampling?service=name")
                 .Returns(new Func<CallInfo, string>(_ => { throw new InvalidOperationException(); }));
 
             HttpSamplingManager httpSamplingManager = new HttpSamplingManager(_httpClient);

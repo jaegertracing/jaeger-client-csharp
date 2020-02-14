@@ -48,7 +48,7 @@ namespace Jaeger.Tests
             ClearProperty(Configuration.JaegerReporterFlushInterval);
             ClearProperty(Configuration.JaegerSamplerType);
             ClearProperty(Configuration.JaegerSamplerParam);
-            ClearProperty(Configuration.JaegerSamplerManagerHostPort);
+            ClearProperty(Configuration.JaegerSamplingEndpoint);
             ClearProperty(Configuration.JaegerServiceName);
             ClearProperty(Configuration.JaegerTags);
             ClearProperty(Configuration.JaegerTraceId128Bit);

@@ -83,9 +83,9 @@ namespace Jaeger
         public const string JaegerSamplerParam = JaegerPrefix + "SAMPLER_PARAM";
 
         /// <summary>
-        /// The sampler manager host:port.
+        /// The url for the remote sampling conf when using sampler type remote.
         /// </summary>
-        public const string JaegerSamplerManagerHostPort = JaegerPrefix + "SAMPLER_MANAGER_HOST_PORT";
+        public const string JaegerSamplingEndpoint = JaegerPrefix + "SAMPLING_ENDPOINT";
 
         /// <summary>
         /// The service name.
@@ -311,10 +311,10 @@ namespace Jaeger
             public double? Param { get; private set; }
 
             /// <summary>
-            /// HTTP host:port of the sampling manager that can provide sampling strategy to this service.
+            /// The URL of the sampling manager that can provide sampling strategy to this service.
             /// Optional.
             /// </summary>
-            public string ManagerHostPort { get; private set; }
+            public string SamplingEndpoint { get; private set; }
 
             public SamplerConfiguration(ILoggerFactory loggerFactory)
             {
@@ -331,7 +331,7 @@ namespace Jaeger
                 return new SamplerConfiguration(loggerFactory)
                     .WithType(GetProperty(JaegerSamplerType, configuration))
                     .WithParam(GetPropertyAsDouble(JaegerSamplerParam, logger, configuration))
-                    .WithManagerHostPort(GetProperty(JaegerSamplerManagerHostPort, configuration));
+                    .WithSamplingEndpoint(GetProperty(JaegerSamplingEndpoint, configuration));
             }
 
             /// <summary>
@@ -349,7 +349,7 @@ namespace Jaeger
             {
                 string samplerType = StringOrDefault(Type, RemoteControlledSampler.Type);
                 double samplerParam = Param.GetValueOrDefault(ProbabilisticSampler.DefaultSamplingProbability);
-                string hostPort = StringOrDefault(ManagerHostPort, HttpSamplingManager.DefaultHostPort);
+                string samplingEndpoint = StringOrDefault(SamplingEndpoint, HttpSamplingManager.DefaultEndpoint);
 
                 switch (samplerType)
                 {
@@ -362,7 +362,7 @@ namespace Jaeger
                     case RemoteControlledSampler.Type:
                         return new RemoteControlledSampler.Builder(serviceName)
                             .WithLoggerFactory(_loggerFactory)
-                            .WithSamplingManager(new HttpSamplingManager(hostPort))
+                            .WithSamplingManager(new HttpSamplingManager(samplingEndpoint))
                             .WithInitialSampler(new ProbabilisticSampler(samplerParam))
                             .WithMetrics(metrics)
                             .Build();
@@ -383,9 +383,9 @@ namespace Jaeger
                 return this;
             }
 
-            public SamplerConfiguration WithManagerHostPort(string managerHostPort)
+            public SamplerConfiguration WithSamplingEndpoint(string samplingEndpoint)
             {
-                ManagerHostPort = managerHostPort;
+                SamplingEndpoint = samplingEndpoint;
                 return this;
             }
         }
