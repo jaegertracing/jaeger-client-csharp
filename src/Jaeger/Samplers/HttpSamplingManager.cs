@@ -8,7 +8,8 @@ namespace Jaeger.Samplers
 {
     public class HttpSamplingManager : ISamplingManager
     {
-        public const string DefaultEndpoint = "http://127.0.0.1:5778/sampling";
+        public const string DefaultHostPort = "127.0.0.1:5778";
+        public const string DefaultEndpoint = "http://" + DefaultHostPort + "/sampling";
 
         private readonly IHttpClient _httpClient;
         private readonly string _endpoint;
@@ -22,6 +23,13 @@ namespace Jaeger.Samplers
         {
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             _endpoint = endpoint ?? DefaultEndpoint;
+
+            // Workaround for obsolete HostPort notation.
+            // UriBuilder needs the schema if host is not an IP and port is given:
+            if (!_endpoint.StartsWith("http://") && !_endpoint.StartsWith("https://"))
+            {
+                _endpoint = "http://" + _endpoint;
+            }
         }
 
         internal SamplingStrategyResponse ParseJson(string json)
