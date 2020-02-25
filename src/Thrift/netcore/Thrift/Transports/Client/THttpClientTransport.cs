@@ -147,12 +147,23 @@ namespace Thrift.Transports.Client
             await _outputStream.WriteAsync(buffer, offset, length, cancellationToken);
         }
 
+        /// <summary>
+        /// Seperate function to avoid a MissingMethodException in .NET Framework 4.6.1
+        /// https://stackoverflow.com/a/46577035/10038915
+        /// Related to: https://github.com/jaegertracing/jaeger-client-csharp/issues/105
+        /// </summary>
+        /// <param name="handler">HttpClientHandler</param>
+        private void AddCertificates(HttpClientHandler handler)
+        {
+            handler.ClientCertificates.AddRange(_certificates);
+        }
+
         private HttpClient CreateClient()
         {
             var handler = new HttpClientHandler();
             if (_certificates.Length > 0)
             {
-                handler.ClientCertificates.AddRange(_certificates);
+                AddCertificates(handler);
             }
 
             var httpClient = new HttpClient(handler);
