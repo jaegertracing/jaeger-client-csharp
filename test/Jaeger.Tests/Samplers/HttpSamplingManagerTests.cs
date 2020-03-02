@@ -30,7 +30,7 @@ namespace Jaeger.Tests.Samplers
         {
             var instance = new HttpSamplingManager(_httpClient, "example.com:80");
             _httpClient.MakeGetRequestAsync("http://example.com/?service=clairvoyant")
-                .Returns("{\"strategyType\":0,\"probabilisticSampling\":{\"samplingRate\":0.001},\"rateLimitingSampling\":null}");
+                .Returns("{\"strategyType\":\"PROBABILISTIC\",\"probabilisticSampling\":{\"samplingRate\":0.001},\"rateLimitingSampling\":null}");
 
             SamplingStrategyResponse response = await instance.GetSamplingStrategyAsync("clairvoyant");
             Assert.NotNull(response.ProbabilisticSampling);
@@ -40,7 +40,7 @@ namespace Jaeger.Tests.Samplers
         public async Task TestGetSamplingStrategy()
         {
             _httpClient.MakeGetRequestAsync("http://www.example.com/sampling?service=clairvoyant")
-               .Returns("{\"strategyType\":0,\"probabilisticSampling\":{\"samplingRate\":0.001},\"rateLimitingSampling\":null}");
+               .Returns("{\"strategyType\":\"PROBABILISTIC\",\"probabilisticSampling\":{\"samplingRate\":0.001},\"rateLimitingSampling\":null}");
 
             SamplingStrategyResponse response = await _undertest.GetSamplingStrategyAsync("clairvoyant");
             Assert.NotNull(response.ProbabilisticSampling);
