@@ -79,8 +79,9 @@ JAEGER_REPORTER_LOG_SPANS | no | Whether the reporter should also log the spans
 JAEGER_REPORTER_MAX_QUEUE_SIZE | no | The reporter's maximum queue size
 JAEGER_REPORTER_FLUSH_INTERVAL | no | The reporter's flush interval (ms)
 JAEGER_SAMPLER_TYPE | no | The sampler type
-JAEGER_SAMPLER_PARAM | no | The sampler parameter (number)
-JAEGER_SAMPLER_MANAGER_HOST_PORT | no | The host name and port when using the remote controlled sampler
+JAEGER_SAMPLER_PARAM | no | The sampler parameter (double)
+JAEGER_SAMPLER_MANAGER_HOST_PORT | no | (DEPRECATED) The host name and port when using the remote controlled sampler
+JAEGER_SAMPLING_ENDPOINT | no | The url for the remote sampling conf when using sampler type remote. Default is http://127.0.0.1:5778/sampling
 JAEGER_TAGS | no | A comma separated list of `name = value` tracer level tags, which get added to all reported spans. The value can also refer to an environment variable using the format `${envVarName:default}`, where the `:default` is optional, and identifies a value to be used if the environment variable cannot be found
 JAEGER_TRACEID_128BIT | no | Whether to use 128bit TraceID instead of 64bit
 

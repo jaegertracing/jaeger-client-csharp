@@ -88,6 +88,11 @@ namespace Jaeger
         public const string JaegerSamplerManagerHostPort = JaegerPrefix + "SAMPLER_MANAGER_HOST_PORT";
 
         /// <summary>
+        /// The url for the remote sampling conf when using sampler type remote.
+        /// </summary>
+        public const string JaegerSamplingEndpoint = JaegerPrefix + "SAMPLING_ENDPOINT";
+
+        /// <summary>
         /// The service name.
         /// </summary>
         public const string JaegerServiceName = JaegerPrefix + "SERVICE_NAME";
@@ -161,7 +166,7 @@ namespace Jaeger
         {
             ILogger logger = loggerFactory.CreateLogger<Configuration>();
 
-            return new Configuration(GetProperty(JaegerServiceName, configuration), loggerFactory)
+            return new Configuration(GetProperty(JaegerServiceName, logger, configuration), loggerFactory)
                 .WithTracerTags(TracerTagsFromIConfiguration(logger, configuration))
                 .WithTraceId128Bit(GetPropertyAsBool(JaegerTraceId128Bit, logger, configuration).GetValueOrDefault(false))
                 .WithReporter(ReporterConfiguration.FromIConfiguration(loggerFactory, configuration))
@@ -312,9 +317,15 @@ namespace Jaeger
 
             /// <summary>
             /// HTTP host:port of the sampling manager that can provide sampling strategy to this service.
+            /// </summary>
+            [Obsolete("Please use SamplingEndpoint instead!")]
+            public string ManagerHostPort { get; private set; }
+
+            /// <summary>
+            /// The URL of the sampling manager that can provide sampling strategy to this service.
             /// Optional.
             /// </summary>
-            public string ManagerHostPort { get; private set; }
+            public string SamplingEndpoint { get; private set; }
 
             public SamplerConfiguration(ILoggerFactory loggerFactory)
             {
@@ -327,11 +338,14 @@ namespace Jaeger
             public static SamplerConfiguration FromIConfiguration(ILoggerFactory loggerFactory, IConfiguration configuration)
             {
                 ILogger logger = loggerFactory.CreateLogger<Configuration>();
-
+                
+#pragma warning disable CS0618 // Supress warning on obsolete method: WithManagerHostPort
                 return new SamplerConfiguration(loggerFactory)
-                    .WithType(GetProperty(JaegerSamplerType, configuration))
+                    .WithType(GetProperty(JaegerSamplerType, logger, configuration))
                     .WithParam(GetPropertyAsDouble(JaegerSamplerParam, logger, configuration))
-                    .WithManagerHostPort(GetProperty(JaegerSamplerManagerHostPort, configuration));
+                    .WithManagerHostPort(GetProperty(JaegerSamplerManagerHostPort, logger, configuration, JaegerSamplingEndpoint))
+                    .WithSamplingEndpoint(GetProperty(JaegerSamplingEndpoint, logger, configuration));
+#pragma warning restore CS0618 // Supress warning on obsolete method: WithManagerHostPort
             }
 
             /// <summary>
@@ -347,9 +361,12 @@ namespace Jaeger
 
             public virtual ISampler GetSampler(string serviceName, IMetrics metrics)
             {
+#pragma warning disable CS0618 // Supress warning on obsolete property: ManagerHostPort
                 string samplerType = StringOrDefault(Type, RemoteControlledSampler.Type);
                 double samplerParam = Param.GetValueOrDefault(ProbabilisticSampler.DefaultSamplingProbability);
                 string hostPort = StringOrDefault(ManagerHostPort, HttpSamplingManager.DefaultHostPort);
+                string samplingEndpoint = StringOrDefault(SamplingEndpoint, "http://" + hostPort);
+#pragma warning disable CS0618 // Supress warning on obsolete property: ManagerHostPort
 
                 switch (samplerType)
                 {
@@ -362,7 +379,7 @@ namespace Jaeger
                     case RemoteControlledSampler.Type:
                         return new RemoteControlledSampler.Builder(serviceName)
                             .WithLoggerFactory(_loggerFactory)
-                            .WithSamplingManager(new HttpSamplingManager(hostPort))
+                            .WithSamplingManager(new HttpSamplingManager(samplingEndpoint))
                             .WithInitialSampler(new ProbabilisticSampler(samplerParam))
                             .WithMetrics(metrics)
                             .Build();
@@ -383,9 +400,16 @@ namespace Jaeger
                 return this;
             }
 
+            [Obsolete("Use WithSamplingEndpoint instead!")]
             public SamplerConfiguration WithManagerHostPort(string managerHostPort)
             {
                 ManagerHostPort = managerHostPort;
+                return this;
+            }
+
+            public SamplerConfiguration WithSamplingEndpoint(string samplingEndpoint)
+            {
+                SamplingEndpoint = samplingEndpoint;
                 return this;
             }
         }
@@ -412,7 +436,7 @@ namespace Jaeger
                 ILogger logger = loggerFactory.CreateLogger<Configuration>();
 
                 CodecConfiguration codecConfiguration = new CodecConfiguration(loggerFactory);
-                string propagation = GetProperty(JaegerPropagation, configuration);
+                string propagation = GetProperty(JaegerPropagation, logger, configuration);
                 if (propagation != null)
                 {
                     foreach (string format in propagation.Split(','))
@@ -706,13 +730,13 @@ namespace Jaeger
             {
                 ILogger logger = loggerFactory.CreateLogger<Configuration>();
 
-                string agentHost = GetProperty(JaegerAgentHost, configuration);
+                string agentHost = GetProperty(JaegerAgentHost, logger, configuration);
                 int? agentPort = GetPropertyAsInt(JaegerAgentPort, logger, configuration);
 
-                string collectorEndpoint = GetProperty(JaegerEndpoint, configuration);
-                string authToken = GetProperty(JaegerAuthToken, configuration);
-                string authUsername = GetProperty(JaegerUser, configuration);
-                string authPassword = GetProperty(JaegerPassword, configuration);
+                string collectorEndpoint = GetProperty(JaegerEndpoint, logger, configuration);
+                string authToken = GetProperty(JaegerAuthToken, logger, configuration);
+                string authUsername = GetProperty(JaegerUser, logger, configuration);
+                string authPassword = GetProperty(JaegerPassword, logger, configuration);
 
                 return new SenderConfiguration(loggerFactory)
                     .WithAgentHost(agentHost)
@@ -740,14 +764,20 @@ namespace Jaeger
             return value != null && value.Length > 0 ? value : defaultValue;
         }
 
-        private static string GetProperty(string name, IConfiguration configuration)
+        private static string GetProperty(string name, ILogger logger, IConfiguration configuration, string replacedBy = null)
         {
-            return configuration[name];
+            var value = configuration[name];
+            if (replacedBy != null && value != null)
+            {
+                logger.LogWarning($"The entry {name} is obsolete. Use {replacedBy} instead!");
+            }
+
+            return value;
         }
 
         private static int? GetPropertyAsInt(string name, ILogger logger, IConfiguration configuration)
         {
-            string value = GetProperty(name, configuration);
+            string value = GetProperty(name, logger, configuration);
             if (!string.IsNullOrEmpty(value))
             {
                 if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int intValue))
@@ -764,7 +794,7 @@ namespace Jaeger
 
         private static double? GetPropertyAsDouble(string name, ILogger logger, IConfiguration configuration)
         {
-            string value = GetProperty(name, configuration);
+            string value = GetProperty(name, logger, configuration);
             if (!string.IsNullOrEmpty(value))
             {
                 if (double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out double doubleValue))
@@ -795,7 +825,7 @@ namespace Jaeger
         /// </summary>
         private static bool? GetPropertyAsBool(string name, ILogger logger, IConfiguration configuration)
         {
-            string value = GetProperty(name, configuration);
+            string value = GetProperty(name, logger, configuration);
             if (!string.IsNullOrEmpty(value))
             {
                 if (string.Equals(value, "1", StringComparison.Ordinal))
@@ -822,7 +852,7 @@ namespace Jaeger
         private static Dictionary<string, string> TracerTagsFromIConfiguration(ILogger logger, IConfiguration configuration)
         {
             Dictionary<string, string> tracerTagMaps = null;
-            string tracerTags = GetProperty(JaegerTags, configuration);
+            string tracerTags = GetProperty(JaegerTags, logger, configuration);
             if (!string.IsNullOrEmpty(tracerTags))
             {
                 string[] tags = tracerTags.Split(',');
@@ -835,7 +865,7 @@ namespace Jaeger
                         {
                             tracerTagMaps = new Dictionary<string, string>();
                         }
-                        tracerTagMaps[tagValue[0].Trim()] = ResolveValue(tagValue[1].Trim(), configuration);
+                        tracerTagMaps[tagValue[0].Trim()] = ResolveValue(tagValue[1].Trim(), logger, configuration);
                     }
                     else
                     {
@@ -846,14 +876,14 @@ namespace Jaeger
             return tracerTagMaps;
         }
 
-        private static string ResolveValue(string value, IConfiguration configuration)
+        private static string ResolveValue(string value, ILogger logger, IConfiguration configuration)
         {
             if (value.StartsWith("${") && value.EndsWith("}"))
             {
                 string[] kvp = value.Substring(2, value.Length - 3).Split(':');
                 if (kvp.Length > 0)
                 {
-                    string propertyValue = GetProperty(kvp[0].Trim(), configuration);
+                    string propertyValue = GetProperty(kvp[0].Trim(), logger, configuration);
                     if (propertyValue == null && kvp.Length > 1)
                     {
                         propertyValue = kvp[1].Trim();

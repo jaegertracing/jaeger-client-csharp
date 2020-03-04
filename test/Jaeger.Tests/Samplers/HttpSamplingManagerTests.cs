@@ -22,14 +22,25 @@ namespace Jaeger.Tests.Samplers
         public HttpSamplingManagerTests()
         {
             _httpClient = Substitute.For<IHttpClient>();
-            _undertest = new HttpSamplingManager(_httpClient, "www.example.com");
+            _undertest = new HttpSamplingManager(_httpClient, "http://www.example.com/sampling");
+        }
+
+        [Fact]
+        public async Task TestAllowHostPortSyntax()
+        {
+            var instance = new HttpSamplingManager(_httpClient, "example.com:80");
+            _httpClient.MakeGetRequestAsync("http://example.com/?service=clairvoyant")
+                .Returns("{\"strategyType\":\"PROBABILISTIC\",\"probabilisticSampling\":{\"samplingRate\":0.001},\"rateLimitingSampling\":null}");
+
+            SamplingStrategyResponse response = await instance.GetSamplingStrategyAsync("clairvoyant");
+            Assert.NotNull(response.ProbabilisticSampling);
         }
 
         [Fact]
         public async Task TestGetSamplingStrategy()
         {
-            _httpClient.MakeGetRequestAsync("http://www.example.com/?service=clairvoyant")
-               .Returns("{\"strategyType\":0,\"probabilisticSampling\":{\"samplingRate\":0.001},\"rateLimitingSampling\":null}");
+            _httpClient.MakeGetRequestAsync("http://www.example.com/sampling?service=clairvoyant")
+               .Returns("{\"strategyType\":\"PROBABILISTIC\",\"probabilisticSampling\":{\"samplingRate\":0.001},\"rateLimitingSampling\":null}");
 
             SamplingStrategyResponse response = await _undertest.GetSamplingStrategyAsync("clairvoyant");
             Assert.NotNull(response.ProbabilisticSampling);
@@ -38,7 +49,7 @@ namespace Jaeger.Tests.Samplers
         [Fact]
         public async Task TestGetSamplingStrategyError()
         {
-            _httpClient.MakeGetRequestAsync("http://www.example.com/?service=")
+            _httpClient.MakeGetRequestAsync("http://www.example.com/sampling?service=")
                 .Returns(new Func<CallInfo, string>(_ => { throw new InvalidOperationException(); }));
 
             await Assert.ThrowsAsync<InvalidOperationException>(() => _undertest.GetSamplingStrategyAsync(""));
@@ -87,7 +98,7 @@ namespace Jaeger.Tests.Samplers
         [Fact]
         public async Task TestDefaultConstructor()
         {
-            _httpClient.MakeGetRequestAsync("http://localhost:5778/?service=name")
+            _httpClient.MakeGetRequestAsync("http://127.0.0.1:5778/sampling?service=name")
                 .Returns(new Func<CallInfo, string>(_ => { throw new InvalidOperationException(); }));
 
             HttpSamplingManager httpSamplingManager = new HttpSamplingManager(_httpClient);

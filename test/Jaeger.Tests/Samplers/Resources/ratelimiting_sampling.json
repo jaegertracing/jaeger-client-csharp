@@ -1,7 +1,7 @@
 {
-  "strategyType": 1,
-  "probabilisticSampling": null,
-  "rateLimitingSampling": {
-    "maxTracesPerSecond": 2.1
-  }
+    "strategyType": "RATE_LIMITING",
+    "probabilisticSampling": null,
+    "rateLimitingSampling": {
+        "maxTracesPerSecond": 2.1
+    }
 }

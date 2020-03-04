@@ -8,9 +8,12 @@ using System.Threading.Tasks;
 using Jaeger.Metrics;
 using Jaeger.Samplers;
 using Jaeger.Senders;
+using Jaeger.Util;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Configuration;
+using NSubstitute;
+using NSubstitute.ReceivedExtensions;
 using OpenTracing;
 using OpenTracing.Noop;
 using OpenTracing.Propagation;
@@ -49,6 +52,7 @@ namespace Jaeger.Tests
             ClearProperty(Configuration.JaegerSamplerType);
             ClearProperty(Configuration.JaegerSamplerParam);
             ClearProperty(Configuration.JaegerSamplerManagerHostPort);
+            ClearProperty(Configuration.JaegerSamplingEndpoint);
             ClearProperty(Configuration.JaegerServiceName);
             ClearProperty(Configuration.JaegerTags);
             ClearProperty(Configuration.JaegerTraceId128Bit);
@@ -525,6 +529,22 @@ namespace Jaeger.Tests
             ISampler sampler = samplerConfiguration.GetSampler("name",
                 new MetricsImpl(NoopMetricsFactory.Instance));
             Assert.True(sampler is RateLimitingSampler);
+        }
+
+        [Fact]
+        public void TestDeprecatedSamplerManagerHostPort()
+        {
+            ILoggerFactory loggerFactory = Substitute.For<ILoggerFactory>();
+            ILogger logger = Substitute.For<ILogger>();
+            loggerFactory.CreateLogger<Configuration>().Returns(logger);
+
+            SetProperty(Configuration.JaegerSamplerManagerHostPort, HttpSamplingManager.DefaultHostPort);
+            SamplerConfiguration samplerConfiguration = SamplerConfiguration.FromEnv(loggerFactory);
+            ISampler sampler = samplerConfiguration.GetSampler("name",
+                new MetricsImpl(NoopMetricsFactory.Instance));
+            Assert.True(sampler is RemoteControlledSampler);
+            loggerFactory.Received(1).CreateLogger<Configuration>();
+            logger.Received(1).Log(LogLevel.Warning, Arg.Any<EventId>(), Arg.Any<object>(), null, Arg.Any<Func<object, Exception, string>>());
         }
 
         internal class TestTextMap : ITextMap
