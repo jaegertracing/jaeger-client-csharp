@@ -5,9 +5,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Jaeger.Exceptions;
-using Jaeger.Thrift.Agent;
-using Thrift.Protocols;
-using Thrift.Transports.Client;
+using Jaeger.Thrift.Senders.Internal;
+using Thrift.Protocol;
 using ThriftBatch = Jaeger.Thrift.Batch;
 using ThriftProcess = Jaeger.Thrift.Process;
 using ThriftSpan = Jaeger.Thrift.Span;
@@ -20,7 +19,7 @@ namespace Jaeger.Senders
         private const int OneMbInBytes = 1048576;
 
         private readonly TProtocol _protocol;
-        private readonly THttpClientTransport _transport;
+        private readonly THttpTransport _transport;
 
         /// <summary>
         /// </summary>
@@ -52,7 +51,7 @@ namespace Jaeger.Senders
                 { "ot-ignore", true }
             };
 
-            _transport = new THttpClientTransport(collectorUri, customHeaders, customProperties);
+            _transport = new THttpTransport(collectorUri, customHeaders, customProperties: customProperties);
             _protocol = ProtocolFactory.GetProtocol(_transport);
         }
 

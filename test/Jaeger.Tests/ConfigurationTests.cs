@@ -544,7 +544,7 @@ namespace Jaeger.Tests
                 new MetricsImpl(NoopMetricsFactory.Instance));
             Assert.True(sampler is RemoteControlledSampler);
             loggerFactory.Received(1).CreateLogger<Configuration>();
-            logger.Received(1).Log(LogLevel.Warning, Arg.Any<EventId>(), Arg.Any<object>(), null, Arg.Any<Func<object, Exception, string>>());
+            logger.Received(1).Log(LogLevel.Warning, Arg.Any<EventId>(), Arg.Any<object>(), Arg.Any<Exception>(), Arg.Any<Func<object, Exception, string>>());
         }
 
         internal class TestTextMap : ITextMap
