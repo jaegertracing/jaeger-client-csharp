@@ -26,21 +26,21 @@ using Thrift.Processor;
 namespace Jaeger.Thrift.Agent
 {
 
-  public partial class ValidateTraceResponse : TBase
+  public partial class ThrottlingResponse : TBase
   {
 
-    public bool Ok { get; set; }
+    public ThrottlingConfig DefaultConfig { get; set; }
 
-    public long TraceCount { get; set; }
+    public List<ServiceThrottlingConfig> ServiceConfigs { get; set; }
 
-    public ValidateTraceResponse()
+    public ThrottlingResponse()
     {
     }
 
-    public ValidateTraceResponse(bool ok, long traceCount) : this()
+    public ThrottlingResponse(ThrottlingConfig defaultConfig, List<ServiceThrottlingConfig> serviceConfigs) : this()
     {
-      this.Ok = ok;
-      this.TraceCount = traceCount;
+      this.DefaultConfig = defaultConfig;
+      this.ServiceConfigs = serviceConfigs;
     }
 
     public async Task ReadAsync(TProtocol iprot, CancellationToken cancellationToken)
@@ -48,8 +48,8 @@ namespace Jaeger.Thrift.Agent
       iprot.IncrementRecursionDepth();
       try
       {
-        bool isset_ok = false;
-        bool isset_traceCount = false;
+        bool isset_defaultConfig = false;
+        bool isset_serviceConfigs = false;
         TField field;
         await iprot.ReadStructBeginAsync(cancellationToken);
         while (true)
@@ -63,10 +63,11 @@ namespace Jaeger.Thrift.Agent
           switch (field.ID)
           {
             case 1:
-              if (field.Type == TType.Bool)
+              if (field.Type == TType.Struct)
               {
-                Ok = await iprot.ReadBoolAsync(cancellationToken);
-                isset_ok = true;
+                DefaultConfig = new ThrottlingConfig();
+                await DefaultConfig.ReadAsync(iprot, cancellationToken);
+                isset_defaultConfig = true;
               }
               else
               {
@@ -74,10 +75,21 @@ namespace Jaeger.Thrift.Agent
               }
               break;
             case 2:
-              if (field.Type == TType.I64)
+              if (field.Type == TType.List)
               {
-                TraceCount = await iprot.ReadI64Async(cancellationToken);
-                isset_traceCount = true;
+                {
+                  TList _list0 = await iprot.ReadListBeginAsync(cancellationToken);
+                  ServiceConfigs = new List<ServiceThrottlingConfig>(_list0.Count);
+                  for(int _i1 = 0; _i1 < _list0.Count; ++_i1)
+                  {
+                    ServiceThrottlingConfig _elem2;
+                    _elem2 = new ServiceThrottlingConfig();
+                    await _elem2.ReadAsync(iprot, cancellationToken);
+                    ServiceConfigs.Add(_elem2);
+                  }
+                  await iprot.ReadListEndAsync(cancellationToken);
+                }
+                isset_serviceConfigs = true;
               }
               else
               {
@@ -93,11 +105,11 @@ namespace Jaeger.Thrift.Agent
         }
 
         await iprot.ReadStructEndAsync(cancellationToken);
-        if (!isset_ok)
+        if (!isset_defaultConfig)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
-        if (!isset_traceCount)
+        if (!isset_serviceConfigs)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
@@ -113,20 +125,27 @@ namespace Jaeger.Thrift.Agent
       oprot.IncrementRecursionDepth();
       try
       {
-        var struc = new TStruct("ValidateTraceResponse");
+        var struc = new TStruct("ThrottlingResponse");
         await oprot.WriteStructBeginAsync(struc, cancellationToken);
         var field = new TField();
-        field.Name = "ok";
-        field.Type = TType.Bool;
+        field.Name = "defaultConfig";
+        field.Type = TType.Struct;
         field.ID = 1;
         await oprot.WriteFieldBeginAsync(field, cancellationToken);
-        await oprot.WriteBoolAsync(Ok, cancellationToken);
+        await DefaultConfig.WriteAsync(oprot, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
-        field.Name = "traceCount";
-        field.Type = TType.I64;
+        field.Name = "serviceConfigs";
+        field.Type = TType.List;
         field.ID = 2;
         await oprot.WriteFieldBeginAsync(field, cancellationToken);
-        await oprot.WriteI64Async(TraceCount, cancellationToken);
+        {
+          await oprot.WriteListBeginAsync(new TList(TType.Struct, ServiceConfigs.Count), cancellationToken);
+          foreach (ServiceThrottlingConfig _iter3 in ServiceConfigs)
+          {
+            await _iter3.WriteAsync(oprot, cancellationToken);
+          }
+          await oprot.WriteListEndAsync(cancellationToken);
+        }
         await oprot.WriteFieldEndAsync(cancellationToken);
         await oprot.WriteFieldStopAsync(cancellationToken);
         await oprot.WriteStructEndAsync(cancellationToken);
@@ -139,29 +158,29 @@ namespace Jaeger.Thrift.Agent
 
     public override bool Equals(object that)
     {
-      var other = that as ValidateTraceResponse;
+      var other = that as ThrottlingResponse;
       if (other == null) return false;
       if (ReferenceEquals(this, other)) return true;
-      return System.Object.Equals(Ok, other.Ok)
-        && System.Object.Equals(TraceCount, other.TraceCount);
+      return System.Object.Equals(DefaultConfig, other.DefaultConfig)
+        && TCollections.Equals(ServiceConfigs, other.ServiceConfigs);
     }
 
     public override int GetHashCode() {
       int hashcode = 157;
       unchecked {
-        hashcode = (hashcode * 397) + Ok.GetHashCode();
-        hashcode = (hashcode * 397) + TraceCount.GetHashCode();
+        hashcode = (hashcode * 397) + DefaultConfig.GetHashCode();
+        hashcode = (hashcode * 397) + TCollections.GetHashCode(ServiceConfigs);
       }
       return hashcode;
     }
 
     public override string ToString()
     {
-      var sb = new StringBuilder("ValidateTraceResponse(");
-      sb.Append(", Ok: ");
-      sb.Append(Ok);
-      sb.Append(", TraceCount: ");
-      sb.Append(TraceCount);
+      var sb = new StringBuilder("ThrottlingResponse(");
+      sb.Append(", DefaultConfig: ");
+      sb.Append(DefaultConfig== null ? "<null>" : DefaultConfig.ToString());
+      sb.Append(", ServiceConfigs: ");
+      sb.Append(ServiceConfigs);
       sb.Append(")");
       return sb.ToString();
     }

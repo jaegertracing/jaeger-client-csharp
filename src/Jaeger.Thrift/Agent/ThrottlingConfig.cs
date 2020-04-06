@@ -26,21 +26,24 @@ using Thrift.Processor;
 namespace Jaeger.Thrift.Agent
 {
 
-  public partial class ValidateTraceResponse : TBase
+  public partial class ThrottlingConfig : TBase
   {
 
-    public bool Ok { get; set; }
+    public int MaxOperations { get; set; }
 
-    public long TraceCount { get; set; }
+    public double CreditsPerSecond { get; set; }
 
-    public ValidateTraceResponse()
+    public double MaxBalance { get; set; }
+
+    public ThrottlingConfig()
     {
     }
 
-    public ValidateTraceResponse(bool ok, long traceCount) : this()
+    public ThrottlingConfig(int maxOperations, double creditsPerSecond, double maxBalance) : this()
     {
-      this.Ok = ok;
-      this.TraceCount = traceCount;
+      this.MaxOperations = maxOperations;
+      this.CreditsPerSecond = creditsPerSecond;
+      this.MaxBalance = maxBalance;
     }
 
     public async Task ReadAsync(TProtocol iprot, CancellationToken cancellationToken)
@@ -48,8 +51,9 @@ namespace Jaeger.Thrift.Agent
       iprot.IncrementRecursionDepth();
       try
       {
-        bool isset_ok = false;
-        bool isset_traceCount = false;
+        bool isset_maxOperations = false;
+        bool isset_creditsPerSecond = false;
+        bool isset_maxBalance = false;
         TField field;
         await iprot.ReadStructBeginAsync(cancellationToken);
         while (true)
@@ -63,10 +67,10 @@ namespace Jaeger.Thrift.Agent
           switch (field.ID)
           {
             case 1:
-              if (field.Type == TType.Bool)
+              if (field.Type == TType.I32)
               {
-                Ok = await iprot.ReadBoolAsync(cancellationToken);
-                isset_ok = true;
+                MaxOperations = await iprot.ReadI32Async(cancellationToken);
+                isset_maxOperations = true;
               }
               else
               {
@@ -74,10 +78,21 @@ namespace Jaeger.Thrift.Agent
               }
               break;
             case 2:
-              if (field.Type == TType.I64)
+              if (field.Type == TType.Double)
               {
-                TraceCount = await iprot.ReadI64Async(cancellationToken);
-                isset_traceCount = true;
+                CreditsPerSecond = await iprot.ReadDoubleAsync(cancellationToken);
+                isset_creditsPerSecond = true;
+              }
+              else
+              {
+                await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
+              }
+              break;
+            case 3:
+              if (field.Type == TType.Double)
+              {
+                MaxBalance = await iprot.ReadDoubleAsync(cancellationToken);
+                isset_maxBalance = true;
               }
               else
               {
@@ -93,11 +108,15 @@ namespace Jaeger.Thrift.Agent
         }
 
         await iprot.ReadStructEndAsync(cancellationToken);
-        if (!isset_ok)
+        if (!isset_maxOperations)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
-        if (!isset_traceCount)
+        if (!isset_creditsPerSecond)
+        {
+          throw new TProtocolException(TProtocolException.INVALID_DATA);
+        }
+        if (!isset_maxBalance)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
@@ -113,20 +132,26 @@ namespace Jaeger.Thrift.Agent
       oprot.IncrementRecursionDepth();
       try
       {
-        var struc = new TStruct("ValidateTraceResponse");
+        var struc = new TStruct("ThrottlingConfig");
         await oprot.WriteStructBeginAsync(struc, cancellationToken);
         var field = new TField();
-        field.Name = "ok";
-        field.Type = TType.Bool;
+        field.Name = "maxOperations";
+        field.Type = TType.I32;
         field.ID = 1;
         await oprot.WriteFieldBeginAsync(field, cancellationToken);
-        await oprot.WriteBoolAsync(Ok, cancellationToken);
+        await oprot.WriteI32Async(MaxOperations, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
-        field.Name = "traceCount";
-        field.Type = TType.I64;
+        field.Name = "creditsPerSecond";
+        field.Type = TType.Double;
         field.ID = 2;
         await oprot.WriteFieldBeginAsync(field, cancellationToken);
-        await oprot.WriteI64Async(TraceCount, cancellationToken);
+        await oprot.WriteDoubleAsync(CreditsPerSecond, cancellationToken);
+        await oprot.WriteFieldEndAsync(cancellationToken);
+        field.Name = "maxBalance";
+        field.Type = TType.Double;
+        field.ID = 3;
+        await oprot.WriteFieldBeginAsync(field, cancellationToken);
+        await oprot.WriteDoubleAsync(MaxBalance, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
         await oprot.WriteFieldStopAsync(cancellationToken);
         await oprot.WriteStructEndAsync(cancellationToken);
@@ -139,29 +164,33 @@ namespace Jaeger.Thrift.Agent
 
     public override bool Equals(object that)
     {
-      var other = that as ValidateTraceResponse;
+      var other = that as ThrottlingConfig;
       if (other == null) return false;
       if (ReferenceEquals(this, other)) return true;
-      return System.Object.Equals(Ok, other.Ok)
-        && System.Object.Equals(TraceCount, other.TraceCount);
+      return System.Object.Equals(MaxOperations, other.MaxOperations)
+        && System.Object.Equals(CreditsPerSecond, other.CreditsPerSecond)
+        && System.Object.Equals(MaxBalance, other.MaxBalance);
     }
 
     public override int GetHashCode() {
       int hashcode = 157;
       unchecked {
-        hashcode = (hashcode * 397) + Ok.GetHashCode();
-        hashcode = (hashcode * 397) + TraceCount.GetHashCode();
+        hashcode = (hashcode * 397) + MaxOperations.GetHashCode();
+        hashcode = (hashcode * 397) + CreditsPerSecond.GetHashCode();
+        hashcode = (hashcode * 397) + MaxBalance.GetHashCode();
       }
       return hashcode;
     }
 
     public override string ToString()
     {
-      var sb = new StringBuilder("ValidateTraceResponse(");
-      sb.Append(", Ok: ");
-      sb.Append(Ok);
-      sb.Append(", TraceCount: ");
-      sb.Append(TraceCount);
+      var sb = new StringBuilder("ThrottlingConfig(");
+      sb.Append(", MaxOperations: ");
+      sb.Append(MaxOperations);
+      sb.Append(", CreditsPerSecond: ");
+      sb.Append(CreditsPerSecond);
+      sb.Append(", MaxBalance: ");
+      sb.Append(MaxBalance);
       sb.Append(")");
       return sb.ToString();
     }

@@ -23,24 +23,27 @@ using Thrift.Transport.Server;
 using Thrift.Processor;
 
 
-namespace Jaeger.Thrift.Agent
+namespace Jaeger.Thrift
 {
 
-  public partial class ValidateTraceResponse : TBase
+  public partial class ClientStats : TBase
   {
 
-    public bool Ok { get; set; }
+    public long FullQueueDroppedSpans { get; set; }
 
-    public long TraceCount { get; set; }
+    public long TooLargeDroppedSpans { get; set; }
 
-    public ValidateTraceResponse()
+    public long FailedToEmitSpans { get; set; }
+
+    public ClientStats()
     {
     }
 
-    public ValidateTraceResponse(bool ok, long traceCount) : this()
+    public ClientStats(long fullQueueDroppedSpans, long tooLargeDroppedSpans, long failedToEmitSpans) : this()
     {
-      this.Ok = ok;
-      this.TraceCount = traceCount;
+      this.FullQueueDroppedSpans = fullQueueDroppedSpans;
+      this.TooLargeDroppedSpans = tooLargeDroppedSpans;
+      this.FailedToEmitSpans = failedToEmitSpans;
     }
 
     public async Task ReadAsync(TProtocol iprot, CancellationToken cancellationToken)
@@ -48,8 +51,9 @@ namespace Jaeger.Thrift.Agent
       iprot.IncrementRecursionDepth();
       try
       {
-        bool isset_ok = false;
-        bool isset_traceCount = false;
+        bool isset_fullQueueDroppedSpans = false;
+        bool isset_tooLargeDroppedSpans = false;
+        bool isset_failedToEmitSpans = false;
         TField field;
         await iprot.ReadStructBeginAsync(cancellationToken);
         while (true)
@@ -63,10 +67,10 @@ namespace Jaeger.Thrift.Agent
           switch (field.ID)
           {
             case 1:
-              if (field.Type == TType.Bool)
+              if (field.Type == TType.I64)
               {
-                Ok = await iprot.ReadBoolAsync(cancellationToken);
-                isset_ok = true;
+                FullQueueDroppedSpans = await iprot.ReadI64Async(cancellationToken);
+                isset_fullQueueDroppedSpans = true;
               }
               else
               {
@@ -76,8 +80,19 @@ namespace Jaeger.Thrift.Agent
             case 2:
               if (field.Type == TType.I64)
               {
-                TraceCount = await iprot.ReadI64Async(cancellationToken);
-                isset_traceCount = true;
+                TooLargeDroppedSpans = await iprot.ReadI64Async(cancellationToken);
+                isset_tooLargeDroppedSpans = true;
+              }
+              else
+              {
+                await TProtocolUtil.SkipAsync(iprot, field.Type, cancellationToken);
+              }
+              break;
+            case 3:
+              if (field.Type == TType.I64)
+              {
+                FailedToEmitSpans = await iprot.ReadI64Async(cancellationToken);
+                isset_failedToEmitSpans = true;
               }
               else
               {
@@ -93,11 +108,15 @@ namespace Jaeger.Thrift.Agent
         }
 
         await iprot.ReadStructEndAsync(cancellationToken);
-        if (!isset_ok)
+        if (!isset_fullQueueDroppedSpans)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
-        if (!isset_traceCount)
+        if (!isset_tooLargeDroppedSpans)
+        {
+          throw new TProtocolException(TProtocolException.INVALID_DATA);
+        }
+        if (!isset_failedToEmitSpans)
         {
           throw new TProtocolException(TProtocolException.INVALID_DATA);
         }
@@ -113,20 +132,26 @@ namespace Jaeger.Thrift.Agent
       oprot.IncrementRecursionDepth();
       try
       {
-        var struc = new TStruct("ValidateTraceResponse");
+        var struc = new TStruct("ClientStats");
         await oprot.WriteStructBeginAsync(struc, cancellationToken);
         var field = new TField();
-        field.Name = "ok";
-        field.Type = TType.Bool;
+        field.Name = "fullQueueDroppedSpans";
+        field.Type = TType.I64;
         field.ID = 1;
         await oprot.WriteFieldBeginAsync(field, cancellationToken);
-        await oprot.WriteBoolAsync(Ok, cancellationToken);
+        await oprot.WriteI64Async(FullQueueDroppedSpans, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
-        field.Name = "traceCount";
+        field.Name = "tooLargeDroppedSpans";
         field.Type = TType.I64;
         field.ID = 2;
         await oprot.WriteFieldBeginAsync(field, cancellationToken);
-        await oprot.WriteI64Async(TraceCount, cancellationToken);
+        await oprot.WriteI64Async(TooLargeDroppedSpans, cancellationToken);
+        await oprot.WriteFieldEndAsync(cancellationToken);
+        field.Name = "failedToEmitSpans";
+        field.Type = TType.I64;
+        field.ID = 3;
+        await oprot.WriteFieldBeginAsync(field, cancellationToken);
+        await oprot.WriteI64Async(FailedToEmitSpans, cancellationToken);
         await oprot.WriteFieldEndAsync(cancellationToken);
         await oprot.WriteFieldStopAsync(cancellationToken);
         await oprot.WriteStructEndAsync(cancellationToken);
@@ -139,29 +164,33 @@ namespace Jaeger.Thrift.Agent
 
     public override bool Equals(object that)
     {
-      var other = that as ValidateTraceResponse;
+      var other = that as ClientStats;
       if (other == null) return false;
       if (ReferenceEquals(this, other)) return true;
-      return System.Object.Equals(Ok, other.Ok)
-        && System.Object.Equals(TraceCount, other.TraceCount);
+      return System.Object.Equals(FullQueueDroppedSpans, other.FullQueueDroppedSpans)
+        && System.Object.Equals(TooLargeDroppedSpans, other.TooLargeDroppedSpans)
+        && System.Object.Equals(FailedToEmitSpans, other.FailedToEmitSpans);
     }
 
     public override int GetHashCode() {
       int hashcode = 157;
       unchecked {
-        hashcode = (hashcode * 397) + Ok.GetHashCode();
-        hashcode = (hashcode * 397) + TraceCount.GetHashCode();
+        hashcode = (hashcode * 397) + FullQueueDroppedSpans.GetHashCode();
+        hashcode = (hashcode * 397) + TooLargeDroppedSpans.GetHashCode();
+        hashcode = (hashcode * 397) + FailedToEmitSpans.GetHashCode();
       }
       return hashcode;
     }
 
     public override string ToString()
     {
-      var sb = new StringBuilder("ValidateTraceResponse(");
-      sb.Append(", Ok: ");
-      sb.Append(Ok);
-      sb.Append(", TraceCount: ");
-      sb.Append(TraceCount);
+      var sb = new StringBuilder("ClientStats(");
+      sb.Append(", FullQueueDroppedSpans: ");
+      sb.Append(FullQueueDroppedSpans);
+      sb.Append(", TooLargeDroppedSpans: ");
+      sb.Append(TooLargeDroppedSpans);
+      sb.Append(", FailedToEmitSpans: ");
+      sb.Append(FailedToEmitSpans);
       sb.Append(")");
       return sb.ToString();
     }

@@ -25,11 +25,11 @@ using Thrift.Processor;
 
 namespace Jaeger.Thrift.Agent
 {
-  public partial class AggregationValidator
+  public partial class ThrottlingService
   {
     public interface IAsync
     {
-      Task<ValidateTraceResponse> validateTraceAsync(string traceId, CancellationToken cancellationToken = default(CancellationToken));
+      Task<ThrottlingResponse> getThrottlingConfigsAsync(List<string> serviceNames, CancellationToken cancellationToken = default(CancellationToken));
 
     }
 
@@ -42,12 +42,12 @@ namespace Jaeger.Thrift.Agent
 
       public Client(TProtocol inputProtocol, TProtocol outputProtocol) : base(inputProtocol, outputProtocol)      {
       }
-      public async Task<ValidateTraceResponse> validateTraceAsync(string traceId, CancellationToken cancellationToken = default(CancellationToken))
+      public async Task<ThrottlingResponse> getThrottlingConfigsAsync(List<string> serviceNames, CancellationToken cancellationToken = default(CancellationToken))
       {
-        await OutputProtocol.WriteMessageBeginAsync(new TMessage("validateTrace", TMessageType.Call, SeqId), cancellationToken);
+        await OutputProtocol.WriteMessageBeginAsync(new TMessage("getThrottlingConfigs", TMessageType.Call, SeqId), cancellationToken);
         
-        var args = new validateTraceArgs();
-        args.TraceId = traceId;
+        var args = new getThrottlingConfigsArgs();
+        args.ServiceNames = serviceNames;
         
         await args.WriteAsync(OutputProtocol, cancellationToken);
         await OutputProtocol.WriteMessageEndAsync(cancellationToken);
@@ -61,14 +61,14 @@ namespace Jaeger.Thrift.Agent
           throw x;
         }
 
-        var result = new validateTraceResult();
+        var result = new getThrottlingConfigsResult();
         await result.ReadAsync(InputProtocol, cancellationToken);
         await InputProtocol.ReadMessageEndAsync(cancellationToken);
         if (result.__isset.success)
         {
           return result.Success;
         }
-        throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "validateTrace failed: unknown result");
+        throw new TApplicationException(TApplicationException.ExceptionType.MissingResult, "getThrottlingConfigs failed: unknown result");
       }
 
     }
@@ -82,7 +82,7 @@ namespace Jaeger.Thrift.Agent
         if (iAsync == null) throw new ArgumentNullException(nameof(iAsync));
 
         _iAsync = iAsync;
-        processMap_["validateTrace"] = validateTrace_ProcessAsync;
+        processMap_["getThrottlingConfigs"] = getThrottlingConfigs_ProcessAsync;
       }
 
       protected delegate Task ProcessFunction(int seqid, TProtocol iprot, TProtocol oprot, CancellationToken cancellationToken);
@@ -125,16 +125,16 @@ namespace Jaeger.Thrift.Agent
         return true;
       }
 
-      public async Task validateTrace_ProcessAsync(int seqid, TProtocol iprot, TProtocol oprot, CancellationToken cancellationToken)
+      public async Task getThrottlingConfigs_ProcessAsync(int seqid, TProtocol iprot, TProtocol oprot, CancellationToken cancellationToken)
       {
-        var args = new validateTraceArgs();
+        var args = new getThrottlingConfigsArgs();
         await args.ReadAsync(iprot, cancellationToken);
         await iprot.ReadMessageEndAsync(cancellationToken);
-        var result = new validateTraceResult();
+        var result = new getThrottlingConfigsResult();
         try
         {
-          result.Success = await _iAsync.validateTraceAsync(args.TraceId, cancellationToken);
-          await oprot.WriteMessageBeginAsync(new TMessage("validateTrace", TMessageType.Reply, seqid), cancellationToken); 
+          result.Success = await _iAsync.getThrottlingConfigsAsync(args.ServiceNames, cancellationToken);
+          await oprot.WriteMessageBeginAsync(new TMessage("getThrottlingConfigs", TMessageType.Reply, seqid), cancellationToken); 
           await result.WriteAsync(oprot, cancellationToken);
         }
         catch (TTransportException)
@@ -146,7 +146,7 @@ namespace Jaeger.Thrift.Agent
           Console.Error.WriteLine("Error occurred in processor:");
           Console.Error.WriteLine(ex.ToString());
           var x = new TApplicationException(TApplicationException.ExceptionType.InternalError," Internal error.");
-          await oprot.WriteMessageBeginAsync(new TMessage("validateTrace", TMessageType.Exception, seqid), cancellationToken);
+          await oprot.WriteMessageBeginAsync(new TMessage("getThrottlingConfigs", TMessageType.Exception, seqid), cancellationToken);
           await x.WriteAsync(oprot, cancellationToken);
         }
         await oprot.WriteMessageEndAsync(cancellationToken);
@@ -156,18 +156,32 @@ namespace Jaeger.Thrift.Agent
     }
 
 
-    public partial class validateTraceArgs : TBase
+    public partial class getThrottlingConfigsArgs : TBase
     {
+      private List<string> _serviceNames;
 
-      public string TraceId { get; set; }
-
-      public validateTraceArgs()
+      public List<string> ServiceNames
       {
+        get
+        {
+          return _serviceNames;
+        }
+        set
+        {
+          __isset.serviceNames = true;
+          this._serviceNames = value;
+        }
       }
 
-      public validateTraceArgs(string traceId) : this()
+
+      public Isset __isset;
+      public struct Isset
       {
-        this.TraceId = traceId;
+        public bool serviceNames;
+      }
+
+      public getThrottlingConfigsArgs()
+      {
       }
 
       public async Task ReadAsync(TProtocol iprot, CancellationToken cancellationToken)
@@ -175,7 +189,6 @@ namespace Jaeger.Thrift.Agent
         iprot.IncrementRecursionDepth();
         try
         {
-          bool isset_traceId = false;
           TField field;
           await iprot.ReadStructBeginAsync(cancellationToken);
           while (true)
@@ -189,10 +202,19 @@ namespace Jaeger.Thrift.Agent
             switch (field.ID)
             {
               case 1:
-                if (field.Type == TType.String)
+                if (field.Type == TType.List)
                 {
-                  TraceId = await iprot.ReadStringAsync(cancellationToken);
-                  isset_traceId = true;
+                  {
+                    TList _list4 = await iprot.ReadListBeginAsync(cancellationToken);
+                    ServiceNames = new List<string>(_list4.Count);
+                    for(int _i5 = 0; _i5 < _list4.Count; ++_i5)
+                    {
+                      string _elem6;
+                      _elem6 = await iprot.ReadStringAsync(cancellationToken);
+                      ServiceNames.Add(_elem6);
+                    }
+                    await iprot.ReadListEndAsync(cancellationToken);
+                  }
                 }
                 else
                 {
@@ -208,10 +230,6 @@ namespace Jaeger.Thrift.Agent
           }
 
           await iprot.ReadStructEndAsync(cancellationToken);
-          if (!isset_traceId)
-          {
-            throw new TProtocolException(TProtocolException.INVALID_DATA);
-          }
         }
         finally
         {
@@ -224,15 +242,25 @@ namespace Jaeger.Thrift.Agent
         oprot.IncrementRecursionDepth();
         try
         {
-          var struc = new TStruct("validateTrace_args");
+          var struc = new TStruct("getThrottlingConfigs_args");
           await oprot.WriteStructBeginAsync(struc, cancellationToken);
           var field = new TField();
-          field.Name = "traceId";
-          field.Type = TType.String;
-          field.ID = 1;
-          await oprot.WriteFieldBeginAsync(field, cancellationToken);
-          await oprot.WriteStringAsync(TraceId, cancellationToken);
-          await oprot.WriteFieldEndAsync(cancellationToken);
+          if (ServiceNames != null && __isset.serviceNames)
+          {
+            field.Name = "serviceNames";
+            field.Type = TType.List;
+            field.ID = 1;
+            await oprot.WriteFieldBeginAsync(field, cancellationToken);
+            {
+              await oprot.WriteListBeginAsync(new TList(TType.String, ServiceNames.Count), cancellationToken);
+              foreach (string _iter7 in ServiceNames)
+              {
+                await oprot.WriteStringAsync(_iter7, cancellationToken);
+              }
+              await oprot.WriteListEndAsync(cancellationToken);
+            }
+            await oprot.WriteFieldEndAsync(cancellationToken);
+          }
           await oprot.WriteFieldStopAsync(cancellationToken);
           await oprot.WriteStructEndAsync(cancellationToken);
         }
@@ -244,36 +272,43 @@ namespace Jaeger.Thrift.Agent
 
       public override bool Equals(object that)
       {
-        var other = that as validateTraceArgs;
+        var other = that as getThrottlingConfigsArgs;
         if (other == null) return false;
         if (ReferenceEquals(this, other)) return true;
-        return System.Object.Equals(TraceId, other.TraceId);
+        return ((__isset.serviceNames == other.__isset.serviceNames) && ((!__isset.serviceNames) || (TCollections.Equals(ServiceNames, other.ServiceNames))));
       }
 
       public override int GetHashCode() {
         int hashcode = 157;
         unchecked {
-          hashcode = (hashcode * 397) + TraceId.GetHashCode();
+          if(__isset.serviceNames)
+            hashcode = (hashcode * 397) + TCollections.GetHashCode(ServiceNames);
         }
         return hashcode;
       }
 
       public override string ToString()
       {
-        var sb = new StringBuilder("validateTrace_args(");
-        sb.Append(", TraceId: ");
-        sb.Append(TraceId);
+        var sb = new StringBuilder("getThrottlingConfigs_args(");
+        bool __first = true;
+        if (ServiceNames != null && __isset.serviceNames)
+        {
+          if(!__first) { sb.Append(", "); }
+          __first = false;
+          sb.Append("ServiceNames: ");
+          sb.Append(ServiceNames);
+        }
         sb.Append(")");
         return sb.ToString();
       }
     }
 
 
-    public partial class validateTraceResult : TBase
+    public partial class getThrottlingConfigsResult : TBase
     {
-      private ValidateTraceResponse _success;
+      private ThrottlingResponse _success;
 
-      public ValidateTraceResponse Success
+      public ThrottlingResponse Success
       {
         get
         {
@@ -293,7 +328,7 @@ namespace Jaeger.Thrift.Agent
         public bool success;
       }
 
-      public validateTraceResult()
+      public getThrottlingConfigsResult()
       {
       }
 
@@ -317,7 +352,7 @@ namespace Jaeger.Thrift.Agent
               case 0:
                 if (field.Type == TType.Struct)
                 {
-                  Success = new ValidateTraceResponse();
+                  Success = new ThrottlingResponse();
                   await Success.ReadAsync(iprot, cancellationToken);
                 }
                 else
@@ -346,7 +381,7 @@ namespace Jaeger.Thrift.Agent
         oprot.IncrementRecursionDepth();
         try
         {
-          var struc = new TStruct("validateTrace_result");
+          var struc = new TStruct("getThrottlingConfigs_result");
           await oprot.WriteStructBeginAsync(struc, cancellationToken);
           var field = new TField();
 
@@ -373,7 +408,7 @@ namespace Jaeger.Thrift.Agent
 
       public override bool Equals(object that)
       {
-        var other = that as validateTraceResult;
+        var other = that as getThrottlingConfigsResult;
         if (other == null) return false;
         if (ReferenceEquals(this, other)) return true;
         return ((__isset.success == other.__isset.success) && ((!__isset.success) || (System.Object.Equals(Success, other.Success))));
@@ -390,7 +425,7 @@ namespace Jaeger.Thrift.Agent
 
       public override string ToString()
       {
-        var sb = new StringBuilder("validateTrace_result(");
+        var sb = new StringBuilder("getThrottlingConfigs_result(");
         bool __first = true;
         if (Success != null && __isset.success)
         {
