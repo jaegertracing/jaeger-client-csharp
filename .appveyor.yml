@@ -1,7 +1,7 @@
 # AppVeyor Build number is incremental and not related to actual version number of the product
 version: '{build}'
 
-image: Visual Studio 2017
+image: Visual Studio 2019
 
 init:
   - cmd: git config --global core.autocrlf true
