@@ -22,12 +22,13 @@ namespace Jaeger.Transport.Thrift.Tests.Transport.Internal
         }
 
         [Fact]
-        public void Constructor_ShouldConnectClient()
+        public async void Open_ShouldConnectClient()
         {
             var host = "host, yo";
             var port = 4528;
 
-            new ThriftUdpClientTransport(host, port, _testingMemoryStream, _mockClient);
+            var transport = new ThriftUdpClientTransport(host, port, _testingMemoryStream, _mockClient);
+            await transport.OpenAsync();
 
             _mockClient.Received(1).Connect(Arg.Is(host), Arg.Is(port));
         }
