@@ -24,59 +24,54 @@ using System.Net.Http.Headers;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
+using Thrift.Transport;
 
-namespace Thrift.Transports.Client
+namespace Jaeger.Thrift.Senders.Internal
 {
     // ReSharper disable once InconsistentNaming
-    public class THttpClientTransport : TClientTransport
+    public class THttpTransport : TTransport
     {
         private readonly X509Certificate[] _certificates;
         private readonly Uri _uri;
 
-        // Timeouts in milliseconds
-        private int _connectTimeout = 30000;
+        private int _connectTimeout = 30000; // Timeouts in milliseconds
         private HttpClient _httpClient;
         private Stream _inputStream;
-
-        private bool _isDisposed;
         private MemoryStream _outputStream = new MemoryStream();
-        private static readonly MediaTypeWithQualityHeaderValue ApacheThriftMediaType = new MediaTypeWithQualityHeaderValue("application/vnd.apache.thrift.binary");
+        private bool _isDisposed;
 
-        public THttpClientTransport(Uri u, IDictionary<string, string> customHeaders)
-            : this(u, Enumerable.Empty<X509Certificate>(), customHeaders)
+        public THttpTransport(Uri uri, IDictionary<string, string> customRequestHeaders = null, string userAgent = null, IDictionary<string, object> customProperties = null)
+            : this(uri, Enumerable.Empty<X509Certificate>(), customRequestHeaders, userAgent, customProperties)
         {
         }
 
-        public THttpClientTransport(Uri u, IDictionary<string, string> customHeaders,
-            IDictionary<string, object> customProperties)
-            : this(u, Enumerable.Empty<X509Certificate>(), customHeaders, customProperties)
-        {
-        }
-
-        public THttpClientTransport(Uri u, IEnumerable<X509Certificate> certificates,
-            IDictionary<string, string> customHeaders,
+        public THttpTransport(Uri uri, IEnumerable<X509Certificate> certificates,
+            IDictionary<string, string> customRequestHeaders, string userAgent = null,
             IDictionary<string, object> customProperties = null)
         {
-            _uri = u;
+            _uri = uri;
             _certificates = (certificates ?? Enumerable.Empty<X509Certificate>()).ToArray();
-            CustomHeaders = customHeaders;
+
+            if (!string.IsNullOrEmpty(userAgent))
+                UserAgent = userAgent;
+
             CustomProperties = customProperties ?? new Dictionary<string, object>();
 
             // due to current bug with performance of Dispose in netcore https://github.com/dotnet/corefx/issues/8809
             // this can be switched to default way (create client->use->dispose per flush) later
-            _httpClient = CreateClient();
+            _httpClient = CreateClient(customRequestHeaders);
         }
 
-        public IDictionary<string, string> CustomHeaders { get; }
+        // According to RFC 2616 section 3.8, the "User-Agent" header may not carry a version number
+        public readonly string UserAgent = "Thrift netstd THttpClient";
+
+        public override bool IsOpen => true;
+
+        public HttpRequestHeaders RequestHeaders => _httpClient.DefaultRequestHeaders;
 
         public IDictionary<string, object> CustomProperties { get; }
 
-        public int ConnectTimeout
-        {
-            set { _connectTimeout = value; }
-        }
-
-        public override bool IsOpen => true;
+        public MediaTypeHeaderValue ContentType { get; set; }
 
         public override async Task OpenAsync(CancellationToken cancellationToken)
         {
@@ -107,8 +102,7 @@ namespace Thrift.Transports.Client
             }
         }
 
-        public override async Task<int> ReadAsync(byte[] buffer, int offset, int length,
-            CancellationToken cancellationToken)
+        public override async ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -147,38 +141,28 @@ namespace Thrift.Transports.Client
             await _outputStream.WriteAsync(buffer, offset, length, cancellationToken);
         }
 
-        /// <summary>
-        /// Seperate function to avoid a MissingMethodException in .NET Framework 4.6.1
-        /// https://stackoverflow.com/a/46577035/10038915
-        /// Related to: https://github.com/jaegertracing/jaeger-client-csharp/issues/105
-        /// </summary>
-        /// <param name="handler">HttpClientHandler</param>
-        private void AddCertificates(HttpClientHandler handler)
-        {
-            handler.ClientCertificates.AddRange(_certificates);
-        }
-
-        private HttpClient CreateClient()
+        private HttpClient CreateClient(IDictionary<string, string> customRequestHeaders)
         {
             var handler = new HttpClientHandler();
-            if (_certificates.Length > 0)
-            {
-                AddCertificates(handler);
-            }
+            handler.ClientCertificates.AddRange(_certificates);
+            handler.AutomaticDecompression = System.Net.DecompressionMethods.Deflate | System.Net.DecompressionMethods.GZip;
 
             var httpClient = new HttpClient(handler);
 
             if (_connectTimeout > 0)
             {
-                httpClient.Timeout = TimeSpan.FromSeconds(_connectTimeout);
+                httpClient.Timeout = TimeSpan.FromMilliseconds(_connectTimeout);
             }
 
-            httpClient.DefaultRequestHeaders.Accept.Add(ApacheThriftMediaType);
-            httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("THttpClientTransport", "1.0.0"));
+            httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/x-thrift"));
+            httpClient.DefaultRequestHeaders.UserAgent.TryParseAdd(UserAgent);
 
-            if (CustomHeaders != null)
+            httpClient.DefaultRequestHeaders.AcceptEncoding.Add(new StringWithQualityHeaderValue("deflate"));
+            httpClient.DefaultRequestHeaders.AcceptEncoding.Add(new StringWithQualityHeaderValue("gzip"));
+
+            if (customRequestHeaders != null)
             {
-                foreach (var item in CustomHeaders)
+                foreach (var item in customRequestHeaders)
                 {
                     httpClient.DefaultRequestHeaders.Add(item.Key, item.Value);
                 }
@@ -206,43 +190,36 @@ namespace Thrift.Transports.Client
         {
             try
             {
-                try
+                _outputStream.Seek(0, SeekOrigin.Begin);
+
+                using (var contentStream = new StreamContent(_outputStream))
                 {
-                    if (_outputStream.CanSeek)
+                    contentStream.Headers.ContentType = ContentType ?? new MediaTypeHeaderValue(@"application/x-thrift");
+
+                    var requestMessage = CreateRequestMessage(contentStream);
+                    var msg = await _httpClient.SendAsync(requestMessage, cancellationToken);
+                    var response = msg.EnsureSuccessStatusCode();
+
+                    _inputStream?.Dispose();
+                    _inputStream = await response.Content.ReadAsStreamAsync();
+                    if (_inputStream.CanSeek)
                     {
-                        _outputStream.Seek(0, SeekOrigin.Begin);
-                    }
-
-                    using (var outStream = new StreamContent(_outputStream))
-                    {
-                        outStream.Headers.ContentType = ApacheThriftMediaType;
-                        var requestMessage = CreateRequestMessage(outStream);
-                        var msg = await _httpClient.SendAsync(requestMessage, cancellationToken);
-
-                        msg.EnsureSuccessStatusCode();
-
-                        if (_inputStream != null)
-                        {
-                            _inputStream.Dispose();
-                            _inputStream = null;
-                        }
-
-                        _inputStream = await msg.Content.ReadAsStreamAsync();
-                        if (_inputStream.CanSeek)
-                        {
-                            _inputStream.Seek(0, SeekOrigin.Begin);
-                        }
+                        _inputStream.Seek(0, SeekOrigin.Begin);
                     }
                 }
-                catch (IOException iox)
-                {
-                    throw new TTransportException(TTransportException.ExceptionType.Unknown, iox.ToString());
-                }
-                catch (HttpRequestException wx)
-                {
-                    throw new TTransportException(TTransportException.ExceptionType.Unknown,
-                        "Couldn't connect to server: " + wx);
-                }
+            }
+            catch (IOException iox)
+            {
+                throw new TTransportException(TTransportException.ExceptionType.Unknown, iox.ToString());
+            }
+            catch (HttpRequestException wx)
+            {
+                throw new TTransportException(TTransportException.ExceptionType.Unknown,
+                    "Couldn't connect to server: " + wx);
+            }
+            catch (Exception ex)
+            {
+                throw new TTransportException(TTransportException.ExceptionType.Unknown, ex.Message);
             }
             finally
             {

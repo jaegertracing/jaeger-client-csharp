@@ -3,11 +3,11 @@ using System.IO;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
-using Thrift.Transports;
+using Thrift.Transport;
 
 namespace Jaeger.Thrift.Senders.Internal
 {
-    public class ThriftUdpClientTransport : TClientTransport
+    public class ThriftUdpClientTransport : TTransport
     {
         public const int MaxPacketSize = 65000; // TODO !!! Not yet used.
 
@@ -39,7 +39,7 @@ namespace Jaeger.Thrift.Senders.Internal
             _client.Close();
         }
 
-        public override async Task<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
+        public override async ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
         {
             var curDataSize = await _byteStream.ReadAsync(buffer, offset, length, cancellationToken);
             if (curDataSize != 0)

@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 using Jaeger.Thrift.Senders.Internal;
-using Thrift.Protocols;
+using Thrift.Protocol;
 
 namespace Jaeger.Thrift.Senders
 {
@@ -17,7 +17,7 @@ namespace Jaeger.Thrift.Senders
 
         private readonly TMemoryBuffer _memoryTransport;
 
-        protected ITProtocolFactory ProtocolFactory { get; }
+        protected TProtocolFactory ProtocolFactory { get; }
 
         protected int MaxSpanBytes { get; }
 

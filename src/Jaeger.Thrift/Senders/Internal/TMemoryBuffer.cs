@@ -20,11 +20,11 @@
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using Thrift.Transports;
+using Thrift.Transport;
 
 namespace Jaeger.Thrift.Senders.Internal
 {
-    internal class TMemoryBuffer : TClientTransport
+    internal class TMemoryBuffer : TTransport
     {
         private readonly MemoryStream _byteStream;
         private bool _isDisposed;
@@ -49,7 +49,7 @@ namespace Jaeger.Thrift.Senders.Internal
             // do nothing
         }
 
-        public override async Task<int> ReadAsync(byte[] buffer, int offset, int length,
+        public override async ValueTask<int> ReadAsync(byte[] buffer, int offset, int length,
             CancellationToken cancellationToken)
         {
             return await _byteStream.ReadAsync(buffer, offset, length, cancellationToken);

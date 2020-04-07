@@ -6,7 +6,7 @@ using System.Threading;
 using Jaeger.Thrift.Senders.Internal;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
-using Thrift.Transports;
+using Thrift.Transport;
 using Xunit;
 
 namespace Jaeger.Transport.Thrift.Tests.Transport.Internal
@@ -87,7 +87,7 @@ namespace Jaeger.Transport.Thrift.Tests.Transport.Internal
             var newBuffer = new byte[8];
 
             var transport = new ThriftUdpClientTransport(host, port, _testingMemoryStream, _mockClient);
-            var ex = await Assert.ThrowsAsync<TTransportException>(() => transport.ReadAsync(newBuffer, 0, 8, CancellationToken.None));
+            var ex = await Assert.ThrowsAsync<TTransportException>(() => transport.ReadAsync(newBuffer, 0, 8, CancellationToken.None).AsTask());
 
             Assert.Equal("ERROR from underlying socket. error message, yo", ex.Message);
         }
