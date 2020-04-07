@@ -116,10 +116,8 @@ namespace Jaeger.Senders.Thrift.Tests
         {
             SetProperty(Configuration.JaegerAgentHost, "jaeger-agent");
             SetProperty(Configuration.JaegerAgentPort, "6832");
-            ISender sender = Configuration.SenderConfiguration.FromEnv(_loggerFactory).GetSender();
-            // TODO: Since the factory is returning null on error, and the host is unknown,
-            // we currently get null instead of UdpSender.
-            Assert.Null(sender);
+            Assert.Throws<SocketException>(() => Configuration.SenderConfiguration.FromEnv(_loggerFactory).GetSender());
+            //ISender sender = Configuration.SenderConfiguration.FromEnv(_loggerFactory).GetSender();
             //Assert.True(sender is UdpSender);
         }
 
