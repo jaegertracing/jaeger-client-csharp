@@ -1,4 +1,6 @@
 ﻿using System.Net.Http;
+using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Jaeger.Crossdock.Model;
 using Microsoft.Extensions.Logging;
@@ -56,13 +58,14 @@ namespace Jaeger.Crossdock.Behavior
             var downstreamUrl = $"http://{downstream.Host}:{downstream.Port}/join_trace";
             _logger.LogInformation("Calling downstream http {serviceName} at {downstream}", downstream.ServiceName, downstreamUrl);
 
-            var resp = await _client.PostAsJsonAsync(downstreamUrl, new JoinTraceRequest(downstream.ServerRole, downstream.Downstream_));
+            var jsonContent = JsonSerializer.Serialize(new JoinTraceRequest(downstream.ServerRole, downstream.Downstream_));
+            var resp = await _client.PostAsync(downstreamUrl, new StringContent(jsonContent, Encoding.UTF8, "application/json"));
             if (!resp.IsSuccessStatusCode)
             {
                 _logger.LogError("Received response with status code {statusCode}", resp.StatusCode);
                 return null;
             }
-            var response = await resp.Content.ReadAsAsync<TraceResponse>();
+            var response = await JsonSerializer.DeserializeAsync<TraceResponse>(await resp.Content.ReadAsStreamAsync());
             _logger.LogInformation("Received response {response}", response);
             return response;
         }

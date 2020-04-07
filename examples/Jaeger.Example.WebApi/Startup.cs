@@ -1,10 +1,9 @@
 ﻿using Jaeger.Samplers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Hosting;
 using OpenTracing;
 using OpenTracing.Util;
 
@@ -22,8 +21,7 @@ namespace Jaeger.Example.WebApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc()
-                .SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            services.AddControllersWithViews();
 
             // Use "OpenTracing.Contrib.NetCore" to automatically generate spans for ASP.NET Core, Entity Framework Core, ...
             // See https://github.com/opentracing-contrib/csharp-netcore for details.
@@ -32,7 +30,7 @@ namespace Jaeger.Example.WebApi
             // Adds the Jaeger Tracer.
             services.AddSingleton<ITracer>(serviceProvider =>
             {
-                string serviceName = serviceProvider.GetRequiredService<IHostingEnvironment>().ApplicationName;
+                string serviceName = serviceProvider.GetRequiredService<IWebHostEnvironment>().ApplicationName;
 
                 // This will log to a default localhost installation of Jaeger.
                 var tracer = new Tracer.Builder(serviceName)
@@ -47,7 +45,7 @@ namespace Jaeger.Example.WebApi
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
@@ -56,12 +54,20 @@ namespace Jaeger.Example.WebApi
             else
             {
                 app.UseExceptionHandler("/Error");
+                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
 
             app.UseHttpsRedirection();
 
-            app.UseMvc();
+            app.UseRouting();
+
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllerRoute(
+                    name: "default",
+                    pattern: "{controller=Values}/{action=Get}/{id?}");
+            });
         }
     }
 }

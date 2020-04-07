@@ -1,21 +1,21 @@
 ﻿using System.Collections.Generic;
+using System.Text.Json.Serialization;
 using Jaeger.Samplers;
-using Newtonsoft.Json;
 
 namespace Jaeger.Crossdock.Model
 {
     public class CreateTracesRequest
     {
-        [JsonProperty("type")]
+        [JsonPropertyName("type")]
         public string Type { get; set; } = RemoteControlledSampler.Type;
 
-        [JsonProperty("operation")]
+        [JsonPropertyName("operation")]
         public string Operation { get; set; }
 
-        [JsonProperty("count")]
+        [JsonPropertyName("count")]
         public int Count { get; set; }
 
-        [JsonProperty("tags")]
+        [JsonPropertyName("tags")]
         public IDictionary<string, string> Tags { get; set; }
     }
 }

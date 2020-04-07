@@ -1,33 +1,26 @@
 ﻿using System.Text;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Jaeger.Crossdock.Model
 {
     public class TraceResponse
     {
-        [JsonProperty("notImplementedError")]
-        public string NotImplementedError { get; } = string.Empty;
+        [JsonPropertyName("notImplementedError")]
+        public string NotImplementedError { get; set; } = string.Empty;
 
-        [JsonProperty("span")]
-        public ObservedSpan Span { get; }
+        [JsonPropertyName("span")]
+        public ObservedSpan Span { get; set; }
 
-        [JsonProperty("downstream")]
+        [JsonPropertyName("downstream")]
         public TraceResponse Downstream { get; set; }
+
+        public TraceResponse()
+        {
+        }
 
         public TraceResponse(ObservedSpan span)
         {
             Span = span;
-        }
-
-        [JsonConstructor]
-        public TraceResponse(
-            string notImplementedError,
-            ObservedSpan span,
-            TraceResponse downstream)
-        {
-            NotImplementedError = notImplementedError;
-            Span = span;
-            Downstream = downstream;
         }
 
         public TraceResponse(string notImplementedError)

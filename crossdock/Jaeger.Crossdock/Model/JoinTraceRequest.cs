@@ -1,20 +1,21 @@
 ﻿using System.Text;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Jaeger.Crossdock.Model
 {
     public class JoinTraceRequest
     {
-        [JsonProperty("serverRole")]
-        public string ServerRole { get; }
+        [JsonPropertyName("serverRole")]
+        public string ServerRole { get; set; }
 
-        [JsonProperty("downstream")]
-        public Downstream Downstream { get; }
+        [JsonPropertyName("downstream")]
+        public Downstream Downstream { get; set; }
 
-        [JsonConstructor]
-        public JoinTraceRequest(
-            string serverRole,
-            Downstream downstream)
+        public JoinTraceRequest()
+        {
+        }
+
+        public JoinTraceRequest(string serverRole, Downstream downstream)
         {
             ServerRole = serverRole;
             Downstream = downstream;

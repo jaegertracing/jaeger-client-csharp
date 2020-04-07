@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="OpenTracing.Contrib.NetCore" Version="0.5.0" />
+    <PackageReference Include="OpenTracing.Contrib.NetCore" Version="0.6.2" />
 
     <!-- NOTE:
         In case you're building this application standalone, use below PackageReference 

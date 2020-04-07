@@ -1,25 +1,29 @@
-FROM microsoft/windowsservercore@sha256:c06b4bfaf634215ea194e6005450740f3a230b27c510cf8facab1e9c678f3a99 as build
+#See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
-SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
+FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-buster-slim AS base
+WORKDIR /app
+EXPOSE 80
+EXPOSE 443
 
-ENV ASPNETCORE_VERSION 2.2.6
-RUN Invoke-WebRequest -OutFile aspnetcore.zip https://dotnetcli.blob.core.windows.net/dotnet/aspnetcore/Runtime/$Env:ASPNETCORE_VERSION/aspnetcore-runtime-$Env:ASPNETCORE_VERSION-win-x64.zip; \
-Expand-Archive aspnetcore.zip -DestinationPath c:\dotnet; \
-Remove-Item -Force aspnetcore.zip
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1-buster AS build
+WORKDIR /src
+COPY ["crossdock/Jaeger.Crossdock/Jaeger.Crossdock.csproj", "crossdock/Jaeger.Crossdock/"]
+COPY ["src/Jaeger/Jaeger.csproj", "src/Jaeger/"]
+COPY ["src/Jaeger.Thrift/Jaeger.Thrift.csproj", "src/Jaeger.Thrift/"]
+RUN dotnet restore "crossdock/Jaeger.Crossdock/Jaeger.Crossdock.csproj"
+COPY . .
+WORKDIR "/src/crossdock/Jaeger.Crossdock"
+RUN dotnet build "Jaeger.Crossdock.csproj" -c Release -o /app/build
 
+FROM build AS publish
+RUN dotnet publish "Jaeger.Crossdock.csproj" -c Release -o /app/publish
 
-
-FROM microsoft/nanoserver@sha256:8f78a4a7da4464973a5cd239732626141aec97e69ba3e4023357628630bc1ee2 as runtime
-
+FROM base AS final
 EXPOSE 8080-8082
-
-COPY --from=build /dotnet /dotnet
-COPY ./publish /app
-
+WORKDIR /app
+COPY --from=publish /app/publish .
 ENV \
 DOTNET_RUNNING_IN_CONTAINER=true \
 AGENT_HOST_PORT=jaeger-agent:5775 \
 SAMPLING_SERVER_URL=http://test_driver:5778/sampling
-
-WORKDIR /dotnet
-ENTRYPOINT ["dotnet", "/app/Jaeger.Crossdock.dll"]
+ENTRYPOINT ["dotnet", "Jaeger.Crossdock.dll"]

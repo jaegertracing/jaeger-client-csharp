@@ -4,9 +4,9 @@ param(
     [string] $PublishPath = (Join-Path $PWD "publish"),
     [string] $BuildConfiguration = "Release",
 
-    [bool] $RunBuild = $false,
-    [bool] $RunTests = $false,
-    [bool] $RunXdock = $true
+    [bool] $RunBuild = $true,
+    [bool] $RunTests = $true,
+    [bool] $RunXdock = $false
 )
 
 $ErrorActionPreference = "Stop"

@@ -1,29 +1,32 @@
 ﻿using System.Text;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Jaeger.Crossdock.Model
 {
     public class Downstream
     {
-        [JsonProperty("serviceName")]
-        public string ServiceName { get; }
+        [JsonPropertyName("serviceName")]
+        public string ServiceName { get; set; }
 
-        [JsonProperty("host")]
-        public string Host { get; }
+        [JsonPropertyName("host")]
+        public string Host { get; set; }
 
-        [JsonProperty("port")]
-        public string Port { get; }
+        [JsonPropertyName("port")]
+        public string Port { get; set; }
 
-        [JsonProperty("transport")]
-        public string Transport { get; }
+        [JsonPropertyName("transport")]
+        public string Transport { get; set; }
 
-        [JsonProperty("serverRole")]
-        public string ServerRole { get; }
+        [JsonPropertyName("serverRole")]
+        public string ServerRole { get; set; }
 
-        [JsonProperty("downstream")]
-        public Downstream Downstream_ { get; }
+        [JsonPropertyName("downstream")]
+        public Downstream Downstream_ { get; set; }
 
-        [JsonConstructor]
+        public Downstream()
+        {
+        }
+
         public Downstream(
             string serviceName,
             string host,

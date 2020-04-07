@@ -1,20 +1,23 @@
 ﻿using System.Text;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Jaeger.Crossdock.Model
 {
     public class ObservedSpan
     {
-        [JsonProperty("traceId")]
-        public string TraceId { get; }
+        [JsonPropertyName("traceId")]
+        public string TraceId { get; set; }
 
-        [JsonProperty("sampled")]
-        public bool Sampled { get; }
+        [JsonPropertyName("sampled")]
+        public bool Sampled { get; set; }
 
-        [JsonProperty("baggage")]
-        public string Baggage { get; }
+        [JsonPropertyName("baggage")]
+        public string Baggage { get; set; }
 
-        [JsonConstructor]
+        public ObservedSpan()
+        {
+        }
+
         public ObservedSpan(
             string traceId,
             bool sampled,

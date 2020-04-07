@@ -1,23 +1,26 @@
 ﻿using System.Text;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Jaeger.Crossdock.Model
 {
     public class StartTraceRequest
     {
-        [JsonProperty("sampled")]
-        public bool Sampled { get; }
+        [JsonPropertyName("sampled")]
+        public bool Sampled { get; set; }
 
-        [JsonProperty("baggage")]
-        public string Baggage { get; }
+        [JsonPropertyName("baggage")]
+        public string Baggage { get; set; }
 
-        [JsonProperty("downstream")]
-        public Downstream Downstream { get; }
+        [JsonPropertyName("downstream")]
+        public Downstream Downstream { get; set; }
 
-        [JsonProperty("serverRole")]
-        public string ServerRole { get; }
+        [JsonPropertyName("serverRole")]
+        public string ServerRole { get; set; }
 
-        [JsonConstructor]
+        public StartTraceRequest()
+        {
+        }
+
         public StartTraceRequest(
             string serverRole,
             bool sampled,
@@ -29,7 +32,6 @@ namespace Jaeger.Crossdock.Model
             Baggage = baggage;
             Downstream = downstream;
         }
-
         public override string ToString()
         {
             var sb = new StringBuilder("StartTraceRequest(");

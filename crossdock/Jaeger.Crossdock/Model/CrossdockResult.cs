@@ -1,5 +1,5 @@
 ﻿using System;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Jaeger.Crossdock.Model
 {
@@ -12,13 +12,16 @@ namespace Jaeger.Crossdock.Model
             Success
         }
 
-        [JsonProperty("status")]
+        [JsonPropertyName("status")]
         public string Status { get; }
 
-        [JsonProperty("output")]
+        [JsonPropertyName("output")]
         public string Output { get; }
 
-        [JsonConstructor]
+        public CrossdockResult()
+        {
+        }
+
         public CrossdockResult(Result result, string output = null)
         {
             Output = output;

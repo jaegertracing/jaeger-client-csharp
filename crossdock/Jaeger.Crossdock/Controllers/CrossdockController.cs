@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Net.Http;
+using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Jaeger.Crossdock.Model;
 using Microsoft.AspNetCore.Mvc;
@@ -122,13 +124,14 @@ namespace Jaeger.Crossdock.Controllers
             var url = $"http://{host}:{Constants.DEFAULT_SERVER_PORT_HTTP}/start_trace";
             _logger.LogInformation("Calling start_trace on {serviceName}", host);
 
-            var resp = await _client.PostAsJsonAsync(url, request);
+            var jsonContent = JsonSerializer.Serialize(request);
+            var resp = await _client.PostAsync(url, new StringContent(jsonContent, Encoding.UTF8, "application/json"));
             if (!resp.IsSuccessStatusCode)
             {
                 _logger.LogError("Received response with status code {statusCode}", resp.StatusCode);
                 return new TraceResponse(await resp.Content.ReadAsStringAsync());
             }
-            var response = await resp.Content.ReadAsAsync<TraceResponse>();
+            var response = await JsonSerializer.DeserializeAsync<TraceResponse>(await resp.Content.ReadAsStreamAsync());
             _logger.LogInformation("Received response {response}", response);
             return response;
         }
