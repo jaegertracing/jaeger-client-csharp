@@ -42,7 +42,7 @@ var reporter = new RemoteReporter.Builder()
     .Build();
 ```
 
-For more information on sender resolution see the sender [README](./src/Jaeger.Core/Senders/README.md)
+For more information on sender resolution see the sender [README](../Senders/README.md)
 
 ## Combined Reporter
 A reporter that combines multiple reporters for usage with the tracer. This is mostly used for debugging, when an output to the Console logger is wanted.
