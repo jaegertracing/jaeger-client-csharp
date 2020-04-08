@@ -11,6 +11,8 @@ Configuration.SenderConfiguration.DefaultSenderResolver = new SenderResolver(log
 	.RegisterSenderFactory<ThriftSenderFactory>();
 ```
 
+If you need to set `JAEGER_SENDER_FACTORY` (when multiple factories are registered), `ThriftSenderFactory.Name` corresponds to `"thrift"`.
+
 ## Configuration
 Depending on what variables are set in `Configuration.SenderConfiguration`, either a `HttpSender` or an `UdpSender` is generated. Setting the `SenderConfiguration.Endpoint` will allways result in an `HttpSender`.
 

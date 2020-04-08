@@ -4,6 +4,8 @@ namespace Jaeger.Senders.Thrift
 {
     public class ThriftSenderFactory : ISenderFactory
     {
+        public const string Name = "thrift";
+
         public ISender GetSender(ILoggerFactory loggerFactory, Configuration.SenderConfiguration senderConfiguration)
         {
             var logger = loggerFactory.CreateLogger<ThriftSenderFactory>();
@@ -33,7 +35,7 @@ namespace Jaeger.Senders.Thrift
                     0 /* max packet size */);
         }
 
-        public string FactoryName => "thrift";
+        public string FactoryName => Name;
 
         private static string StringOrDefault(string value, string defaultValue)
         {

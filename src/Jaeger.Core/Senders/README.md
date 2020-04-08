@@ -20,8 +20,8 @@ If a factory was found, `ISenderFactory.GetSender()` will be used to get a confi
 var senderResolver = new SenderResolver(loggerFactory)
 	.RegisterSenderFactory<ThriftSenderFactory>();
 var senderConfiguration = new Configuration.SenderConfiguration(loggerFactory)
-	.WithSenderResolver(senderResolver)	// optional, defaults to Configuration.SenderConfiguration.DefaultSenderResolver
-	.WithSenderFactory("thrift");		// optional if only one Factory registered to senderResolver
+	.WithSenderResolver(senderResolver)            // optional, defaults to Configuration.SenderConfiguration.DefaultSenderResolver
+	.WithSenderFactory(ThriftSenderFactory.Name);  // optional when only one Factory registered to senderResolver
 var sender = senderResolver.Resolve(senderConfiguration);
 ```
 
@@ -50,7 +50,7 @@ var tracer = Configuration.FromEnv(loggerFactory).GetTracer();
 ```
 
 # Notice
-The `ThriftSenderFactory` is defined as part of the NuGET package `Jaeger.Senders.Thrift`. This is usually included through the meta-package `Jaeger`. If you do not want to add a dependency on `Jaeger.Thrift.VendoredThrift` when using other `Jaeger.Senders.*` packages or when defining your own `ISender`/`ISenderFactory`, use the package `Jaeger.Core` directly instead of `Jaeger`.
+The `ThriftSenderFactory` is defined as part of the NuGET package `Jaeger.Senders.Thrift`. This is usually included through the meta-package `Jaeger`. If you do not want to add a dependency on `ApacheThrift` when using other `Jaeger.Senders.*` packages or when defining your own `ISender`/`ISenderFactory`, use the package `Jaeger.Core` directly instead of `Jaeger`.
 
 By default, `Configuration.SenderConfiguration.DefaultSenderResolver` does NOT contain any `ISenderFactory` instances since `Jaeger.Core` is agnostic of any `ISender` implementation. All calls to `SenderResolver.Resolve` will return `NoopSender.Instance`.
 

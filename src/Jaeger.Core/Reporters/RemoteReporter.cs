@@ -239,7 +239,8 @@ namespace Jaeger.Reporters
                 }
                 if (_sender == null)
                 {
-                    _sender = NoopSender.Instance;
+                    var senderResolver = new SenderResolver(_loggerFactory);
+                    _sender = senderResolver.Resolve();
                 }
                 if (_metrics == null)
                 {

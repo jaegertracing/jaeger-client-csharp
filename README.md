@@ -63,6 +63,11 @@ ITracer tracer = config.GetTracer();
 
 The config objects lazily builds and configures Jaeger Tracer. Multiple calls to GetTracer() return the same instance.
 
+#### Notice
+The `ThriftSenderFactory` is defined as part of the NuGET package `Jaeger.Senders.Thrift`. This is usually included through the meta-package `Jaeger`. If you do not want to add a dependency on `ApacheThrift` when using other `Jaeger.Senders.*` packages or when defining your own `ISender`/`ISenderFactory`, use the package `Jaeger.Core` directly instead of `Jaeger`.
+
+By default, `Configuration.SenderConfiguration.DefaultSenderResolver` does NOT contain any `ISenderFactory` instances since `Jaeger.Core` is agnostic of any `ISender` implementation. All calls to `SenderResolver.Resolve` will return `NoopSender.Instance`.
+
 #### Configuration via Environment
 
 It is also possible to obtain a `Jaeger.Configuration` object configured using properties specified
