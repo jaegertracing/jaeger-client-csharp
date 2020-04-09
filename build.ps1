@@ -59,16 +59,9 @@ Task "Build" $RunBuild {
 
 Task "Tests" $RunTests {
 
-    $testsFailed = $false
-    Get-ChildItem -Filter *.csproj -Recurse | ForEach-Object {
+    dotnet test -c $BuildConfiguration --no-build
 
-        if (Select-Xml -Path $_.FullName -XPath "/Project/ItemGroup/PackageReference[@Include='Microsoft.NET.Test.Sdk']") {
-            dotnet test $_.FullName -c $BuildConfiguration --no-build
-            if ($LASTEXITCODE -ne 0) { $testsFailed = $true }
-        }
-    }
-
-    if ($testsFailed) { throw "At least one test failed." }
+    if ($LASTEXITCODE -ne 0) { throw "At least one test failed." }
 }
 
 Write-Host "`nBuild finished in $($Stopwatch.Elapsed.TotalSeconds) sec." -ForegroundColor Green
