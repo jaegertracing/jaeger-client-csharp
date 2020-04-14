@@ -9,7 +9,7 @@ namespace Jaeger.Thrift.Senders.Internal
 {
     public class ThriftUdpClientTransport : TTransport
     {
-        public const int MaxPacketSize = 65000; // TODO !!! Not yet used.
+        public const int MaxPacketSize = 65000;
 
         private readonly IUdpClient _client;
         private readonly MemoryStream _byteStream;

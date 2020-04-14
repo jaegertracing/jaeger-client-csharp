@@ -50,6 +50,8 @@ namespace Jaeger.Core.Tests
             // Explicitly clear all properties
             ClearProperty(Configuration.JaegerAgentHost);
             ClearProperty(Configuration.JaegerAgentPort);
+            ClearProperty(Configuration.JaegerGrpcTarget);
+            ClearProperty(Configuration.JaegerGrpcRootCertificate);
             ClearProperty(Configuration.JaegerReporterLogSpans);
             ClearProperty(Configuration.JaegerReporterMaxQueueSize);
             ClearProperty(Configuration.JaegerReporterFlushInterval);
@@ -283,7 +285,7 @@ namespace Jaeger.Core.Tests
         [Fact]
         public void TestSenderWithNoPropertiesReturnsNoopSender()
         {
-            Assert.True(Configuration.SenderConfiguration.FromEnv(_loggerFactory).GetSender() is NoopSender);
+            Assert.IsType<NoopSender>(Configuration.SenderConfiguration.FromEnv(_loggerFactory).GetSender());
         }
 
         [Fact]
@@ -332,7 +334,7 @@ namespace Jaeger.Core.Tests
             SetProperty(Configuration.JaegerAgentHost, "jaeger-agent");
             SetProperty(Configuration.JaegerAgentPort, "6832");
 
-            Assert.True(Configuration.SenderConfiguration.FromEnv(_loggerFactory).GetSender() is NoopSender);
+            Assert.IsType<NoopSender>(Configuration.SenderConfiguration.FromEnv(_loggerFactory).GetSender());
         }
 
         [Fact]
@@ -515,7 +517,7 @@ namespace Jaeger.Core.Tests
                 .WithType(ConstSampler.Type);
             ISampler sampler = samplerConfiguration.GetSampler("name",
                 new MetricsImpl(NoopMetricsFactory.Instance));
-            Assert.True(sampler is ConstSampler);
+            Assert.IsType<ConstSampler>(sampler);
         }
 
         [Fact]
@@ -525,7 +527,7 @@ namespace Jaeger.Core.Tests
                 .WithType(ProbabilisticSampler.Type);
             ISampler sampler = samplerConfiguration.GetSampler("name",
                 new MetricsImpl(NoopMetricsFactory.Instance));
-            Assert.True(sampler is ProbabilisticSampler);
+            Assert.IsType<ProbabilisticSampler>(sampler);
         }
 
         [Fact]
@@ -535,7 +537,7 @@ namespace Jaeger.Core.Tests
                 .WithType(RateLimitingSampler.Type);
             ISampler sampler = samplerConfiguration.GetSampler("name",
                 new MetricsImpl(NoopMetricsFactory.Instance));
-            Assert.True(sampler is RateLimitingSampler);
+            Assert.IsType<RateLimitingSampler>(sampler);
         }
 
         [Fact]
@@ -549,7 +551,7 @@ namespace Jaeger.Core.Tests
             Configuration.SamplerConfiguration samplerConfiguration = Configuration.SamplerConfiguration.FromEnv(loggerFactory);
             ISampler sampler = samplerConfiguration.GetSampler("name",
                 new MetricsImpl(NoopMetricsFactory.Instance));
-            Assert.True(sampler is RemoteControlledSampler);
+            Assert.IsType<RemoteControlledSampler>(sampler);
             loggerFactory.Received(1).CreateLogger<Configuration>();
             logger.Received(1).Log(LogLevel.Warning, Arg.Any<EventId>(), Arg.Any<object>(), Arg.Any<Exception>(), Arg.Any<Func<object, Exception, string>>());
         }

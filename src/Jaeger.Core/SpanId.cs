@@ -26,9 +26,29 @@ namespace Jaeger
             Id = traceId.Low;
         }
 
+        public bool Equals(SpanId other)
+        {
+            return Id == other.Id;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is SpanId other && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            return Id.GetHashCode();
+        }
+
         public override string ToString()
         {
             return Id.ToString("x");
+        }
+
+        public byte[] ToByteArray()
+        {
+            return Utils.LongToNetworkBytes(Id);
         }
 
         public static implicit operator long(SpanId s)

@@ -30,6 +30,24 @@ namespace Jaeger
             Low = low;
         }
 
+        public bool Equals(TraceId other)
+        {
+            return High == other.High && Low == other.Low;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is TraceId other && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return (High.GetHashCode() * 397) ^ Low.GetHashCode();
+            }
+        }
+
         public override string ToString()
         {
             if (High == 0)
@@ -38,6 +56,18 @@ namespace Jaeger
             }
 
             return $"{High:x}{Low:x016}";
+        }
+
+        public byte[] ToByteArray()
+        {
+            var bytesHigh = Utils.LongToNetworkBytes(High);
+            var bytesLow = Utils.LongToNetworkBytes(Low);
+
+            var bytes = new byte[bytesHigh.Length + bytesLow.Length];
+            Array.Copy(bytesHigh, 0, bytes, 0, bytesHigh.Length);
+            Array.Copy(bytesLow, 0, bytes, bytesHigh.Length, bytesLow.Length);
+
+            return bytes;
         }
 
         public static TraceId FromString(string from)
