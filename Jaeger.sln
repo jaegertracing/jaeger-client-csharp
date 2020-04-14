@@ -26,6 +26,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "crossdock", "crossdock", "{BE369D2B-A6BA-4B1D-B3BA-165D80340B1D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jaeger.Crossdock", "crossdock\Jaeger.Crossdock\Jaeger.Crossdock.csproj", "{B51D7B1B-8DE5-4FD3-9F09-3B320F34FC21}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Senders", "Senders", "{A608712F-64B9-49AA-B688-81B7A49436B7}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jaeger.Senders.Thrift", "src\Senders\Jaeger.Senders.Thrift\Jaeger.Senders.Thrift.csproj", "{B7F77019-9165-4D4C-9196-877D4B7181CB}"
