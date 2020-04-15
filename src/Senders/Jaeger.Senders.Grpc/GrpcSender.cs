@@ -17,15 +17,20 @@ namespace Jaeger.Senders.Grpc
     public class GrpcSender : ISender
     {
         public const string DefaultCollectorGrpcTarget = "localhost:14250";
-        public const int MaxPacketSize = 65000;
+
+        /// <summary>
+        /// Defaults to 4 MB (GRPC_DEFAULT_MAX_RECV_MESSAGE_LENGTH).
+        /// </summary>
+        public const int MaxPacketSize = 4 * 1024 * 1024;
 
         private readonly Channel _channel;
         private readonly CollectorService.CollectorServiceClient _client;
-        private readonly int _maxSpanBytes;
+        private readonly int _maxPacketSize;
 
         private readonly List<GrpcSpan> _spanBuffer = new List<GrpcSpan>();
         private GrpcProcess _process;
         private int _processBytesSize;
+        private int _maxSpanSize;
         private int _byteBufferSize;
 
         /// <summary>
@@ -58,7 +63,7 @@ namespace Jaeger.Senders.Grpc
 
             _channel = new Channel(target, credentials);
             _client = new CollectorService.CollectorServiceClient(_channel);
-            _maxSpanBytes = maxPacketSize;
+            _maxPacketSize = maxPacketSize;
         }
 
         public async Task<int> AppendAsync(Span span, CancellationToken cancellationToken)
@@ -72,20 +77,26 @@ namespace Jaeger.Senders.Grpc
                 };
                 _processBytesSize = _process.CalculateSize();
                 _byteBufferSize += _processBytesSize;
+                _maxSpanSize = _maxPacketSize - _processBytesSize;
+
+                if (_maxSpanSize < 0)
+                {
+                    throw new SenderException($"GrpcSender was misconfigured, packet size too small, size = {_maxPacketSize}, max = {_processBytesSize}", null, 1);
+                }
             }
 
             GrpcSpan grpcSpan = JaegerGrpcSpanConverter.ConvertSpan(span);
             int spanSize = grpcSpan.CalculateSize();
-            if (spanSize > _maxSpanBytes)
+            if (spanSize > _maxSpanSize)
             {
-                throw new SenderException($"GrpcSender received a span that was too large, size = {spanSize}, max = {_maxSpanBytes}", null, 1);
+                throw new SenderException($"GrpcSender received a span that was too large, size = {spanSize}, max = {_maxSpanSize}", null, 1);
             }
 
             _byteBufferSize += spanSize;
-            if (_byteBufferSize <= _maxSpanBytes)
+            if (_byteBufferSize <= _maxPacketSize)
             {
                 _spanBuffer.Add(grpcSpan);
-                if (_byteBufferSize < _maxSpanBytes)
+                if (_byteBufferSize < _maxPacketSize)
                 {
                     return 0;
                 }

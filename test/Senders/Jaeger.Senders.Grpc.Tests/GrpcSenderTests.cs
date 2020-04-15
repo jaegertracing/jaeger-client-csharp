@@ -41,9 +41,21 @@ namespace Jaeger.Senders.Grpc.Tests
         }
 
         [Fact]
-        public async Task TestNotAppendable()
+        public async Task TestProcessDoesntFit()
         {
-            var maxPacketSize = 1; // Span has around 50 bytes
+            var maxPacketSize = 1; // Process has around 100 bytes
+            var sender = new GrpcSender(GrpcSender.DefaultCollectorGrpcTarget, ChannelCredentials.Insecure, maxPacketSize);
+            var span = GetSpan();
+
+            var ex = await Assert.ThrowsAsync<SenderException>(() => sender.AppendAsync(span, CancellationToken.None));
+            Assert.Equal(1, ex.DroppedSpanCount);
+            Assert.Contains("too small", ex.Message);
+        }
+
+        [Fact]
+        public async Task TestSpanDoesntFit()
+        {
+            var maxPacketSize = 140; // Process has around 100 bytes, Span has around 50 bytes
             var sender = new GrpcSender(GrpcSender.DefaultCollectorGrpcTarget, ChannelCredentials.Insecure, maxPacketSize);
             var span = GetSpan();
 
@@ -55,7 +67,7 @@ namespace Jaeger.Senders.Grpc.Tests
         [Fact]
         public async Task TestFlushing()
         {
-            var maxPacketSize = 100; // Span has around 50 bytes
+            var maxPacketSize = 200; // Process has around 100 bytes, Span has around 50 bytes
             var sender = new GrpcSender(GrpcSender.DefaultCollectorGrpcTarget, ChannelCredentials.Insecure, maxPacketSize);
             var span = GetSpan();
 
