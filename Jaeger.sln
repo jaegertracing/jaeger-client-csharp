@@ -4,8 +4,14 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 16.0.29102.190
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{4FB0DAC9-D8C6-4368-B48E-363FA85029A4}"
+	ProjectSection(SolutionItems) = preProject
+		src\Directory.Build.props = src\Directory.Build.props
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{F4DBFB49-2F67-49B0-A60F-E8ED78ACF550}"
+	ProjectSection(SolutionItems) = preProject
+		test\Directory.Build.props = test\Directory.Build.props
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jaeger.Core.Tests", "test\Jaeger.Core.Tests\Jaeger.Core.Tests.csproj", "{5F1C7EB5-98A6-48C8-9F35-2A296148FD01}"
 EndProject
@@ -16,6 +22,9 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jaeger.Core", "src\Jaeger.Core\Jaeger.Core.csproj", "{ABA4F1B1-F6D0-40A9-904B-EFA98A4C0411}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "examples", "examples", "{1ADE2BBF-56C4-433D-9B1C-A532915058D3}"
+	ProjectSection(SolutionItems) = preProject
+		examples\Directory.Build.props = examples\Directory.Build.props
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jaeger.Example.WebApi", "examples\Jaeger.Example.WebApi\Jaeger.Example.WebApi.csproj", "{258F726B-6E51-4F18-9FB6-41D09A836904}"
 EndProject
@@ -38,6 +47,13 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Communication", "Communication", "{30786A14-F882-410B-A74D-BF608B05340A}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Jaeger.Communication.Thrift", "src\Communication\Jaeger.Communication.Thrift\Jaeger.Communication.Thrift.csproj", "{4521D9CB-C7E6-4C38-AA34-035EC7DC41E0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{22F94D42-FF84-4B15-8762-C95ACC8D1FE5}"
+	ProjectSection(SolutionItems) = preProject
+		Directory.Build.props = Directory.Build.props
+		README.md = README.md
+		version.props = version.props
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
