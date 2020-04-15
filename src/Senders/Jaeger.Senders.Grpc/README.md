@@ -8,7 +8,7 @@ To use this, include the following line before doing any other calls to the `Con
 ```C#
 Configuration.SenderConfiguration.DefaultSenderResolver = new SenderResolver(loggerFactory)
 	// You can add other ISenderFactory instances too
-	.RegisterSenderFactory<ThriftSenderFactory>();
+	.RegisterSenderFactory<GrpcSenderFactory>();
 ```
 
 If you need to set `JAEGER_SENDER_FACTORY` (when multiple factories are registered), `GrpcSenderFactory.Name` corresponds to `"grpc"`.
@@ -18,7 +18,7 @@ Independent on what variables are set in `Configuration.SenderConfiguration`, a 
 
 ```C#
 new SenderConfiguration(loggerFactory)
-	// Used with UdpSender:
+	// Used with GrpcSender:
 	.WithGrpcTarget(grpcTarget)                    // Host and port or any other valid gRPC target
 	.WithGrpcRootCertificate(grpcRootCertificate); // Path to the root certificate
 ```
