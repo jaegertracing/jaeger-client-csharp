@@ -11,7 +11,7 @@ namespace Jaeger.Transports.Thrift
         public const int DefaultAgentUdpCompactPort = 6831;
 
         public ThriftUdpTransport(TTransport transport)
-            : base(new TBinaryProtocol.Factory(), transport)
+            : base(new TCompactProtocol.Factory(), transport)
         {
         }
 

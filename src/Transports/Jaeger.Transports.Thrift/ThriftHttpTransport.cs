@@ -13,7 +13,7 @@ namespace Jaeger.Transports.Thrift
         private const string HttpCollectorJaegerThriftFormatParam = "format=jaeger.thrift";
 
         public ThriftHttpTransport(TTransport transport)
-            : base(new TCompactProtocol.Factory(), transport)
+            : base(new TBinaryProtocol.Factory(), transport)
         {
         }
 
