@@ -9,11 +9,8 @@ namespace Jaeger.Senders.Thrift.Senders.Internal
 {
     public class ThriftUdpClientTransport : TTransport
     {
-        private readonly string _host;
-        private readonly int _port;
-        private readonly MemoryStream _byteStream;
         private readonly IUdpClient _client;
-
+        private readonly MemoryStream _byteStream;
         private bool _isDisposed;
 
         public ThriftUdpClientTransport(string host, int port)
@@ -23,43 +20,21 @@ namespace Jaeger.Senders.Thrift.Senders.Internal
 
         internal ThriftUdpClientTransport(string host, int port, MemoryStream byteStream, IUdpClient udpClient)
         {
-            _host = host;
-            _port = port;
             _byteStream = byteStream;
             _client = udpClient;
+            _client.Connect(host, port);
         }
 
-        public override bool IsOpen => _client?.Client?.Connected ?? false;
+        public override bool IsOpen => _client.Client.Connected;
 
         public override Task OpenAsync(CancellationToken cancellationToken)
         {
-            if (cancellationToken.IsCancellationRequested)
-            {
-                return Task.FromCanceled(cancellationToken);
-            }
-
-            if (IsOpen)
-            {
-                throw new TTransportException(TTransportException.ExceptionType.AlreadyOpen, "Socket already connected");
-            }
-
-            if (_port <= 0)
-            {
-                throw new TTransportException(TTransportException.ExceptionType.NotOpen, "Cannot open without port");
-            }
-
-            if (_client == null)
-            {
-                throw new InvalidOperationException("Invalid or not initialized udp client");
-            }
-
-            _client.Connect(_host, _port);
             return Task.CompletedTask;
         }
 
         public override void Close()
         {
-            _client?.Close();
+            _client.Close();
         }
 
         public override async ValueTask<int> ReadAsync(byte[] buffer, int offset, int length, CancellationToken cancellationToken)
@@ -131,7 +106,7 @@ namespace Jaeger.Senders.Thrift.Senders.Internal
 
         public override string ToString()
         {
-            return $"{nameof(ThriftUdpClientTransport)}(Client={_host}:{_port})";
+            return $"{nameof(ThriftUdpClientTransport)}(Client={_client.Client.RemoteEndPoint})";
         }
     }
 }

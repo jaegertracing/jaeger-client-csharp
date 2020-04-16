@@ -1,9 +1,13 @@
-﻿using Jaeger.Samplers;
+﻿using Jaeger.Reporters;
+using Jaeger.Samplers;
+using Jaeger.Senders;
+using Jaeger.Senders.Thrift;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging.Abstractions;
 using OpenTracing;
 using OpenTracing.Util;
 
@@ -33,6 +37,8 @@ namespace Jaeger.Example.WebApi
                 string serviceName = serviceProvider.GetRequiredService<IWebHostEnvironment>().ApplicationName;
 
                 // This will log to a default localhost installation of Jaeger.
+                Jaeger.Configuration.SenderConfiguration.DefaultSenderResolver = new SenderResolver(NullLoggerFactory.Instance)
+                    .RegisterSenderFactory<ThriftSenderFactory>();
                 var tracer = new Tracer.Builder(serviceName)
                     .WithSampler(new ConstSampler(true))
                     .Build();
