@@ -34,10 +34,10 @@ namespace Jaeger
         {
             if (High == 0)
             {
-                return Low.ToString("x");
+                return Low.ToString("x016");
             }
 
-            return $"{High:x}{Low:x016}";
+            return $"{High:x016}{Low:x016}";
         }
 
         public static TraceId FromString(string from)
