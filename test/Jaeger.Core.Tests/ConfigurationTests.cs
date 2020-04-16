@@ -283,7 +283,7 @@ namespace Jaeger.Core.Tests
         [Fact]
         public void TestSenderWithNoPropertiesReturnsNoopSender()
         {
-            Assert.True(Configuration.SenderConfiguration.FromEnv(_loggerFactory).GetSender() is NoopSender);
+            Assert.IsType<NoopSender>(Configuration.SenderConfiguration.FromEnv(_loggerFactory).GetSender());
         }
 
         [Fact]
