@@ -4,16 +4,6 @@
  * DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
  *  @generated
  */
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Text;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-using Thrift;
-using Thrift.Collections;
-
 
 namespace Jaeger.Thrift.Agent.Zipkin
 {

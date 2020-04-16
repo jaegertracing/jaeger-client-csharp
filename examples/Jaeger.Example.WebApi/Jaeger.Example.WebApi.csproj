@@ -1,11 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="OpenTracing.Contrib.NetCore" Version="0.5.0" />
+    <PackageReference Include="OpenTracing.Contrib.NetCore" Version="0.6.2" />
 
     <!-- NOTE:
         In case you're building this application standalone, use below PackageReference 

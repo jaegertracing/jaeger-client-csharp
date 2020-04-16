@@ -62,12 +62,7 @@ namespace Jaeger.Example.WebApi
 
             app.UseRouting();
 
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllerRoute(
-                    name: "default",
-                    pattern: "{controller=Values}/{action=Get}/{id?}");
-            });
+            app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
         }
     }
 }
