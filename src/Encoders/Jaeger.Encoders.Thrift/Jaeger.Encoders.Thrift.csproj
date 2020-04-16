@@ -5,9 +5,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Encoders\Jaeger.Encoders.Thrift\Jaeger.Encoders.Thrift.csproj" />
     <ProjectReference Include="..\..\Transports\Jaeger.Transports.Thrift\Jaeger.Transports.Thrift.csproj" />
-    <ProjectReference Include="..\Jaeger.Senders.SizedBatch\Jaeger.Senders.SizedBatch.csproj" />
+    <ProjectReference Include="..\Jaeger.Encoders.SizedBatch\Jaeger.Encoders.SizedBatch.csproj" />
   </ItemGroup>
 
 </Project>

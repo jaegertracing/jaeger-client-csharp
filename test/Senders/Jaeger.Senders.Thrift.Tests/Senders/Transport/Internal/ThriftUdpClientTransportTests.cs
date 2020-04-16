@@ -3,7 +3,8 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using Jaeger.Thrift.Senders.Internal;
+using System.Threading.Tasks;
+using Jaeger.Senders.Thrift.Senders.Internal;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Thrift.Transport;
@@ -22,12 +23,13 @@ namespace Jaeger.Senders.Thrift.Tests.Senders.Transport.Internal
         }
 
         [Fact]
-        public void Constructor_ShouldConnectClient()
+        public async Task Constructor_ShouldConnectClient()
         {
             var host = "host, yo";
             var port = 4528;
 
-            new ThriftUdpClientTransport(host, port, _testingMemoryStream, _mockClient);
+            var transport = new ThriftUdpClientTransport(host, port, _testingMemoryStream, _mockClient);
+            await transport.OpenAsync();
 
             _mockClient.Received(1).Connect(Arg.Is(host), Arg.Is(port));
         }

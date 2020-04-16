@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace>Jaeger.Thrift</RootNamespace>
 
     <!-- No XML docs as this library contains auto-generated code that doesn't produce useful XML comments -->
     <GenerateDocumentationFile>false</GenerateDocumentationFile>

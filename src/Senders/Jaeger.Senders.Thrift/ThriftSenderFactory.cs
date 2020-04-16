@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Jaeger.Encoders.Thrift;
+using Jaeger.Transports.Thrift;
+using Microsoft.Extensions.Logging;
 
 namespace Jaeger.Senders.Thrift
 {
@@ -12,27 +14,31 @@ namespace Jaeger.Senders.Thrift
 
             if (!string.IsNullOrEmpty(senderConfiguration.Endpoint))
             {
-                HttpSender.Builder httpSenderBuilder = new HttpSender.Builder(senderConfiguration.Endpoint);
+                var httpBuilder = new ThriftHttpTransport.Builder(senderConfiguration.Endpoint);
                 if (!string.IsNullOrEmpty(senderConfiguration.AuthUsername) && !string.IsNullOrEmpty(senderConfiguration.AuthPassword))
                 {
                     logger.LogDebug("Using HTTP Basic authentication with data from the environment variables.");
-                    httpSenderBuilder.WithAuth(senderConfiguration.AuthUsername, senderConfiguration.AuthPassword);
+                    httpBuilder.WithAuth(senderConfiguration.AuthUsername, senderConfiguration.AuthPassword);
                 }
                 else if (!string.IsNullOrEmpty(senderConfiguration.AuthToken))
                 {
                     logger.LogDebug("Auth Token environment variable found.");
-                    httpSenderBuilder.WithAuth(senderConfiguration.AuthToken);
+                    httpBuilder.WithAuth(senderConfiguration.AuthToken);
                 }
 
                 logger.LogDebug("Using the HTTP Sender to send spans directly to the endpoint.");
-                return httpSenderBuilder.Build();
+                return new HttpSender(
+                    httpBuilder.Build(),
+                    0);
             }
 
             logger.LogDebug("Using the UDP Sender to send spans to the agent.");
             return new UdpSender(
-                    StringOrDefault(senderConfiguration.AgentHost, UdpSender.DefaultAgentUdpHost),
-                    senderConfiguration.AgentPort.GetValueOrDefault(UdpSender.DefaultAgentUdpCompactPort),
-                    0 /* max packet size */);
+                new ThriftUdpTransport.Builder()
+                    .WithHost(StringOrDefault(senderConfiguration.AgentHost, null))
+                    .WithPort(senderConfiguration.AgentPort.GetValueOrDefault(0))
+                    .Build(),
+                0 /* max packet size */);
         }
 
         public string FactoryName => Name;

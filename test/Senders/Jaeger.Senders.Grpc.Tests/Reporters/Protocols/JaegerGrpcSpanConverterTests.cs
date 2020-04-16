@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
+using Jaeger.Encoders.Grpc.Internal;
 using Jaeger.Reporters;
 using Jaeger.Samplers;
-using Jaeger.Senders.Grpc.Protocols;
 using OpenTracing;
 using Xunit;
 using GrpcSpan = Jaeger.ApiV2.Span;

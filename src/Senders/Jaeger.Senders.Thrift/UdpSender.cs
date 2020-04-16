@@ -1,17 +1,17 @@
 using System;
 using System.Collections.Generic;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
-using Jaeger.Exceptions;
+using Jaeger.Encoders.Thrift;
 using Jaeger.Thrift.Agent;
-using Jaeger.Thrift.Senders.Internal;
-using ThriftBatch = Jaeger.Thrift.Batch;
-using ThriftProcess = Jaeger.Thrift.Process;
-using ThriftSpan = Jaeger.Thrift.Span;
+using Jaeger.Exceptions;
+using Jaeger.Senders.SizedBatch;
+using Jaeger.Senders.Thrift.Senders.Internal;
+using Jaeger.Transports.Thrift;
 
 namespace Jaeger.Senders.Thrift
 {
-    /// <inheritdoc />
     /// <summary>
     /// JaegerUdpTransport provides an implementation to transport spans over UDP using
     /// Compact Thrift. It handles making sure payloads efficiently use the UDP packet
@@ -19,70 +19,35 @@ namespace Jaeger.Senders.Thrift
     /// </summary>
     public class UdpSender : ThriftSender
     {
-        public const string DefaultAgentUdpHost = "localhost";
-        public const int DefaultAgentUdpCompactPort = 6831;
-
-        private readonly Agent.Client _agentClient;
-        private readonly ThriftUdpClientTransport _udpTransport;
+        public const int MaxPacketSize = 65000;
 
         /// <summary>
-        /// This constructor expects Jaeger running on <see cref="DefaultAgentUdpHost"/>
-        /// and port <see cref="DefaultAgentUdpCompactPort"/>.
+        /// This constructor expects Jaeger running on <see cref="ThriftUdpTransport.DefaultAgentUdpHost"/>
+        /// and port <see cref="ThriftUdpTransport.DefaultAgentUdpCompactPort"/>.
         /// </summary>
         public UdpSender()
-            : this(DefaultAgentUdpHost, DefaultAgentUdpCompactPort, 0)
+            : this(ThriftUdpTransport.DefaultAgentUdpHost, ThriftUdpTransport.DefaultAgentUdpCompactPort, 0)
         {
         }
 
-        /// <param name="host">If empty it will use <see cref="DefaultAgentUdpHost"/>.</param>
-        /// <param name="port">If 0 it will use <see cref="DefaultAgentUdpCompactPort"/>.</param>
-        /// <param name="maxPacketSize">If 0 it will use <see cref="ThriftUdpClientTransport.MaxPacketSize"/>.</param>
+        /// <param name="host">If empty it will use <see cref="ThriftUdpTransport.DefaultAgentUdpHost"/>.</param>
+        /// <param name="port">If 0 it will use <see cref="ThriftUdpTransport.DefaultAgentUdpCompactPort"/>.</param>
+        /// <param name="maxPacketSize">If 0 it will use <see cref="MaxPacketSize"/>.</param>
         public UdpSender(string host, int port, int maxPacketSize)
-            : base(ProtocolType.Compact, maxPacketSize)
+            : this(new ThriftUdpTransport.Builder(host, port).Build(), maxPacketSize)
         {
-
-            if (string.IsNullOrEmpty(host))
-            {
-                host = DefaultAgentUdpHost;
-            }
-
-            if (port == 0)
-            {
-                port = DefaultAgentUdpCompactPort;
-            }
-
-            _udpTransport = new ThriftUdpClientTransport(host, port);
-            _agentClient = new Agent.Client(ProtocolFactory.GetProtocol(_udpTransport));
         }
 
-        protected override async Task SendAsync(ThriftProcess process, List<ThriftSpan> spans, CancellationToken cancellationToken)
+        /// <param name="transport">If empty it will use <see cref="ThriftUdpTransport"/>.</param>
+        /// <param name="maxPacketSize">If 0 it will use <see cref="MaxPacketSize"/>.</param>
+        public UdpSender(ThriftUdpTransport transport, int maxPacketSize)
+            : base(transport, maxPacketSize == 0 ? MaxPacketSize : maxPacketSize)
         {
-            try
-            {
-                var batch = new ThriftBatch(process, spans);
-                await _agentClient.emitBatchAsync(batch, cancellationToken).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                throw new SenderException($"Could not send {spans.Count} spans", ex, spans.Count);
-            }
-        }
-
-        public override async Task<int> CloseAsync(CancellationToken cancellationToken)
-        {
-            try
-            {
-                return await base.CloseAsync(cancellationToken).ConfigureAwait(false);
-            }
-            finally
-            {
-                _udpTransport.Close();
-            }
         }
 
         public override string ToString()
         {
-            return $"{nameof(UdpSender)}(UdpTransport={_udpTransport})";
+            return $"{nameof(UdpSender)}({base.ToString()})";
         }
     }
 }

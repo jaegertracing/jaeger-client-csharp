@@ -9,7 +9,13 @@ FROM mcr.microsoft.com/dotnet/core/sdk:3.1-buster AS build
 WORKDIR /src
 COPY ["crossdock/Jaeger.Crossdock/Jaeger.Crossdock.csproj", "crossdock/Jaeger.Crossdock/"]
 COPY ["src/Jaeger/Jaeger.csproj", "src/Jaeger/"]
-COPY ["src/Jaeger.Thrift/Jaeger.Thrift.csproj", "src/Jaeger.Thrift/"]
+COPY ["src/Senders/Jaeger.Senders.Thrift/Jaeger.Senders.Thrift.csproj", "src/Senders/Jaeger.Senders.Thrift/"]
+COPY ["src/Encoders/Jaeger.Encoders.Thrift/Jaeger.Encoders.Thrift.csproj", "src/Encoders/Jaeger.Encoders.Thrift/"]
+COPY ["src/Encoders/Jaeger.Encoders.SizedBatch/Jaeger.Encoders.SizedBatch.csproj", "src/Encoders/Jaeger.Encoders.SizedBatch/"]
+COPY ["src/Jaeger.Core/Jaeger.Core.csproj", "src/Jaeger.Core/"]
+COPY ["src/Transports/Jaeger.Transports.Thrift/Jaeger.Transports.Thrift.csproj", "src/Transports/Jaeger.Transports.Thrift/"]
+COPY ["src/Communication/Jaeger.Communication.Thrift/Jaeger.Communication.Thrift.csproj", "src/Communication/Jaeger.Communication.Thrift/"]
+COPY ["src/Senders/Jaeger.Senders.SizedBatch/Jaeger.Senders.SizedBatch.csproj", "src/Senders/Jaeger.Senders.SizedBatch/"]
 RUN dotnet restore "crossdock/Jaeger.Crossdock/Jaeger.Crossdock.csproj"
 COPY . .
 WORKDIR "/src/crossdock/Jaeger.Crossdock"

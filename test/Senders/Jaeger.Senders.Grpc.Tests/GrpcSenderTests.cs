@@ -1,7 +1,9 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Grpc.Core;
+using Jaeger.Encoders.Grpc;
 using Jaeger.Exceptions;
+using Jaeger.Transports.Grpc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -29,6 +31,11 @@ namespace Jaeger.Senders.Grpc.Tests
                 .Start() as Span;
         }
 
+        private GrpcEncoder GetGrpcEncoder()
+        {
+            return new GrpcEncoder(new GrpcTransport(GrpcTransport.DefaultCollectorGrpcTarget, ChannelCredentials.Insecure));
+        }
+
         [Fact]
         public async Task TestDefaultSenderAppendNoSend()
         {
@@ -44,7 +51,7 @@ namespace Jaeger.Senders.Grpc.Tests
         public async Task TestProcessDoesntFit()
         {
             var maxPacketSize = 1; // Process has around 100 bytes
-            var sender = new GrpcSender(GrpcSender.DefaultCollectorGrpcTarget, ChannelCredentials.Insecure, maxPacketSize);
+            var sender = new GrpcSender(GetGrpcEncoder(), maxPacketSize);
             var span = GetSpan();
 
             var ex = await Assert.ThrowsAsync<SenderException>(() => sender.AppendAsync(span, CancellationToken.None));
@@ -56,7 +63,7 @@ namespace Jaeger.Senders.Grpc.Tests
         public async Task TestSpanDoesntFit()
         {
             var maxPacketSize = 140; // Process has around 100 bytes, Span has around 50 bytes
-            var sender = new GrpcSender(GrpcSender.DefaultCollectorGrpcTarget, ChannelCredentials.Insecure, maxPacketSize);
+            var sender = new GrpcSender(GetGrpcEncoder(), maxPacketSize);
             var span = GetSpan();
 
             var ex = await Assert.ThrowsAsync<SenderException>(() => sender.AppendAsync(span, CancellationToken.None));
@@ -68,7 +75,7 @@ namespace Jaeger.Senders.Grpc.Tests
         public async Task TestFlushing()
         {
             var maxPacketSize = 200; // Process has around 100 bytes, Span has around 50 bytes
-            var sender = new GrpcSender(GrpcSender.DefaultCollectorGrpcTarget, ChannelCredentials.Insecure, maxPacketSize);
+            var sender = new GrpcSender(GetGrpcEncoder(), maxPacketSize);
             var span = GetSpan();
 
             // Only appended, no sending, so this should not fail.

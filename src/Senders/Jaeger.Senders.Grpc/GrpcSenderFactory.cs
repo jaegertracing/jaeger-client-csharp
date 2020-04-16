@@ -1,4 +1,6 @@
 ﻿using Grpc.Core;
+using Jaeger.Encoders.Grpc;
+using Jaeger.Transports.Grpc;
 using Microsoft.Extensions.Logging;
 
 namespace Jaeger.Senders.Grpc
@@ -23,10 +25,13 @@ namespace Jaeger.Senders.Grpc
                 credentials = ChannelCredentials.Insecure;
             }
 
+            var transport = new GrpcTransport(
+                StringOrDefault(senderConfiguration.GrpcTarget, GrpcTransport.DefaultCollectorGrpcTarget),
+                credentials);
+
             logger.LogDebug("Using the gRPC Sender to send spans directly to the endpoint.");
             return new GrpcSender(
-                StringOrDefault(senderConfiguration.GrpcTarget, GrpcSender.DefaultCollectorGrpcTarget),
-                credentials,
+                new GrpcEncoder(transport),
                 0 /* max packet size */);
         }
 

@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Reflection;
+using Jaeger.Encoders.Thrift;
 using Jaeger.Reporters;
+using Jaeger.Transports.Thrift;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -102,7 +104,7 @@ namespace Jaeger.Senders.Thrift.Tests
             SetProperty(Configuration.JaegerServiceName, "Test");
             Tracer tracer = (Tracer)Configuration.FromEnv(_loggerFactory).GetTracer();
             Assert.IsType<RemoteReporter>(tracer.Reporter);
-            Assert.Equal("RemoteReporter(Sender=UdpSender(UdpTransport=ThriftUdpClientTransport(Client=127.0.0.1:6831)))", tracer.Reporter.ToString());
+            Assert.Contains("UdpSender", tracer.Reporter.ToString());
         }
 
         [Fact]
@@ -118,9 +120,8 @@ namespace Jaeger.Senders.Thrift.Tests
         {
             SetProperty(Configuration.JaegerAgentHost, "jaeger-agent");
             SetProperty(Configuration.JaegerAgentPort, "6832");
-            Assert.Throws<SocketException>(() => Configuration.SenderConfiguration.FromEnv(_loggerFactory).GetSender());
-            //ISender sender = Configuration.SenderConfiguration.FromEnv(_loggerFactory).GetSender();
-            //Assert.True(sender is UdpSender);
+            ISender sender = Configuration.SenderConfiguration.FromEnv(_loggerFactory).GetSender();
+            Assert.True(sender is UdpSender);
         }
 
         [Fact]
