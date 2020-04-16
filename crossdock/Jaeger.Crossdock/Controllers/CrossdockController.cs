@@ -89,7 +89,7 @@ namespace Jaeger.Crossdock.Controllers
 
         private string ValidateTrace(Downstream target, TraceResponse resp, string service, int level, string traceID, bool sampled, string baggage)
         {
-            if (!CompareTraceIDs(traceID, resp.Span.TraceId))
+            if (!EqualTraceIDs(traceID, resp.Span.TraceId))
             {
                 return $"Trace ID mismatch in S{level}({service}): expected {traceID}, received {resp.Span.TraceId}";
             }
@@ -119,7 +119,7 @@ namespace Jaeger.Crossdock.Controllers
             return null;
         }
 
-        private bool CompareTraceIDs(string id1, string id2)
+        private bool EqualTraceIDs(string id1, string id2)
         {
             var len = Math.Max(id1.Length, id2.Length);
             return PadTraceID(id1, len) == PadTraceID(id2, len);
