@@ -133,7 +133,7 @@ namespace Jaeger.Thrift.Senders.Internal
 
         public override string ToString()
         {
-            return $"{nameof(ThriftUdpClientTransport)}(Client={_client.Client.RemoteEndPoint})";
+            return $"{nameof(ThriftUdpClientTransport)}(Client={_host}:{_port})";
         }
     }
 }
