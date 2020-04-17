@@ -1,13 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Net.Sockets;
-using System.Threading;
-using System.Threading.Tasks;
-using Jaeger.Encoders.Thrift;
-using Jaeger.Thrift.Agent;
-using Jaeger.Exceptions;
-using Jaeger.Senders.SizedBatch;
-using Jaeger.Senders.Thrift.Senders.Internal;
 using Jaeger.Transports.Thrift;
 
 namespace Jaeger.Senders.Thrift

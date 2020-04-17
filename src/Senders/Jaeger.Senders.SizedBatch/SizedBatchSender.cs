@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Jaeger.Encoders;
 using Jaeger.Encoders.SizedBatch;
 using Jaeger.Exceptions;
-using Jaeger.Transports;
 
 namespace Jaeger.Senders.SizedBatch
 {

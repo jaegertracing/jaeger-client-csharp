@@ -1,4 +1,3 @@
-using Jaeger.Encoders.Thrift;
 using Jaeger.Transports.Thrift;
 
 namespace Jaeger.Senders.Thrift

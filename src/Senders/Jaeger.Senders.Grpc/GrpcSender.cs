@@ -1,10 +1,5 @@
-using System.Threading;
-using System.Threading.Tasks;
-using Jaeger.ApiV2;
 using Jaeger.Encoders.Grpc;
-using Jaeger.Encoders.SizedBatch;
 using Jaeger.Senders.SizedBatch;
-using Jaeger.Transports;
 using Jaeger.Transports.Grpc;
 
 namespace Jaeger.Senders.Grpc

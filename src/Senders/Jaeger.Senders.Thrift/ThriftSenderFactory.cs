@@ -1,5 +1,4 @@
-﻿using Jaeger.Encoders.Thrift;
-using Jaeger.Transports.Thrift;
+﻿using Jaeger.Transports.Thrift;
 using Microsoft.Extensions.Logging;
 
 namespace Jaeger.Senders.Thrift
