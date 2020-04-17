@@ -1,9 +1,7 @@
-﻿using System.Collections.Generic;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 using Jaeger.Encoders;
 using Jaeger.Thrift;
-using Jaeger.Thrift.Agent;
 using Jaeger.Transports.Thrift.Internal;
 using Thrift.Protocol;
 using Thrift.Transport;
@@ -12,8 +10,9 @@ namespace Jaeger.Transports.Thrift
 {
     public abstract class ThriftTransport : ITransport
     {
-        private readonly TTransport _transport;
-        private readonly Agent.Client _agentClient;
+        protected readonly TTransport _transport;
+        protected readonly TProtocol _protocol;
+
         private readonly TMemoryBuffer _memoryTransport;
 
         public TProtocolFactory ProtocolFactory { get; }
@@ -23,7 +22,7 @@ namespace Jaeger.Transports.Thrift
             ProtocolFactory = protocolFactory;
 
             _transport = transport;
-            _agentClient = new Agent.Client(protocolFactory.GetProtocol(transport));
+            _protocol = protocolFactory.GetProtocol(transport);
             _memoryTransport = new TMemoryBuffer();
         }
 
@@ -37,10 +36,7 @@ namespace Jaeger.Transports.Thrift
             return _memoryTransport.GetBuffer().Length;
         }
 
-        public Task WriteBatchAsync(Batch batch, CancellationToken cancellationToken)
-        {
-            return _agentClient.emitBatchAsync(batch, cancellationToken);
-        }
+        public abstract Task WriteBatchAsync(Batch encBatch, CancellationToken cancellationToken);
 
         public override string ToString()
         {

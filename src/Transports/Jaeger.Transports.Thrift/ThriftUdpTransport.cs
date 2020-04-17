@@ -1,5 +1,8 @@
-﻿using Jaeger.Senders.Thrift.Senders.Internal;
-using Microsoft.Extensions.Options;
+﻿using System.Threading;
+using System.Threading.Tasks;
+using Jaeger.Senders.Thrift.Senders.Internal;
+using Jaeger.Thrift;
+using Jaeger.Thrift.Agent;
 using Thrift.Protocol;
 using Thrift.Transport;
 
@@ -10,9 +13,17 @@ namespace Jaeger.Transports.Thrift
         public const string DefaultAgentUdpHost = "localhost";
         public const int DefaultAgentUdpCompactPort = 6831;
 
+        private readonly Agent.Client _agentClient;
+
         public ThriftUdpTransport(TTransport transport)
             : base(new TCompactProtocol.Factory(), transport)
         {
+            _agentClient = new Agent.Client(_protocol);
+        }
+
+        public override Task WriteBatchAsync(Batch batch, CancellationToken cancellationToken)
+        {
+            return _agentClient.emitBatchAsync(batch, cancellationToken);
         }
 
         public override string ToString()

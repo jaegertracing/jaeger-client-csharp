@@ -2,7 +2,10 @@
 using System.Collections.Generic;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using Jaeger.Senders.Thrift.Senders.Internal;
+using Jaeger.Thrift;
 using Thrift.Protocol;
 using Thrift.Transport;
 
@@ -15,6 +18,12 @@ namespace Jaeger.Transports.Thrift
         public ThriftHttpTransport(TTransport transport)
             : base(new TBinaryProtocol.Factory(), transport)
         {
+        }
+
+        public override async Task WriteBatchAsync(Batch batch, CancellationToken cancellationToken)
+        {
+            await batch.WriteAsync(_protocol, cancellationToken).ConfigureAwait(false);
+            await _transport.FlushAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public override string ToString()
