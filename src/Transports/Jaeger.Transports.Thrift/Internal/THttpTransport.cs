@@ -241,5 +241,17 @@ namespace Jaeger.Senders.Thrift.Senders.Internal
             }
             _isDisposed = true;
         }
+
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            sb.Append(nameof(THttpTransport));
+            sb.Append('(');
+            sb.Append($"Uri={_uri}, ");
+            sb.Append($"Certificates={string.Join(", ", _certificates.Select(c => c.Subject))}, ");
+            sb.Append($"CustomProperties={string.Join(", ", CustomProperties)}");
+            sb.Append(')');
+            return sb.ToString();
+        }
     }
 }

@@ -57,7 +57,7 @@ namespace Jaeger.Transports.Grpc
 
         public override string ToString()
         {
-            return $"{nameof(GrpcTransport)}(Channel={_channel})";
+            return $"{nameof(GrpcTransport)}(Channel={_channel.ResolvedTarget})";
         }
     }
 }
