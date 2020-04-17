@@ -60,6 +60,7 @@ namespace Jaeger.Senders.Thrift
             try
             {
                 var batch = new ThriftBatch(process, spans);
+                await _agentClient.OpenTransportAsync(cancellationToken).ConfigureAwait(false);
                 await _agentClient.emitBatchAsync(batch, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex)
