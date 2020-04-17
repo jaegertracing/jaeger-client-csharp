@@ -28,7 +28,7 @@ namespace Jaeger
 
         public override string ToString()
         {
-            return Id.ToString("x");
+            return Id.ToString("x016");
         }
 
         public static implicit operator long(SpanId s)
