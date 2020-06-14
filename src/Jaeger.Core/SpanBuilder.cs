@@ -164,7 +164,7 @@ namespace Jaeger
 
         private SpanContext CreateNewContext(string debugId)
         {
-            TraceId traceId = TraceId.NewUniqueId(_tracer.UseTraceId128Bit);
+            TraceId traceId = TraceId.NewUniqueId(_tracer);
             SpanId spanId = new SpanId(traceId);
 
             var flags = SpanContextFlags.None;
@@ -247,7 +247,7 @@ namespace Jaeger
 
             return new SpanContext(
                 preferredReference.TraceId,
-                SpanId.NewUniqueId(),
+                SpanId.NewUniqueId(_tracer),
                 preferredReference.SpanId,
                 // should we do OR across passed references?
                 preferredReference.Flags,

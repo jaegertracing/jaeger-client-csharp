@@ -3,6 +3,13 @@ using System.Net;
 
 namespace Jaeger.Util
 {
+
+    /// <summary>
+    /// A function that can return new random bytes. The function must
+    /// be thread safe.
+    /// </summary>
+    public delegate void RandomNextBytes(byte[] bytes);
+
     public static class Utils
     {
         private static readonly Random Random = new Random();
@@ -37,16 +44,28 @@ namespace Jaeger.Util
             return intIp;
         }
 
-        public static long UniqueId()
+        /// <summary>
+        /// Default implementation of RandomNextBytes that uses a static Random object
+        /// </summary>
+        public static void DefaultNextBytes(byte[] bytes)
         {
+            lock (Random)
+            {
+                Random.NextBytes(bytes);
+            }
+        }
+
+        public static long UniqueId(RandomNextBytes nextBytes)
+        {
+            if ( nextBytes == null )
+            {
+                nextBytes = DefaultNextBytes;
+            }
             long value = 0;
             while (value == 0)
             {
                 var bytes = new byte[8];
-                lock (Random)
-                {
-                    Random.NextBytes(bytes);
-                }
+                nextBytes(bytes);
                 value = BitConverter.ToInt64(bytes, 0);
             }
             return value;

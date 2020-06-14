@@ -21,6 +21,13 @@ using OpenTracing.Util;
 
 namespace Jaeger
 {
+
+    /// <summary>
+    /// A function that can return new random bytes. The function must
+    /// be thread safe.
+    /// </summary>
+    public delegate void RandomNextBytes(byte[] bytes);
+
     public class Tracer : ITracer, IDisposable
     {
         private readonly BaggageSetter _baggageSetter;
@@ -45,6 +52,8 @@ namespace Jaeger
         public bool UseTraceId128Bit { get; }
         public long IPv4 { get; }
 
+        public RandomNextBytes RandomGenerator { get ; }
+
         private Tracer(
             string serviceName,
             IReporter reporter,
@@ -58,8 +67,9 @@ namespace Jaeger
             IScopeManager scopeManager,
             IBaggageRestrictionManager baggageRestrictionManager,
             bool expandExceptionLogs,
-            bool useTraceId128Bit)
-        {
+            bool useTraceId128Bit,
+            RandomNextBytes randomGenerator)
+        {        
             ServiceName = serviceName;
             Reporter = reporter;
             Sampler = sampler;
@@ -72,6 +82,7 @@ namespace Jaeger
             _baggageSetter = new BaggageSetter(baggageRestrictionManager, metrics);
             ExpandExceptionLogs = expandExceptionLogs;
             UseTraceId128Bit = useTraceId128Bit;
+            RandomGenerator = randomGenerator;
 
             Version = LoadVersion();
             tags[Constants.JaegerClientVersionTagKey] = Version;
@@ -216,6 +227,7 @@ namespace Jaeger
             public IScopeManager ScopeManager { get; private set; } = new AsyncLocalScopeManager();
             public bool ExpandExceptionLogs { get; private set; }
             public bool UseTraceId128Bit { get; private set; }
+            public RandomNextBytes RandomGenerator { get; private set; } = Utils.DefaultNextBytes;
             public IReadOnlyDictionary<string, object> Tags => _tags;
 
             public Builder(string serviceName)
@@ -342,6 +354,16 @@ namespace Jaeger
                 return this;
             }
 
+            ///<summary>
+            /// Provide your own random number generator for generating trace and span IDs.
+            /// It must be thread safe.
+            ///</summary>
+            public Builder WithRandomGenerator(RandomNextBytes randomGenerator)
+            {
+                RandomGenerator = randomGenerator;
+                return this;
+            }
+
             public Builder WithBaggageRestrictionManager(IBaggageRestrictionManager baggageRestrictionManager)
             {
                 BaggageRestrictionManager = baggageRestrictionManager;
@@ -382,7 +404,8 @@ namespace Jaeger
                 }
 
                 return new Tracer(ServiceName, Reporter, Sampler, _registry, Clock, Metrics, LoggerFactory,
-                    _tags, ZipkinSharedRpcSpan, ScopeManager, BaggageRestrictionManager, ExpandExceptionLogs, UseTraceId128Bit);
+                    _tags, ZipkinSharedRpcSpan, ScopeManager, BaggageRestrictionManager, ExpandExceptionLogs, 
+                    UseTraceId128Bit, RandomGenerator);
             }
 
             public static String CheckValidServiceName(String serviceName)

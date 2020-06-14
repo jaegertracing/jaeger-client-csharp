@@ -11,9 +11,9 @@ namespace Jaeger
     {
         private long Id { get; }
 
-        public static SpanId NewUniqueId()
+        public static SpanId NewUniqueId(Tracer context)
         {
-            return new SpanId(Utils.UniqueId());
+            return new SpanId(Utils.UniqueId((bytes) => context.RandomGenerator(bytes)));
         }
 
         public SpanId(long spanId)

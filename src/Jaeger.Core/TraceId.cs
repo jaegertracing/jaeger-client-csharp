@@ -13,10 +13,11 @@ namespace Jaeger
         public long Low { get; }
         public bool IsZero => Low == 0 && High == 0;
 
-        public static TraceId NewUniqueId(bool useHigh)
+        public static TraceId NewUniqueId(Tracer context)
         {
-            var high = useHigh ? Utils.UniqueId() : 0;
-            var low = Utils.UniqueId();
+            var high = context.UseTraceId128Bit ? 
+                        Utils.UniqueId((bytes) => context.RandomGenerator(bytes)) : 0;
+            var low = Utils.UniqueId((bytes) => context.RandomGenerator(bytes));
             return new TraceId(high, low);
         }
 
