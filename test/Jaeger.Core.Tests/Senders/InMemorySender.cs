@@ -40,13 +40,14 @@ namespace Jaeger.Core.Tests.Senders
             return new List<Span>(_received);
         }
 
-        public Task<int> AppendAsync(Span span, CancellationToken cancellationToken)
+        public async Task<int> AppendAsync(Span span, CancellationToken cancellationToken)
         {
             _blocker.Wait(cancellationToken);
+            await Task.Delay(1);
 
             _appended.Add(span);
             _received.Add(span);
-            return Task.FromResult(0);
+            return 0;
         }
 
         public virtual Task<int> FlushAsync(CancellationToken cancellationToken)
