@@ -456,5 +456,19 @@ namespace Jaeger.Core.Tests
                 .Finish();
             Assert.Empty(reporter.GetSpans());
         }
+
+        [Fact]
+        public void TestRandomOverride()
+        {
+            Random random = new Random(42);
+            Tracer tracer = new Tracer.Builder("fo")
+                .WithReporter(reporter)
+                .WithSampler(new ConstSampler(false))
+                .WithRandomGenerator((bytes) => random.NextBytes(bytes))
+                .Build();
+            ISpan foo = tracer.BuildSpan("foo")
+                .Start();
+            Assert.Equal("3bcd04ae96ba173e", foo.Context.SpanId);
+        }
     }
 }
