@@ -35,10 +35,10 @@ namespace Jaeger.Reporters
             _commandQueue = new BlockingCollection<ICommand>(maxQueueSize);
 
             // start a thread to append spans
-            _queueProcessorTask = Task.Factory.StartNew(ProcessQueueLoop, TaskCreationOptions.LongRunning);
+            _queueProcessorTask = Task.Run(ProcessQueueLoop);
 
             _flushInterval = flushInterval;
-            _flushTask = Task.Factory.StartNew(FlushLoop, TaskCreationOptions.LongRunning);
+            _flushTask = Task.Run(FlushLoop);
         }
 
         public void Report(Span span)
