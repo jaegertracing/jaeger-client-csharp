@@ -45,18 +45,27 @@ namespace Jaeger.Core.Tests.Senders
             _blocker.Wait(cancellationToken);
             await Task.Delay(1);
 
-            _appended.Add(span);
-            _received.Add(span);
+            lock (_appended)
+            {
+                _appended.Add(span);
+                _received.Add(span);
+            }
             return 0;
         }
 
-        public virtual Task<int> FlushAsync(CancellationToken cancellationToken)
+        public virtual async Task<int> FlushAsync(CancellationToken cancellationToken)
         {
-            int flushedSpans = _appended.Count;
-            _flushed.AddRange(_appended);
-            _appended.Clear();
+            await Task.Delay(1);
 
-            return Task.FromResult(flushedSpans);
+            int flushedSpans;
+            lock (_appended )
+            {
+                flushedSpans = _appended.Count;
+                _flushed.AddRange(_appended);
+                _appended.Clear();
+            }
+
+            return flushedSpans;
         }
 
         public Task<int> CloseAsync(CancellationToken cancellationToken)
