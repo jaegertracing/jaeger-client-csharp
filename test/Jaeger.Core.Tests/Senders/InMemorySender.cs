@@ -75,9 +75,11 @@ namespace Jaeger.Core.Tests.Senders
             return Task.FromResult(flushedSpans);
         }
 
-        public Task<int> CloseAsync(CancellationToken cancellationToken)
+        public async Task<int> CloseAsync(CancellationToken cancellationToken)
         {
-            return FlushAsync(cancellationToken);
+            int result = await FlushAsync(cancellationToken);
+            AllowAppend();
+            return result;
         }
 
         public void BlockAppend()
