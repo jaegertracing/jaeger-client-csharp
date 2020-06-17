@@ -42,8 +42,10 @@ namespace Jaeger.Core.Tests.Senders
 
         public async Task<int> AppendAsync(Span span, CancellationToken cancellationToken)
         {
-            _blocker.Wait(cancellationToken);
-            await Task.Delay(1);
+            //This serves to both make this call actually asynchronous and also to prevent the 
+            //blocking call from consuming a Thread Pool thread. 
+            await Task.Factory.StartNew(() => _blocker.Wait(cancellationToken),
+                TaskCreationOptions.LongRunning);
 
             lock (_appended)
             {
@@ -53,9 +55,14 @@ namespace Jaeger.Core.Tests.Senders
             return 0;
         }
 
-        public virtual async Task<int> FlushAsync(CancellationToken cancellationToken)
+        public virtual Task<int> FlushAsync(CancellationToken cancellationToken)
         {
-            await Task.Delay(1);
+            //This conflicts with the way TestCloseWhenQueueFull is written. Since
+            //it blocks the process queue from ever ending, RemoteReporter.CloseAsync
+            //is guaranteed to timeout, which means cancellationToken here will already
+            //be set. This prevents the rest of the function from running, causing the 
+            //test to fail.
+            //await Task.Delay(1, cancellationToken);
 
             int flushedSpans;
             lock (_appended )
@@ -65,7 +72,7 @@ namespace Jaeger.Core.Tests.Senders
                 _appended.Clear();
             }
 
-            return flushedSpans;
+            return Task.FromResult(flushedSpans);
         }
 
         public Task<int> CloseAsync(CancellationToken cancellationToken)
