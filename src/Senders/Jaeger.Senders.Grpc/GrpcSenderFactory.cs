@@ -1,4 +1,5 @@
-﻿using Grpc.Core;
+﻿using System.IO;
+using Grpc.Core;
 using Microsoft.Extensions.Logging;
 
 namespace Jaeger.Senders.Grpc
@@ -15,7 +16,7 @@ namespace Jaeger.Senders.Grpc
             if (!string.IsNullOrEmpty(senderConfiguration.GrpcRootCertificate))
             {
                 logger.LogDebug("Using TLS gRPC channel with data from the configuration.");
-                credentials = new SslCredentials(senderConfiguration.GrpcRootCertificate);
+                credentials = new SslCredentials(File.ReadAllText(senderConfiguration.GrpcRootCertificate));
             }
             else
             {

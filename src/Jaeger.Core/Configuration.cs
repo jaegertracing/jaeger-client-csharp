@@ -63,7 +63,7 @@ namespace Jaeger
         public const string JaegerGrpcTarget = JaegerPrefix + "GRPC_TARGET";
 
         /// <summary>
-        /// The root certificate used to create a trusted TLS connection to the GRPC collector.
+        /// The path to the root certificate used to validate the TLS connection to the GRPC collector.
         /// </summary>
         public const string JaegerGrpcRootCertificate = JaegerPrefix + "GRPC_ROOT_CERTIFICATE";
 
