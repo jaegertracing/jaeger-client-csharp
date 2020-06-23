@@ -15,9 +15,23 @@ namespace Jaeger.Core.Tests
         }
 
         [Fact]
+        public void FromString_WithoutZeroes()
+        {
+            var spanId = SpanId.FromString("2a");
+            Assert.Equal("000000000000002a", _spanId.ToString());
+        }
+
+        [Fact]
+        public void FromString_WithZeroes()
+        {
+            var spanId = SpanId.FromString("000000000000002a");
+            Assert.Equal("000000000000002a", _spanId.ToString());
+        }
+
+        [Fact]
         public void Field_ShouldReturnHexString()
         {
-            Assert.Equal("2a", _spanId.ToString());
+            Assert.Equal("000000000000002a", _spanId.ToString());
         }
 
         [Fact]

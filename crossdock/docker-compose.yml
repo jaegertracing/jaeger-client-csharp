@@ -39,9 +39,6 @@ services:
             - "jaeger:jaeger-agent"
         ports:
             - "8080-8082"
-#       Udp sender needs to know agent's address
-        depends_on:
-            - jaeger
             
     go:
         image: jaegertracing/xdock-go
