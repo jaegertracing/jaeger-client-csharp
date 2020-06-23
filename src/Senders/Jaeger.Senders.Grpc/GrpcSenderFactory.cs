@@ -16,7 +16,18 @@ namespace Jaeger.Senders.Grpc
             if (!string.IsNullOrEmpty(senderConfiguration.GrpcRootCertificate))
             {
                 logger.LogDebug("Using TLS gRPC channel with data from the configuration.");
-                credentials = new SslCredentials(File.ReadAllText(senderConfiguration.GrpcRootCertificate));
+                
+                KeyCertificatePair keypair = null;
+                if (!string.IsNullOrEmpty(senderConfiguration.GrpcClientChain)
+                    && !string.IsNullOrEmpty(senderConfiguration.GrpcClientKey))
+                {
+                    var clientcert = File.ReadAllText(senderConfiguration.GrpcClientChain);
+                    var clientkey = File.ReadAllText(senderConfiguration.GrpcClientKey);
+                    keypair = new KeyCertificatePair(clientcert, clientkey);
+                }
+
+                var rootcert = File.ReadAllText(senderConfiguration.GrpcRootCertificate);
+                credentials = new SslCredentials(rootcert, keypair);
             }
             else
             {

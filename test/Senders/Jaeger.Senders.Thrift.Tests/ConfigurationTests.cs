@@ -39,6 +39,8 @@ namespace Jaeger.Senders.Thrift.Tests
             ClearProperty(Configuration.JaegerAgentPort);
             ClearProperty(Configuration.JaegerGrpcTarget);
             ClearProperty(Configuration.JaegerGrpcRootCertificate);
+            ClearProperty(Configuration.JaegerGrpcClientChain);
+            ClearProperty(Configuration.JaegerGrpcClientKey);
             ClearProperty(Configuration.JaegerReporterLogSpans);
             ClearProperty(Configuration.JaegerReporterMaxQueueSize);
             ClearProperty(Configuration.JaegerReporterFlushInterval);
