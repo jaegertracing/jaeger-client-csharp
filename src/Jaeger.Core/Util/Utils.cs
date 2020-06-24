@@ -64,5 +64,16 @@ namespace Jaeger.Util
             }
             return value;
         }
+
+        public static byte[] LongToNetworkBytes(long data)
+        {
+            var bytes = BitConverter.GetBytes(data);
+            if (BitConverter.IsLittleEndian)
+            {
+                Array.Reverse(bytes);
+            }
+
+            return bytes;
+        }
     }
 }

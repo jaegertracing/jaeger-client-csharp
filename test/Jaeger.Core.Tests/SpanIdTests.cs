@@ -40,5 +40,19 @@ namespace Jaeger.Core.Tests
             var longValue = (long)_spanId;
             Assert.Equal(longValue, Convert.ToInt64(_spanIdValue));
         }
+
+        [Fact]
+        public void Field_ShouldReturnBytes()
+        {
+            Assert.Collection(_spanId.ToByteArray(),
+                b => Assert.Equal(b, (byte)0x00),
+                b => Assert.Equal(b, (byte)0x00),
+                b => Assert.Equal(b, (byte)0x00),
+                b => Assert.Equal(b, (byte)0x00),
+                b => Assert.Equal(b, (byte)0x00),
+                b => Assert.Equal(b, (byte)0x00),
+                b => Assert.Equal(b, (byte)0x00),
+                b => Assert.Equal(b, (byte)0x2a));
+        }
     }
 }

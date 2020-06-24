@@ -284,7 +284,7 @@ namespace Jaeger.Core.Tests
                     .Start();
 
                 Assert.Empty(newSpan.GetReferences());
-                Assert.Equal(new SpanId(0).ToString(), newSpan.Context.ParentId.ToString()); // TODO SpanId should implement Equals()
+                Assert.Equal(new SpanId(0), newSpan.Context.ParentId);
                 Assert.NotEqual(parentSpan.Context.TraceId, newSpan.Context.TraceId);
             }
         }

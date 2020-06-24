@@ -130,6 +130,7 @@ namespace Jaeger.Senders.Thrift.Protocols
                     return new ThriftTag { Key = key, VType = ThriftTagType.LONG, VLong = val };
                 case string val:
                     return new ThriftTag { Key = key, VType = ThriftTagType.STRING, VStr = val };
+                // TODO: We might want to support stringification of lists and objects.
                 default:
                     return new ThriftTag { Key = key, VType = ThriftTagType.STRING, VStr = Convert.ToString(value, CultureInfo.InvariantCulture) };
             }
