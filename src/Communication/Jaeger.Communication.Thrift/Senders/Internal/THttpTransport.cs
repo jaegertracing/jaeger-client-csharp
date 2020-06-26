@@ -31,7 +31,6 @@ namespace Jaeger.Thrift.Senders.Internal
     // ReSharper disable once InconsistentNaming
     public class THttpTransport : TTransport
     {
-        private readonly X509Certificate[] _certificates;
         private readonly Uri _uri;
 
         private int _connectTimeout = 30000; // Timeouts in milliseconds
@@ -40,30 +39,30 @@ namespace Jaeger.Thrift.Senders.Internal
         private MemoryStream _outputStream = new MemoryStream();
         private bool _isDisposed;
 
-        public THttpTransport(Uri uri, IDictionary<string, string> customRequestHeaders = null, string userAgent = null, IDictionary<string, object> customProperties = null)
-            : this(uri, Enumerable.Empty<X509Certificate>(), customRequestHeaders, userAgent, customProperties)
-        {
-        }
-
-        public THttpTransport(Uri uri, IEnumerable<X509Certificate> certificates,
-            IDictionary<string, string> customRequestHeaders, string userAgent = null,
+        public THttpTransport(Uri uri, IDictionary<string, string> customRequestHeaders,
+            HttpClientHandler handler = null, IEnumerable<X509Certificate> certificates = null,
+            string userAgent = null,
             IDictionary<string, object> customProperties = null)
         {
             _uri = uri;
-            _certificates = (certificates ?? Enumerable.Empty<X509Certificate>()).ToArray();
 
             if (!string.IsNullOrEmpty(userAgent))
+            {
                 UserAgent = userAgent;
+            }
 
             CustomProperties = customProperties ?? new Dictionary<string, object>();
 
             // due to current bug with performance of Dispose in netcore https://github.com/dotnet/corefx/issues/8809
             // this can be switched to default way (create client->use->dispose per flush) later
-            _httpClient = CreateClient(customRequestHeaders);
+
+            handler ??= new HttpClientHandler();
+            certificates ??= Enumerable.Empty<X509Certificate>();
+            _httpClient = CreateClient(handler, certificates, customRequestHeaders);
         }
 
         // According to RFC 2616 section 3.8, the "User-Agent" header may not carry a version number
-        public readonly string UserAgent = "Thrift netstd THttpClient";
+        public string UserAgent { get; } = "Thrift netstd THttpClient";
 
         public override bool IsOpen => true;
 
@@ -141,10 +140,13 @@ namespace Jaeger.Thrift.Senders.Internal
             await _outputStream.WriteAsync(buffer, offset, length, cancellationToken);
         }
 
-        private HttpClient CreateClient(IDictionary<string, string> customRequestHeaders)
+        private HttpClient CreateClient(HttpClientHandler handler, IEnumerable<X509Certificate> certificates, IDictionary<string, string> customRequestHeaders)
         {
-            var handler = new HttpClientHandler();
-            handler.ClientCertificates.AddRange(_certificates);
+            if (certificates != null)
+            {
+                handler.ClientCertificates.AddRange(certificates.ToArray());
+            }
+
             handler.AutomaticDecompression = System.Net.DecompressionMethods.Deflate | System.Net.DecompressionMethods.GZip;
 
             var httpClient = new HttpClient(handler);
