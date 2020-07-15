@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -51,7 +53,7 @@ namespace Jaeger.Senders.Thrift
                 { "ot-ignore", true }
             };
 
-            _transport = new THttpTransport(collectorUri, customHeaders, customProperties: customProperties);
+            _transport = new THttpTransport(collectorUri, customHeaders, builder.HttpHandler, builder.Certificates, builder.UserAgent, customProperties);
             _protocol = ProtocolFactory.GetProtocol(_transport);
         }
 
@@ -91,6 +93,9 @@ namespace Jaeger.Senders.Thrift
             internal string Endpoint { get; }
             internal int MaxPacketSize { get; private set; } = OneMbInBytes;
             internal AuthenticationHeaderValue AuthenticationHeaderValue { get; private set; }
+            public HttpClientHandler HttpHandler { get; private set; }
+            public IEnumerable<X509Certificate> Certificates { get; private set; }
+            public string UserAgent { get; private set; }
 
             public Builder(string endpoint)
             {
@@ -114,6 +119,24 @@ namespace Jaeger.Senders.Thrift
             public Builder WithAuth(string authToken)
             {
                 AuthenticationHeaderValue = new AuthenticationHeaderValue("Bearer", authToken);
+                return this;
+            }
+
+            public Builder WithHttpHandler(HttpClientHandler httpHandler)
+            {
+                HttpHandler = httpHandler;
+                return this;
+            }
+
+            public Builder WithCertificates(IEnumerable<X509Certificate> certificates)
+            {
+                Certificates = certificates;
+                return this;
+            }
+
+            public Builder WithUserAgent(string userAgent)
+            {
+                UserAgent = userAgent;
                 return this;
             }
 

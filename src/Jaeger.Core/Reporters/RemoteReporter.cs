@@ -239,7 +239,8 @@ namespace Jaeger.Reporters
                 }
                 if (_sender == null)
                 {
-                    var senderResolver = new SenderResolver(_loggerFactory);
+                    var senderResolver = Configuration.SenderConfiguration.DefaultSenderResolver
+                        ?? new SenderResolver(_loggerFactory);
                     _sender = senderResolver.Resolve();
                 }
                 if (_metrics == null)

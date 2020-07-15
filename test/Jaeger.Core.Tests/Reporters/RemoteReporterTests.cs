@@ -100,9 +100,9 @@ namespace Jaeger.Core.Tests.Reporters
             Assert.Empty(_sender.GetAppended());
             Assert.Equal(numberOfSpans, _sender.GetFlushed().Count);
 
-            Assert.Equal(100, _metricsFactory.GetCounter("jaeger:started_spans", "sampled=y"));
-            Assert.Equal(100, _metricsFactory.GetCounter("jaeger:reporter_spans", "result=ok"));
-            Assert.Equal(100, _metricsFactory.GetCounter("jaeger:traces", "sampled=y,state=started"));
+            Assert.Equal(numberOfSpans, _metricsFactory.GetCounter("jaeger:started_spans", "sampled=y"));
+            Assert.Equal(numberOfSpans, _metricsFactory.GetCounter("jaeger:reporter_spans", "result=ok"));
+            Assert.Equal(numberOfSpans, _metricsFactory.GetCounter("jaeger:traces", "sampled=y,state=started"));
         }
 
         [Fact(Skip = "This test is flaky and deadlocks from time to time. May a smarter person fix it.")]

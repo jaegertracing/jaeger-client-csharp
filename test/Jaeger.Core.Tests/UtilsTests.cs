@@ -41,5 +41,19 @@ namespace Jaeger.Core.Tests
         {
             Assert.Equal(-1, Utils.IpToInt("255.255.255.255"));
         }
+
+        [Fact]
+        public void TestLongToNetworkBytes()
+        {
+            Assert.Collection(Utils.LongToNetworkBytes(unchecked((long)0xC96C5795D7870F42)),
+                b => Assert.Equal(b, (byte)0xC9),
+                b => Assert.Equal(b, (byte)0x6C),
+                b => Assert.Equal(b, (byte)0x57),
+                b => Assert.Equal(b, (byte)0x95),
+                b => Assert.Equal(b, (byte)0xD7),
+                b => Assert.Equal(b, (byte)0x87),
+                b => Assert.Equal(b, (byte)0x0F),
+                b => Assert.Equal(b, (byte)0x42));
+        }
     }
 }

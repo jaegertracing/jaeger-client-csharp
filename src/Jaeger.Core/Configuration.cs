@@ -58,6 +58,26 @@ namespace Jaeger
         public const string JaegerAgentPort = JaegerPrefix + "AGENT_PORT";
 
         /// <summary>
+        /// The target used to locate the grpc collector endpoint.
+        /// </summary>
+        public const string JaegerGrpcTarget = JaegerPrefix + "GRPC_TARGET";
+
+        /// <summary>
+        /// The root certificate file used to check the server side certificate from GRPC collector (roots.pem).
+        /// </summary>
+        public const string JaegerGrpcRootCertificate = JaegerPrefix + "GRPC_ROOT_CERTIFICATE";
+
+        /// <summary>
+        /// The client certificate chain file used to create a trusted TLS connection to the GRPC collector (client.pem).
+        /// </summary>
+        public const string JaegerGrpcClientChain = JaegerPrefix + "GRPC_ROOT_CERTIFICATE";
+
+        /// <summary>
+        /// The client private key file used to create a trusted TLS connection to the GRPC collector (client.key).
+        /// </summary>
+        public const string JaegerGrpcClientKey = JaegerPrefix + "GRPC_ROOT_CERTIFICATE";
+
+        /// <summary>
         /// Whether the reporter should log the spans.
         /// </summary>
         public const string JaegerReporterLogSpans = JaegerPrefix + "REPORTER_LOG_SPANS";
@@ -345,7 +365,7 @@ namespace Jaeger
             public static SamplerConfiguration FromIConfiguration(ILoggerFactory loggerFactory, IConfiguration configuration)
             {
                 ILogger logger = loggerFactory.CreateLogger<Configuration>();
-                
+
 #pragma warning disable CS0618 // Supress warning on obsolete method: WithManagerHostPort
                 return new SamplerConfiguration(loggerFactory)
                     .WithType(GetProperty(JaegerSamplerType, logger, configuration))
@@ -647,6 +667,26 @@ namespace Jaeger
             public int? AgentPort { get; private set; }
 
             /// <summary>
+            /// The GRPC target. Has no effect if the sender is set. Optional.
+            /// </summary>
+            public string GrpcTarget { get; private set; }
+
+            /// <summary>
+            /// The root certificate file used to check the server side certificate from GRPC collector (roots.pem). Optional.
+            /// </summary>
+            public string GrpcRootCertificate { get; private set; }
+
+            /// <summary>
+            /// The client certificate chain file used to create a trusted TLS connection to the GRPC collector (client.pem). Optional.
+            /// </summary>
+            public string GrpcClientChain { get; private set; }
+
+            /// <summary>
+            /// The client private key file used to create a trusted TLS connection to the GRPC collector (client.key). Optional.
+            /// </summary>
+            public string GrpcClientKey { get; private set; }
+
+            /// <summary>
             /// The endpoint, like https://jaeger-collector:14268/api/traces.
             /// </summary>
             public string Endpoint { get; private set; }
@@ -707,6 +747,30 @@ namespace Jaeger
                 return this;
             }
 
+            public SenderConfiguration WithGrpcTarget(string grpcTarget)
+            {
+                GrpcTarget = grpcTarget;
+                return this;
+            }
+
+            public SenderConfiguration WithGrpcRootCertificate(string grpcRootCertificate)
+            {
+                GrpcRootCertificate = grpcRootCertificate;
+                return this;
+            }
+
+            public SenderConfiguration WithGrpcClientChain(string grpcClientChain)
+            {
+                GrpcClientChain = grpcClientChain;
+                return this;
+            }
+
+            public SenderConfiguration WithGrpcClientKey(string grpcClientKey)
+            {
+                GrpcClientKey = grpcClientKey;
+                return this;
+            }
+
             public SenderConfiguration WithEndpoint(string endpoint)
             {
                 Endpoint = endpoint;
@@ -762,6 +826,11 @@ namespace Jaeger
                 string agentHost = GetProperty(JaegerAgentHost, logger, configuration);
                 int? agentPort = GetPropertyAsInt(JaegerAgentPort, logger, configuration);
 
+                string grpcTarget = GetProperty(JaegerGrpcTarget, logger, configuration);
+                string grpcRootCertificate = GetProperty(JaegerGrpcRootCertificate, logger, configuration);
+                string grpcClientChain = GetProperty(JaegerGrpcClientChain, logger, configuration);
+                string grpcClientKey = GetProperty(JaegerGrpcClientKey, logger, configuration);
+
                 string collectorEndpoint = GetProperty(JaegerEndpoint, logger, configuration);
                 string authToken = GetProperty(JaegerAuthToken, logger, configuration);
                 string authUsername = GetProperty(JaegerUser, logger, configuration);
@@ -772,6 +841,10 @@ namespace Jaeger
                     .WithSenderFactory(senderFactory)
                     .WithAgentHost(agentHost)
                     .WithAgentPort(agentPort)
+                    .WithGrpcTarget(grpcTarget)
+                    .WithGrpcRootCertificate(grpcRootCertificate)
+                    .WithGrpcClientChain(grpcClientChain)
+                    .WithGrpcClientKey(grpcClientKey)
                     .WithEndpoint(collectorEndpoint)
                     .WithAuthToken(authToken)
                     .WithAuthUsername(authUsername)
