@@ -40,12 +40,12 @@ namespace Jaeger.Samplers
         /// <summary>
         /// Updates <see cref="Sampler"/> to a new sampler when it is different.
         /// </summary>
-        internal void UpdateSampler()
+        internal async void UpdateSampler()
         {
             try
             {
-                SamplingStrategyResponse response = _samplingManager.GetSamplingStrategyAsync(_serviceName)
-                    .ConfigureAwait(false).GetAwaiter().GetResult();
+                SamplingStrategyResponse response = await _samplingManager.GetSamplingStrategyAsync(_serviceName)
+                    .ConfigureAwait(false);
 
                 _metrics.SamplerRetrieved.Inc(1);
 

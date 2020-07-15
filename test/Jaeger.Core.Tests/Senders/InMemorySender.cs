@@ -40,27 +40,46 @@ namespace Jaeger.Core.Tests.Senders
             return new List<Span>(_received);
         }
 
-        public Task<int> AppendAsync(Span span, CancellationToken cancellationToken)
+        public async Task<int> AppendAsync(Span span, CancellationToken cancellationToken)
         {
-            _blocker.Wait(cancellationToken);
+            //This serves to both make this call actually asynchronous and also to prevent the 
+            //blocking call from consuming a Thread Pool thread. 
+            await Task.Factory.StartNew(() => _blocker.Wait(cancellationToken),
+                TaskCreationOptions.LongRunning);
 
-            _appended.Add(span);
-            _received.Add(span);
-            return Task.FromResult(0);
+            lock (_appended)
+            {
+                _appended.Add(span);
+                _received.Add(span);
+            }
+            return 0;
         }
 
         public virtual Task<int> FlushAsync(CancellationToken cancellationToken)
         {
-            int flushedSpans = _appended.Count;
-            _flushed.AddRange(_appended);
-            _appended.Clear();
+            //This conflicts with the way TestCloseWhenQueueFull is written. Since
+            //it blocks the process queue from ever ending, RemoteReporter.CloseAsync
+            //is guaranteed to timeout, which means cancellationToken here will already
+            //be set. This prevents the rest of the function from running, causing the 
+            //test to fail.
+            //await Task.Delay(1, cancellationToken);
+
+            int flushedSpans;
+            lock (_appended )
+            {
+                flushedSpans = _appended.Count;
+                _flushed.AddRange(_appended);
+                _appended.Clear();
+            }
 
             return Task.FromResult(flushedSpans);
         }
 
-        public Task<int> CloseAsync(CancellationToken cancellationToken)
+        public async Task<int> CloseAsync(CancellationToken cancellationToken)
         {
-            return FlushAsync(cancellationToken);
+            int result = await FlushAsync(cancellationToken);
+            AllowAppend();
+            return result;
         }
 
         public void BlockAppend()
