@@ -13,6 +13,7 @@ Welcome to the Jaeger project! 👋🎉
 ## Requirement - what kind of business use case are you trying to solve?
 
 <!-- required section -->
+<!-- If you use OpenTracing.Contrib.NetCore, check if your ticket belongs here or to https://github.com/opentracing-contrib/csharp-netcore -->
 
 ## Problem - what in Jaeger blocks you from solving the requirement?
 
