@@ -35,7 +35,7 @@ namespace Jaeger.Reporters
             _commandQueue = new BlockingCollection<ICommand>(maxQueueSize);
 
             // start a thread to append spans
-            _queueProcessorTask = Task.Factory.StartNew(ProcessQueueLoop, TaskCreationOptions.LongRunning);
+            _queueProcessorTask = Task.Run(async () => { await ProcessQueueLoop(); });
 
             _flushInterval = flushInterval;
             _flushTask = Task.Run(FlushLoop);
@@ -123,14 +123,14 @@ namespace Jaeger.Reporters
             while (!_commandQueue.IsAddingCompleted);
         }
 
-        private void ProcessQueueLoop()
+        private async Task ProcessQueueLoop()
         {
             // This blocks until a command is available or IsCompleted=true
             foreach (ICommand command in _commandQueue.GetConsumingEnumerable())
             {
                 try
                 {
-                    command.ExecuteAsync().Wait();
+                    await command.ExecuteAsync();
                 }
                 catch (SenderException ex)
                 {
