@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 using Jaeger.Exceptions;
 using Jaeger.Metrics;
 using Jaeger.Senders;
@@ -18,7 +19,7 @@ namespace Jaeger.Reporters
         public const int DefaultMaxQueueSize = 100;
         public static readonly TimeSpan DefaultFlushInterval = TimeSpan.FromSeconds(1);
 
-        private readonly BlockingCollection<ICommand> _commandQueue;
+        private readonly BufferBlock<ICommand> _commandQueue;
         private readonly Task _queueProcessorTask;
         private readonly TimeSpan _flushInterval;
         private readonly Task _flushTask;
@@ -32,7 +33,9 @@ namespace Jaeger.Reporters
             _sender = sender;
             _metrics = metrics;
             _logger = loggerFactory.CreateLogger<RemoteReporter>();
-            _commandQueue = new BlockingCollection<ICommand>(maxQueueSize);
+            _commandQueue = new BufferBlock<ICommand>( new DataflowBlockOptions() {
+                BoundedCapacity = maxQueueSize
+            });
 
             // start a thread to append spans
             _queueProcessorTask = Task.Run(async () => { await ProcessQueueLoop(); });
@@ -47,7 +50,7 @@ namespace Jaeger.Reporters
             try
             {
                 // It's better to drop spans, than to block here
-                added = _commandQueue.TryAdd(new AppendCommand(this, span));
+                added = _commandQueue.Post(new AppendCommand(this, span));
             }
             catch (InvalidOperationException)
             {
@@ -64,7 +67,7 @@ namespace Jaeger.Reporters
         {
             // Note: Java creates a CloseCommand but we have CompleteAdding() in C# so we don't need the command.
             // (This also stops the FlushLoop)
-            _commandQueue.CompleteAdding();
+            _commandQueue.Complete();
 
             try
             {
@@ -104,7 +107,7 @@ namespace Jaeger.Reporters
             {
                 // We can safely drop FlushCommand when the queue is full - sender should take care of flushing
                 // in such case
-                _commandQueue.TryAdd(new FlushCommand(this));
+                _commandQueue.Post(new FlushCommand(this));
             }
             catch (InvalidOperationException)
             {
@@ -120,16 +123,17 @@ namespace Jaeger.Reporters
                 await Task.Delay(_flushInterval).ConfigureAwait(false);
                 Flush();
             }
-            while (!_commandQueue.IsAddingCompleted);
+            while (!_commandQueue.Completion.IsCompleted);
         }
 
         private async Task ProcessQueueLoop()
         {
             // This blocks until a command is available or IsCompleted=true
-            foreach (ICommand command in _commandQueue.GetConsumingEnumerable())
+            while (await _commandQueue.OutputAvailableAsync())
             {
                 try
                 {
+                    var command = await _commandQueue.ReceiveAsync();
                     await command.ExecuteAsync();
                 }
                 catch (SenderException ex)
