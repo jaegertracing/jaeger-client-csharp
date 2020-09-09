@@ -46,17 +46,9 @@ namespace Jaeger.Reporters
 
         public void Report(Span span)
         {
-            bool added = false;
-            try
-            {
-                // It's better to drop spans, than to block here
-                added = _commandQueue.Post(new AppendCommand(this, span));
-            }
-            catch (InvalidOperationException)
-            {
-                // The queue has been marked as IsAddingCompleted -> no-op.
-            }
-
+            // It's better to drop spans, than to block here
+            var added = _commandQueue.Post(new AppendCommand(this, span));
+            
             if (!added)
             {
                 _metrics.ReporterDropped.Inc(1);
