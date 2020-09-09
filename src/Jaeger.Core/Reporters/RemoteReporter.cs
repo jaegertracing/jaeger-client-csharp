@@ -65,8 +65,6 @@ namespace Jaeger.Reporters
 
         public async Task CloseAsync(CancellationToken cancellationToken)
         {
-            // Note: Java creates a CloseCommand but we have CompleteAdding() in C# so we don't need the command.
-            // (This also stops the FlushLoop)
             _commandQueue.Complete();
 
             try
@@ -103,16 +101,9 @@ namespace Jaeger.Reporters
             // to reduce the number of updateGauge stats, we only emit queue length on flush
             _metrics.ReporterQueueLength.Update(_commandQueue.Count);
 
-            try
-            {
-                // We can safely drop FlushCommand when the queue is full - sender should take care of flushing
-                // in such case
-                _commandQueue.Post(new FlushCommand(this));
-            }
-            catch (InvalidOperationException)
-            {
-                // The queue has been marked as IsAddingCompleted -> no-op.
-            }
+            // We can safely drop FlushCommand when the queue is full - sender should take care of flushing
+            // in such case
+            _commandQueue.Post(new FlushCommand(this));
         }
 
         private async Task FlushLoop()
