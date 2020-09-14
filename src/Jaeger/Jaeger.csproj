@@ -3,13 +3,13 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Description>Jaeger .NET Tracing</Description>
-    <PackageIconUrl>https://github.com/jaegertracing/jaeger-client-csharp/raw/master/images/jaeger-icon.png</PackageIconUrl>
 	
     <!-- This is only a metapackage -->
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <DisableImplicitFrameworkReferences>true</DisableImplicitFrameworkReferences>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <RuntimeMetadataVersion>1.0.0</RuntimeMetadataVersion>
+    <!-- Remove once https://github.com/NuGet/Home/issues/8583 is fixed -->
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
