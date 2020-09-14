@@ -4,7 +4,8 @@
     <Authors>Chatham Financial Corp. and The Jaeger Authors</Authors>
     <Copyright>Copyright 2018 (c) The Jaeger Authors. Copyright 2018 (c) Chatham Financial Corp.</Copyright>
     <PackageProjectUrl>https://github.com/jaegertracing/jaeger-client-csharp</PackageProjectUrl>
-    <PackageLicenseUrl>https://github.com/jaegertracing/jaeger-client-csharp/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageIcon>jaeger-icon.png</PackageIcon>
     <PackageReleaseNotes Condition="'$(APPVEYOR_REPO_TAG_NAME)' != ''">https://github.com/jaegertracing/jaeger-client-csharp/releases/tag/$(APPVEYOR_REPO_TAG_NAME)</PackageReleaseNotes>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>git://github.com/jaegertracing/jaeger-client-csharp</RepositoryUrl>
@@ -18,5 +19,9 @@
     <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)SignKey.snk</AssemblyOriginatorKeyFile>
     <PublicSign Condition=" '$(OS)' != 'Windows_NT' ">true</PublicSign>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="$(SolutionDir)/images/jaeger-icon.png" Pack="true" PackagePath="" />
+  </ItemGroup>
 
 </Project>
