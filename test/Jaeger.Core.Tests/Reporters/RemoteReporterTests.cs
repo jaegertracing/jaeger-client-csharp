@@ -15,8 +15,10 @@ using Xunit.Abstractions;
 
 namespace Jaeger.Core.Tests.Reporters
 {
+    //
     public class RemoteReporterTests
     {
+
         private const int MaxQueueSize = 500;
         private readonly TimeSpan _flushInterval = TimeSpan.FromSeconds(1);
         private readonly TimeSpan _closeTimeout = TimeSpan.FromSeconds(1);
