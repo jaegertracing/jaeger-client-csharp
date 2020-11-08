@@ -82,7 +82,7 @@ namespace Jaeger.Core.Tests.Reporters
             Assert.Single(received);
         }
 
-        [Fact]
+        [Fact] 
         public async Task TestRemoteReporterFlushesOnClose()
         {
             SetupTracer();
