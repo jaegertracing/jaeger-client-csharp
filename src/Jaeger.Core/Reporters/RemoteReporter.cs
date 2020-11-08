@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
+using System.Timers;
 using Jaeger.Exceptions;
 using Jaeger.Metrics;
 using Jaeger.Senders;
@@ -22,10 +23,11 @@ namespace Jaeger.Reporters
         private readonly BufferBlock<ICommand> _commandQueue;
         private readonly Task _queueProcessorTask;
         private readonly TimeSpan _flushInterval;
-        private readonly Task _flushTask;
+        private readonly int _maxQueueSize;
         private readonly ISender _sender;
         private readonly IMetrics _metrics;
         private readonly ILogger _logger;
+        private System.Timers.Timer _timer;
 
         internal RemoteReporter(ISender sender, TimeSpan flushInterval, int maxQueueSize,
             IMetrics metrics, ILoggerFactory loggerFactory)
@@ -33,26 +35,44 @@ namespace Jaeger.Reporters
             _sender = sender;
             _metrics = metrics;
             _logger = loggerFactory.CreateLogger<RemoteReporter>();
-            _commandQueue = new BufferBlock<ICommand>( new DataflowBlockOptions() {
+            _commandQueue = new BufferBlock<ICommand>(new DataflowBlockOptions()
+            {
                 BoundedCapacity = maxQueueSize
             });
 
             // start a thread to append spans
-            _queueProcessorTask = Task.Run(async () => { await ProcessQueueLoop(); });
-
+            _queueProcessorTask = Task.Run(ProcessQueueLoop);
             _flushInterval = flushInterval;
-            _flushTask = Task.Run(FlushLoop);
+            _maxQueueSize = maxQueueSize;
+            InitializeFlushTimer();
+        }
+
+        private void InitializeFlushTimer()
+        {
+            _timer = new System.Timers.Timer
+            {
+                AutoReset = false,
+                Interval = _flushInterval.TotalMilliseconds
+            };
+            _timer.Elapsed += FlushOnTimer;
+            _timer.Start();
         }
 
         public void Report(Span span)
         {
             // It's better to drop spans, than to block here
             var added = _commandQueue.Post(new AppendCommand(this, span));
-            
+
             if (!added)
             {
                 _metrics.ReporterDropped.Inc(1);
             }
+
+            if (_commandQueue.Count >= _maxQueueSize)
+            {
+                var t = FlushAsync();
+            }
+
         }
 
         public async Task CloseAsync(CancellationToken cancellationToken)
@@ -88,6 +108,23 @@ namespace Jaeger.Reporters
             }
         }
 
+        internal void FlushOnTimer(object sender, ElapsedEventArgs e)
+        {
+            try
+            {
+                Flush();
+            }
+            finally
+            {
+                _timer.Start();
+            }
+        }
+
+        internal async Task FlushAsync()
+        {
+            await Task.Run(Flush);
+        }
+
         internal void Flush()
         {
             // to reduce the number of updateGauge stats, we only emit queue length on flush
@@ -95,18 +132,10 @@ namespace Jaeger.Reporters
 
             // We can safely drop FlushCommand when the queue is full - sender should take care of flushing
             // in such case
-            _commandQueue.Post(new FlushCommand(this));
-        }
-
-        private async Task FlushLoop()
-        {
-            // First flush should happen later so we start with the delay
-            do
-            {
-                await Task.Delay(_flushInterval).ConfigureAwait(false);
-                Flush();
-            }
-            while (!_commandQueue.Completion.IsCompleted);
+            var flushCommand = new FlushCommand(this);
+            var t = flushCommand.ExecuteAsync();
+            t.Wait();
+            t.GetAwaiter();
         }
 
         private async Task ProcessQueueLoop()
