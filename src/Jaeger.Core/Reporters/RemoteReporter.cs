@@ -70,7 +70,7 @@ namespace Jaeger.Reporters
 
             if (_commandQueue.Count >= _maxQueueSize)
             {
-                var t = FlushAsync();
+                var t = FlushAsync(new CancellationTokenSource(10000).Token);
             }
 
         }
@@ -120,9 +120,9 @@ namespace Jaeger.Reporters
             }
         }
 
-        internal async Task FlushAsync()
+        internal async Task FlushAsync(CancellationToken token)
         {
-            await Task.Run(Flush);
+            await Task.Run(Flush, token);
         }
 
         internal void Flush()
