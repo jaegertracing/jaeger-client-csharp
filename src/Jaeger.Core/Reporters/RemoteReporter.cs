@@ -56,6 +56,7 @@ namespace Jaeger.Reporters
             };
             _timer.Elapsed += FlushOnTimer;
             _timer.Start();
+
         }
 
         public void Report(Span span)
@@ -68,11 +69,6 @@ namespace Jaeger.Reporters
                 _metrics.ReporterDropped.Inc(1);
             }
 
-            if (_commandQueue.Count >= _maxQueueSize)
-            {
-                var t = FlushAsync(new CancellationTokenSource(10000).Token);
-            }
-
         }
 
         public async Task CloseAsync(CancellationToken cancellationToken)
@@ -82,6 +78,10 @@ namespace Jaeger.Reporters
             try
             {
                 // Give processor some time to process any queued commands.
+
+                _timer?.Stop();
+                _timer?.Dispose();
+                _timer = null;
 
                 var cts = CancellationTokenSource.CreateLinkedTokenSource(
                     cancellationToken,
@@ -118,11 +118,6 @@ namespace Jaeger.Reporters
             {
                 _timer.Start();
             }
-        }
-
-        internal async Task FlushAsync(CancellationToken token)
-        {
-            await Task.Run(Flush, token);
         }
 
         internal void Flush()
