@@ -1,8 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using Google.Protobuf;
+using Jaeger.ApiV2;
 using Jaeger.Reporters;
 using Jaeger.Samplers;
 using Jaeger.Senders.Grpc.Protocols;
+using Jaeger.Util;
 using OpenTracing;
 using Xunit;
 using GrpcSpan = Jaeger.ApiV2.Span;
@@ -125,9 +129,8 @@ namespace Jaeger.Senders.Grpc.Tests.Reporters.Protocols
 
             GrpcSpan span = JaegerGrpcSpanConverter.ConvertSpan(child);
 
-            // TODO: Check ParentSpanID
-            //Assert.Equal((long)child.Context.ParentId, span.ParentSpanId);
-            Assert.Empty(span.References);
+            Assert.Single(span.References);
+            Assert.Equal(BuildReference(parent.Context, References.ChildOf), span.References[0]);
         }
 
         [Fact]
@@ -143,8 +146,6 @@ namespace Jaeger.Senders.Grpc.Tests.Reporters.Protocols
 
             GrpcSpan span = JaegerGrpcSpanConverter.ConvertSpan(child);
 
-            // TODO: Check ParentSpanID
-            //Assert.Equal(0, span.ParentSpanId);
             Assert.Equal(2, span.References.Count);
             Assert.Equal(BuildReference(parent.Context, References.ChildOf), span.References[0]);
             Assert.Equal(BuildReference(parent2.Context, References.ChildOf), span.References[1]);
@@ -163,8 +164,6 @@ namespace Jaeger.Senders.Grpc.Tests.Reporters.Protocols
 
             GrpcSpan span = JaegerGrpcSpanConverter.ConvertSpan(child);
 
-            // TODO: Check ParentSpanID
-            //Assert.Equal(0, span.ParentSpanId);
             Assert.Equal(2, span.References.Count);
             Assert.Equal(BuildReference(parent.Context, References.FollowsFrom), span.References[0]);
             Assert.Equal(BuildReference(parent2.Context, References.ChildOf), span.References[1]);
