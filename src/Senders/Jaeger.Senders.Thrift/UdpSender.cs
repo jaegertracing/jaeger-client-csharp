@@ -36,11 +36,10 @@ namespace Jaeger.Senders.Thrift
 
         /// <param name="host">If empty it will use <see cref="DefaultAgentUdpHost"/>.</param>
         /// <param name="port">If 0 it will use <see cref="DefaultAgentUdpCompactPort"/>.</param>
-        /// <param name="maxPacketSize">If 0 it will use <see cref="ThriftUdpClientTransport.MaxPacketSize"/>.</param>
+        /// <param name="maxPacketSize">If 0 it will use <see cref="ThriftUdpClientTransport.MaxPacketSize"/>. Must not exceed <see cref="ThriftUdpClientTransport.MaxPacketSize"/>.</param>
         public UdpSender(string host, int port, int maxPacketSize)
             : base(ProtocolType.Compact, maxPacketSize)
         {
-
             if (string.IsNullOrEmpty(host))
             {
                 host = DefaultAgentUdpHost;
@@ -49,6 +48,12 @@ namespace Jaeger.Senders.Thrift
             if (port == 0)
             {
                 port = DefaultAgentUdpCompactPort;
+            }
+
+            if (maxPacketSize > ThriftUdpClientTransport.MaxPacketSize)
+            {
+                throw new NotSupportedException($"Using a packet size bigger than {ThriftUdpClientTransport.MaxPacketSize} "
+                                                + "can lead to lost traces and is therefore not supported.");
             }
 
             _udpTransport = new ThriftUdpClientTransport(host, port);
