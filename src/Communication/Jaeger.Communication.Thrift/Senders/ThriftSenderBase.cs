@@ -21,8 +21,8 @@ namespace Jaeger.Thrift.Senders
 
         protected int MaxSpanBytes { get; }
 
-        /// <param name="protocolType">Protocol type (compact or binary)</param<
-        /// <param name="maxPacketSize">If 0 it will use default value <see cref="ThriftUdpTransport.MAX_PACKET_SIZE"/>.</param>
+        /// <param name="protocolType">Protocol type (compact or binary)</param>
+        /// <param name="maxPacketSize">If 0 it will use default value <see cref="ThriftUdpClientTransport.MaxPacketSize"/>.</param>
         public ThriftSenderBase(ProtocolType protocolType, int maxPacketSize)
         {
             switch (protocolType)
