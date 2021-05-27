@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Jaeger.Core.Tests.Senders;
+using Jaeger.Core.Tests.Util;
 using Jaeger.Metrics;
 using Jaeger.Reporters;
 using Jaeger.Samplers;
@@ -59,7 +60,9 @@ namespace Jaeger.Core.Tests
             ClearProperty(Configuration.JaegerReporterFlushInterval);
             ClearProperty(Configuration.JaegerSamplerType);
             ClearProperty(Configuration.JaegerSamplerParam);
+#pragma warning disable CS0618 // Supress warning on obsolete constant: JaegerSamplerManagerHostPort
             ClearProperty(Configuration.JaegerSamplerManagerHostPort);
+#pragma warning restore CS0618 // Supress warning on obsolete constant: JaegerSamplerManagerHostPort
             ClearProperty(Configuration.JaegerSamplingEndpoint);
             ClearProperty(Configuration.JaegerServiceName);
             ClearProperty(Configuration.JaegerTags);
@@ -546,16 +549,18 @@ namespace Jaeger.Core.Tests
         public void TestDeprecatedSamplerManagerHostPort()
         {
             ILoggerFactory loggerFactory = Substitute.For<ILoggerFactory>();
-            ILogger logger = Substitute.For<ILogger>();
-            loggerFactory.CreateLogger<Configuration>().Returns(logger);
-
+            var logger = Substitute.For<MockLogger>();
+            loggerFactory.CreateLogger<Configuration>().Returns<ILogger>(logger);
+            
+#pragma warning disable CS0618 // Supress warning on obsolete constant: JaegerSamplerManagerHostPort
             SetProperty(Configuration.JaegerSamplerManagerHostPort, HttpSamplingManager.DefaultHostPort);
+#pragma warning restore CS0618 // Supress warning on obsolete constant: JaegerSamplerManagerHostPort
             Configuration.SamplerConfiguration samplerConfiguration = Configuration.SamplerConfiguration.FromEnv(loggerFactory);
             ISampler sampler = samplerConfiguration.GetSampler("name",
                 new MetricsImpl(NoopMetricsFactory.Instance));
             Assert.IsType<RemoteControlledSampler>(sampler);
             loggerFactory.Received(1).CreateLogger<Configuration>();
-            logger.Received(1).Log(LogLevel.Warning, Arg.Any<EventId>(), Arg.Any<object>(), Arg.Any<Exception>(), Arg.Any<Func<object, Exception, string>>());
+            logger.Received(1).Log(LogLevel.Warning, Arg.Any<string>());
         }
 
         internal class TestTextMap : ITextMap

@@ -7,7 +7,7 @@ using Thrift.Transport;
 
 namespace Jaeger.Thrift.Senders.Internal
 {
-    public class ThriftUdpClientTransport : TTransport
+    public class ThriftUdpClientTransport : TEndpointTransport
     {
         public const int MaxPacketSize = 65000;
 
@@ -24,6 +24,7 @@ namespace Jaeger.Thrift.Senders.Internal
         }
 
         internal ThriftUdpClientTransport(string host, int port, MemoryStream byteStream, IUdpClient udpClient)
+            : base(null)
         {
             _host = host;
             _port = port;
@@ -33,7 +34,7 @@ namespace Jaeger.Thrift.Senders.Internal
 
         public override bool IsOpen => _client?.Client?.Connected ?? false;
 
-        public override Task OpenAsync(CancellationToken cancellationToken)
+        public override Task OpenAsync(CancellationToken cancellationToken = new())
         {
             if (cancellationToken.IsCancellationRequested)
             {

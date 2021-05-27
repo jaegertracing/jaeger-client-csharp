@@ -1,12 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using Google.Protobuf;
-using Jaeger.ApiV2;
 using Jaeger.Reporters;
 using Jaeger.Samplers;
 using Jaeger.Senders.Grpc.Protocols;
-using Jaeger.Util;
 using OpenTracing;
 using Xunit;
 using GrpcSpan = Jaeger.ApiV2.Span;

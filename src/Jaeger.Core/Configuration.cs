@@ -105,6 +105,7 @@ namespace Jaeger
         /// <summary>
         /// The sampler manager host:port.
         /// </summary>
+        [Obsolete("Please use SamplingEndpoint instead!")]
         public const string JaegerSamplerManagerHostPort = JaegerPrefix + "SAMPLER_MANAGER_HOST_PORT";
 
         /// <summary>
