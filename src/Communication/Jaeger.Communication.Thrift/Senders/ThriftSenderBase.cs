@@ -50,7 +50,7 @@ namespace Jaeger.Thrift.Senders
 
         public int GetSize(TBase thriftBase)
         {
-            _memoryTransport.Length = 0;
+            _memoryTransport.SetLength(0);
             thriftBase.WriteAsync(ProtocolFactory.GetProtocol(_memoryTransport), CancellationToken.None).GetAwaiter().GetResult();
             return _memoryTransport.Length;
         }
