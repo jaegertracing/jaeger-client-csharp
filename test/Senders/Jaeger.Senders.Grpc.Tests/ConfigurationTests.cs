@@ -44,7 +44,9 @@ namespace Jaeger.Senders.Grpc.Tests
             ClearProperty(Configuration.JaegerReporterFlushInterval);
             ClearProperty(Configuration.JaegerSamplerType);
             ClearProperty(Configuration.JaegerSamplerParam);
+#pragma warning disable CS0618 // Supress warning on obsolete constant: JaegerSamplerManagerHostPort
             ClearProperty(Configuration.JaegerSamplerManagerHostPort);
+#pragma warning restore CS0618 // Supress warning on obsolete constant: JaegerSamplerManagerHostPort
             ClearProperty(Configuration.JaegerServiceName);
             ClearProperty(Configuration.JaegerTags);
             ClearProperty(Configuration.JaegerSenderFactory);

@@ -1,7 +1,9 @@
 using System;
 using System.Threading;
 using Jaeger.Thrift.Senders.Internal;
+using Thrift;
 using Thrift.Protocol;
+using Thrift.Transport.Client;
 
 namespace Jaeger.Thrift.Senders
 {
@@ -15,7 +17,7 @@ namespace Jaeger.Thrift.Senders
 
         public const int EmitBatchOverhead = 33;
 
-        private readonly TMemoryBuffer _memoryTransport;
+        private readonly TMemoryBufferTransport _memoryTransport;
 
         protected TProtocolFactory ProtocolFactory { get; }
 
@@ -43,14 +45,14 @@ namespace Jaeger.Thrift.Senders
             }
 
             MaxSpanBytes = maxPacketSize - EmitBatchOverhead;
-            _memoryTransport = new TMemoryBuffer();
+            _memoryTransport = new TMemoryBufferTransport(new TConfiguration());
         }
 
         public int GetSize(TBase thriftBase)
         {
-            _memoryTransport.Reset();
+            _memoryTransport.Length = 0;
             thriftBase.WriteAsync(ProtocolFactory.GetProtocol(_memoryTransport), CancellationToken.None).GetAwaiter().GetResult();
-            return _memoryTransport.GetBuffer().Length;
+            return _memoryTransport.Length;
         }
     }
 }

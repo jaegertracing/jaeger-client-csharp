@@ -1,4 +1,4 @@
-﻿using System;
+﻿using Jaeger.Core.Tests.Util;
 using Jaeger.Reporters;
 using Jaeger.Samplers;
 using Microsoft.Extensions.Logging;
@@ -13,9 +13,9 @@ namespace Jaeger.Core.Tests.Reporters
         public void LoggingReporter_ShouldCallLogger()
         {
             var loggerFactory = Substitute.For<ILoggerFactory>();
-            var logger = Substitute.For<ILogger>();
+            var logger = Substitute.For<MockLogger>();
 
-            loggerFactory.CreateLogger<LoggingReporter>().Returns(logger);
+            loggerFactory.CreateLogger<LoggingReporter>().Returns<ILogger>(logger);
 
             var reporter = new LoggingReporter(loggerFactory);
 
@@ -27,16 +27,16 @@ namespace Jaeger.Core.Tests.Reporters
             tracer.BuildSpan("foo").Start().Finish();
 
             loggerFactory.Received(1).CreateLogger<LoggingReporter>();
-            logger.Received(1).Log(LogLevel.Information, Arg.Any<EventId>(), Arg.Any<object>(), null, Arg.Any<Func<object, Exception, string>>());
+            logger.Received(1).Log(LogLevel.Information, Arg.Any<string>());
         }
 
         [Fact]
         public void LoggingReporter_CanLogActiveSpan()
         {
             var loggerFactory = Substitute.For<ILoggerFactory>();
-            var logger = Substitute.For<ILogger>();
+            var logger = Substitute.For<MockLogger>();
 
-            loggerFactory.CreateLogger<LoggingReporter>().Returns(logger);
+            loggerFactory.CreateLogger<LoggingReporter>().Returns<ILogger>(logger);
 
             var reporter = new LoggingReporter(loggerFactory);
 
@@ -48,7 +48,7 @@ namespace Jaeger.Core.Tests.Reporters
             tracer.BuildSpan("foo").StartActive(true).Dispose();
 
             loggerFactory.Received(1).CreateLogger<LoggingReporter>();
-            logger.Received(1).Log(LogLevel.Information, Arg.Any<EventId>(), Arg.Any<object>(), null, Arg.Any<Func<object, Exception, string>>());
+            logger.Received(1).Log(LogLevel.Information, Arg.Any<string>());
         }
     }
 }
