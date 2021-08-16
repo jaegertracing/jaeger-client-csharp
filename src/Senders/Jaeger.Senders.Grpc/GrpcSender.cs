@@ -61,7 +61,13 @@ namespace Jaeger.Senders.Grpc
                 maxPacketSize = MaxPacketSize;
             }
 
-            _channel = new Channel(target, credentials);
+            var channelOptions = new List<ChannelOption>()
+            {
+                new ChannelOption(ChannelOptions.MaxSendMessageLength, maxPacketSize),
+                new ChannelOption(ChannelOptions.MaxReceiveMessageLength, maxPacketSize)
+            };
+
+            _channel = new Channel(target, credentials, channelOptions);
             _client = new CollectorService.CollectorServiceClient(_channel);
             _maxPacketSize = maxPacketSize;
         }
