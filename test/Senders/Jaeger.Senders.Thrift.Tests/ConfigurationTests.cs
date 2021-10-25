@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Net.Sockets;
 using System.Reflection;
 using Jaeger.Reporters;
 using Microsoft.Extensions.Configuration;
@@ -46,7 +45,9 @@ namespace Jaeger.Senders.Thrift.Tests
             ClearProperty(Configuration.JaegerReporterFlushInterval);
             ClearProperty(Configuration.JaegerSamplerType);
             ClearProperty(Configuration.JaegerSamplerParam);
+#pragma warning disable CS0618 // Supress warning on obsolete constant: JaegerSamplerManagerHostPort
             ClearProperty(Configuration.JaegerSamplerManagerHostPort);
+#pragma warning restore CS0618 // Supress warning on obsolete constant: JaegerSamplerManagerHostPort
             ClearProperty(Configuration.JaegerServiceName);
             ClearProperty(Configuration.JaegerTags);
             ClearProperty(Configuration.JaegerSenderFactory);

@@ -37,7 +37,8 @@ namespace Jaeger.Core.Tests.Baggage
         [Fact]
         public void TestUpdateBaggageRestrictions()
         {
-            _baggageRestrictionProxy.GetBaggageRestrictionsAsync(SERVICE_NAME).Returns(new List<BaggageRestrictionResponse> { RESTRICTION });
+            _baggageRestrictionProxy.GetBaggageRestrictionsAsync(SERVICE_NAME)
+                .Returns<List<BaggageRestrictionResponse>>(new List<BaggageRestrictionResponse> { RESTRICTION });
 
             _undertest.UpdateBaggageRestrictions();
 
@@ -69,7 +70,7 @@ namespace Jaeger.Core.Tests.Baggage
         public void TestDenyBaggageOnInitializationFailure()
         {
             _baggageRestrictionProxy.GetBaggageRestrictionsAsync(SERVICE_NAME)
-                .Returns(new List<BaggageRestrictionResponse> { RESTRICTION });
+                .Returns<List<BaggageRestrictionResponse>>(new List<BaggageRestrictionResponse> { RESTRICTION });
 
             _undertest = new RemoteBaggageRestrictionManager(SERVICE_NAME, _baggageRestrictionProxy, _metrics,
                 true, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));

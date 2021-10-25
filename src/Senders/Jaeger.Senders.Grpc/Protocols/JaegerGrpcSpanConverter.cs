@@ -22,7 +22,6 @@ namespace Jaeger.Senders.Grpc.Protocols
             var duration = (span.FinishTimestampUtc ?? startTime) - startTime;
 
             var references = span.GetReferences();
-            var oneChildOfParent = references.Count == 1 && string.Equals(References.ChildOf, references[0].Type, StringComparison.Ordinal);
 
             var grpcSpan = new GrpcSpan
             {
@@ -32,7 +31,7 @@ namespace Jaeger.Senders.Grpc.Protocols
                 Flags = (uint)context.Flags,
                 StartTime = Timestamp.FromDateTime(startTime),
                 Duration = Duration.FromTimeSpan(duration),
-                References = { oneChildOfParent ? new List<GrpcReference>() : BuildReferences(references) },
+                References = { BuildReferences(references) },
                 Tags = { BuildTags(span.GetTags()) },
                 Logs = { BuildLogs(span.GetLogs()) }
             };

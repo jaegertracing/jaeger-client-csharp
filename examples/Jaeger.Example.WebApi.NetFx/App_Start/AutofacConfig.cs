@@ -4,6 +4,9 @@ using Jaeger.Samplers;
 using OpenTracing;
 using System.Reflection;
 using System.Web.Http;
+using Jaeger.Senders;
+using Jaeger.Senders.Thrift;
+using Microsoft.Extensions.Logging;
 
 namespace Jaeger.Example.WebApi.NetFx
 {
@@ -13,6 +16,10 @@ namespace Jaeger.Example.WebApi.NetFx
 
         static AutofacConfig()
         {
+            // This is necessary to pick the correct sender, otherwise a NoopSender is used!
+            Configuration.SenderConfiguration.DefaultSenderResolver = new SenderResolver(null)
+                .RegisterSenderFactory<ThriftSenderFactory>();
+
             tracer = new Tracer.Builder("WebApi-NetFx")
                 .WithSampler(new ConstSampler(true))
                 .Build();

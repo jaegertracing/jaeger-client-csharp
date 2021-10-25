@@ -29,7 +29,7 @@ using Thrift.Transport;
 namespace Jaeger.Thrift.Senders.Internal
 {
     // ReSharper disable once InconsistentNaming
-    public class THttpTransport : TTransport
+    public class THttpTransport : TEndpointTransport
     {
         private readonly Uri _uri;
 
@@ -43,6 +43,7 @@ namespace Jaeger.Thrift.Senders.Internal
             HttpClientHandler handler = null, IEnumerable<X509Certificate> certificates = null,
             string userAgent = null,
             IDictionary<string, object> customProperties = null)
+            : base(null)
         {
             _uri = uri;
 
@@ -113,6 +114,8 @@ namespace Jaeger.Thrift.Senders.Internal
                 throw new TTransportException(TTransportException.ExceptionType.NotOpen, "No request has been sent");
             }
 
+            CheckReadBytesAvailable(length);
+
             try
             {
                 var ret = await _inputStream.ReadAsync(buffer, offset, length, cancellationToken);
@@ -121,7 +124,8 @@ namespace Jaeger.Thrift.Senders.Internal
                 {
                     throw new TTransportException(TTransportException.ExceptionType.EndOfFile, "No more data available");
                 }
-
+                
+                CountConsumedMessageBytes(ret);
                 return ret;
             }
             catch (IOException iox)
@@ -157,6 +161,9 @@ namespace Jaeger.Thrift.Senders.Internal
             }
 
             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/x-thrift"));
+            
+            // Clear any user agent values to avoid drift with the field value
+            httpClient.DefaultRequestHeaders.UserAgent.Clear();
             httpClient.DefaultRequestHeaders.UserAgent.TryParseAdd(UserAgent);
 
             httpClient.DefaultRequestHeaders.AcceptEncoding.Add(new StringWithQualityHeaderValue("deflate"));
@@ -226,6 +233,7 @@ namespace Jaeger.Thrift.Senders.Internal
             finally
             {
                 _outputStream = new MemoryStream();
+                ResetConsumedMessageSize();
             }
         }
 

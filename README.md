@@ -6,7 +6,7 @@
 - Supports netstandard 2.0
 
 ## Status
-This library is still under construction and needs to be peer reviewed as well as have features added.
+This library is considered stable and can be used in production.
 
 ## Usage
 This package contains everything you need to get up and running. The meta-package includes the following packages:

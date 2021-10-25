@@ -28,7 +28,7 @@ namespace Jaeger.Senders.Thrift.Tests.Senders.Transport.Internal
             var port = 4528;
 
             var transport = new ThriftUdpClientTransport(host, port, _testingMemoryStream, _mockClient);
-            await transport.OpenAsync();
+            await transport.OpenAsync(CancellationToken.None);
 
             _mockClient.Received(1).Connect(Arg.Is(host), Arg.Is(port));
         }
@@ -118,7 +118,7 @@ namespace Jaeger.Senders.Thrift.Tests.Senders.Transport.Internal
             var port = 4528;
 
             var transport = new ThriftUdpClientTransport(host, port, _testingMemoryStream, _mockClient);
-            var tInfo = transport.FlushAsync();
+            var tInfo = transport.FlushAsync(CancellationToken.None);
 
             Assert.True(tInfo.IsCompleted);
             await _mockClient.Received(0).SendAsync(Arg.Any<byte[]>(), Arg.Any<int>());
@@ -133,7 +133,7 @@ namespace Jaeger.Senders.Thrift.Tests.Senders.Transport.Internal
             _testingMemoryStream = new MemoryStream(streamBytes);
 
             var transport = new ThriftUdpClientTransport(host, port, _testingMemoryStream, _mockClient);
-            var tInfo = transport.FlushAsync();
+            var tInfo = transport.FlushAsync(CancellationToken.None);
 
             Assert.True(tInfo.IsCompleted);
             await _mockClient.Received(1).SendAsync(Arg.Any<byte[]>(), Arg.Is(8));
@@ -150,7 +150,7 @@ namespace Jaeger.Senders.Thrift.Tests.Senders.Transport.Internal
             _mockClient.SendAsync(Arg.Any<byte[]>(), Arg.Any<int>()).Throws(new Exception("message, yo"));
 
             var transport = new ThriftUdpClientTransport(host, port, _testingMemoryStream, _mockClient);
-            var ex = await Assert.ThrowsAsync<TTransportException>(() => transport.FlushAsync());
+            var ex = await Assert.ThrowsAsync<TTransportException>(() => transport.FlushAsync(CancellationToken.None));
 
             Assert.Equal("Cannot flush closed transport. message, yo", ex.Message);
         }
