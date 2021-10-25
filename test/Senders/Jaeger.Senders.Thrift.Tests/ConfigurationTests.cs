@@ -17,6 +17,7 @@ namespace Jaeger.Senders.Thrift.Tests
 
         private readonly ILoggerFactory _loggerFactory;
 
+
         public ConfigurationTests()
         {
             _loggerFactory = NullLoggerFactory.Instance;
