@@ -21,7 +21,11 @@ namespace Jaeger.Util
 
             // Note: This ensures that internal requests from the tracer are not instrumented
             // by https://github.com/opentracing-contrib/csharp-netcore
+#if NET5_0
+            request.Options.Set(new HttpRequestOptionsKey<bool>("ot-ignore"), true);
+#else
             request.Properties["ot-ignore"] = true;
+#endif
 
             var response = await _httpClient.SendAsync(request).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
