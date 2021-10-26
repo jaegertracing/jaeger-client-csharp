@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp3.1;net5.0;netstandard2.1;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;netcoreapp3.1;net5.0</TargetFrameworks>
     <PackageTags>jaeger;tracing;opentracing</PackageTags>
     <Description>Jaeger .NET Tracing</Description>
     <RootNamespace>Jaeger</RootNamespace>

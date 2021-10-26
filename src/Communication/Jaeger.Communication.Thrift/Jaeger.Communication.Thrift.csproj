@@ -1,7 +1,7 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.1;netstandard2.0</TargetFrameworks>
+    <TargetFramework>netstandard2.0</TargetFramework>
 
     <!-- No XML docs as this library contains auto-generated code that doesn't produce useful XML comments -->
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
