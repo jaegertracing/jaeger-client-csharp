@@ -1,12 +1,13 @@
 [![Build status][ci-img]][ci] [![NuGet][nuget-img]][nuget]
 
+# 🛑 This library is being deprecated!
+
+We urge all users to migrate to [OpenTelemetry](https://opentelemetry.io/). Please refer to the [notice in the documentation](https://www.jaegertracing.io/docs/latest/client-libraries/#deprecating-jaeger-clients) for details.
+
 # C# Client for Jaeger (https://jaegertracing.io)
 
 - Implements C# [OpenTracing API](https://github.com/opentracing/opentracing-csharp)
 - Supports netstandard 2.0
-
-## Status
-This library is considered stable and can be used in production.
 
 ## Usage
 This package contains everything you need to get up and running. The meta-package includes the following packages:
