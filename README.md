@@ -1,6 +1,8 @@
 [![Build status][ci-img]][ci] [![NuGet][nuget-img]][nuget]
 
-# 🛑 This library is being deprecated!
+# 🛑 This library is DEPRECATED!
+
+No new pull requests are accepted except for security fixes.
 
 We urge all users to migrate to [OpenTelemetry](https://opentelemetry.io/). Please refer to the [notice in the documentation](https://www.jaegertracing.io/docs/latest/client-libraries/#deprecating-jaeger-clients) for details.
 
